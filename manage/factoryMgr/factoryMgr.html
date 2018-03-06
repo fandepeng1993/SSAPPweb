@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>库存管理</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+	<link href="../../css/font-awesome.min.css" rel="stylesheet">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.autocomplete.js"></script>
+	<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript" src="../../js/plugins/suggest/bootstrap-suggest.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="../../js/GooFlowjs/default.css">
+    <link rel="stylesheet" type="text/css" href="../../js/GooFlowjs/GooFlow2.css">
+    <script type="text/javascript" src="../../js/GooFlowjs/GooFunc.js"></script>
+	<script type="text/javascript" src="../../js/GooFlowjs/json2.js"></script>
+    <script type="text/javascript" src="../../js/GooFlowjs/GooFlow.js"></script>
+    <script type="text/javascript" src="../../js/GooFlowjs/GooFlow_color.js"></script>
+	<style type="text/css">
+	td{height:20px!important;text-align: center;line-height:20px!important;}
+	.totalDiv input{border:0px;background:none;}
+	</style>
+	<script type="text/javascript">
+	var aH3;
+	var aDiv;
+	function initTab() {
+		aH3=$("#cen_right_top").children("h3");
+		aDiv=$("#cen_right_top").children("div");
+		for(var i=0;i<aH3.length;i++)
+		{
+			aH3[i].index=i;
+			aH3[i].onclick=function() {
+				for(var i=0;i<aH3.length;i++) {
+					aH3[i].className="";
+					aDiv[i].style.display="none";
+				}
+				this.className="white";
+				aDiv[this.index].style.display="block";
+			}
+		}
+	}
+		//设定查看的权限。1：查看所有；2：查看直属下级；3：查看所有下级；4：查看自己；
+		var selPri = -1;
+		//当前页面所属菜单的menuCode
+	    var menuCode;
+		
+	    var searchDTO = {};
+	    var fieldList;
+		//根据权限渲染页面
+		$(document).ready(function(){
+			
+			initTab();
+			$(aH3[0]).html("全部库存");
+			$(aH3[1]).html("备货库存");
+			$(aH3[2]).html("订单库存");
+			$(aH3[3]).html("相似规格库存");
+			$(aH3[4]).html("在制品库存");
+			//搜索自动匹配下拉框
+			menuCode = Request["menuCode"];
+			$.ajax({
+			      url: "../../sessionAdmin/getPri",
+			      datatype: "json",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+			    	  var pathname = window.location.pathname;
+			    	  var url = pathname.substring(pathname.indexOf("/", 1) + 1, pathname.length);
+			    	  $.each(eval("(" + data + ")"), function(index, item) {
+			      			if(item.menuUrl == url) {
+			      				searchDTO = {
+		      							"proName":"",
+		      							"dSpec":"",
+		      							"dSteel":"",
+		      							"dStandards":"",
+		      					};
+			      				if(item.menuName == "查看") {
+			      					$("#search-g").show();
+			      					showTotal();
+			      					initTable("productTable1","../../viewWmsProAdmin/countAllNumByDTO",1);
+									initTable("productTable2","../../viewWmsProAdmin/countBHNumByDTO",2);
+									initTable("productTable3","../../viewWmsProAdmin/countSHNumByDTO",3);
+									initTable("productTable4","../../viewWmsProAdmin/countFuzzyAllNumByDTO",4);
+									initTable("productTable5","../../viewWmsProAdmin/countFuzzyAllVMWNumByDTO",5);
+			      				} 
+			      				
+			      			}
+		    	  		});
+			      	} 
+				});
+			});
+		
+			var products = null;
+			var total = null;
+			function initTable(tbodyId,url,objIndex) {
+				
+				var url;
+				var currentPageObj = eval("pageObj" + objIndex);
+				$.ajax({
+					url: url,
+					datatype: "json",
+					type: "post",
+					data: JSON.stringify(searchDTO),
+					success: function (data, status, xhr) {
+						getSearchFieldList();
+						$("#"+tbodyId).empty();
+						currentPageObj.totalRecords = data;
+						//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+						if(currentPageObj.totalRecords % currentPageObj.pageSize != 0) {
+							currentPageObj.totalPages = Math.floor(currentPageObj.totalRecords / currentPageObj.pageSize) + 1;
+						} else {
+							currentPageObj.totalPages = currentPageObj.totalRecords / currentPageObj.pageSize;
+						}
+						//根据totalPages初始化页码插件
+						$("#sumPage" + objIndex).html("共<strong class=\"allPage" + objIndex + "\">" + currentPageObj.totalPages + "</strong>页");
+						$("#Pagination" + objIndex).pagination(currentPageObj.totalPages, {paginationIndex:objIndex});
+					} 
+				});
+			}
+
+			var pageObj1, pageObj2, pageObj3, pageObj4, pageObj5;
+			for(var i=1; i<=5; i++) {
+				var temp = {
+						"pageSize": 10,
+						"pageNo": 1,
+						"totalRecords": 0,
+						"totalPages": 0
+				};
+				eval("pageObj" + i + "=temp");
+			}
+			/* var pageSize = 10;
+			var pageNo = 1;//当前的页码
+			var totalRecords = 0;
+			var totalPages = 0; */
+	
+			function circleInfos(objIndex) {
+				var url;
+				var currentPageObj = eval("pageObj" + objIndex);
+				switch(objIndex) {
+				case 1: 
+					var url = "../../viewWmsProAdmin/vwpsALLByDTOLazy/" + currentPageObj.pageNo + "," + currentPageObj.pageSize;
+					break;
+				case 2:
+					var url = "../../viewWmsProAdmin/vwpsBHByDTOLazy/" + currentPageObj.pageNo + "," + currentPageObj.pageSize;
+					break;
+				case 3:
+					var url = "../../viewWmsProAdmin/vwpsSHByDTOLazy/" + currentPageObj.pageNo + "," + currentPageObj.pageSize;
+					break;
+				case 4:
+					var url = "../../viewWmsProAdmin/fuzzyAllVwpsByDTOLazy/" + currentPageObj.pageNo + "," + currentPageObj.pageSize;
+					break;
+				case 5:
+					var url = "../../viewWmsProAdmin/fuzzyAllVMWsByDTOLazy/" + currentPageObj.pageNo + "," + currentPageObj.pageSize;
+					break;
+				}
+				$.ajax({
+					url: url,
+					datatype: "json",
+					type: "post",
+					data: JSON.stringify(searchDTO),
+					success: function (data, status, xhr) {
+						$("#productTable" + objIndex).empty();
+						products = data;
+						
+						$.each(data, function(index, item) {
+							new UserCommon().fillTable("productTable" + objIndex, item, (currentPageObj.pageNo-1)*currentPageObj.pageSize + index);
+							//为checkbox添加监听事件
+							new UserCommon().checkboxListener();
+						});
+						
+						if (objIndex == 5) {
+							getworkFlowData();
+						}
+
+					}
+				});
+			}
+			
+			function showTotal(){
+				$.ajax({
+					url: "../../viewWmsProAdmin/getTotalMap",
+					datatype: "json",
+					type: "post",
+					data: JSON.stringify(searchDTO),
+					success: function (data, status, xhr) {
+						total = data;
+						for(var i=1;i<=5;i++){
+							fillInput(i);
+						}					
+					}
+				});
+			}
+	
+			function fillInput(i){
+				var productTableObj = eval("total.productTable" + i);
+				var totalQuantity;
+				var totalQuantity = (productTableObj==null) ? 0: productTableObj.totalQuantity;
+				var totalWeight = (productTableObj==null) ? 0: productTableObj.totalWeight;
+				$("#"+"total"+i).find("input[name='quantity']").val(totalQuantity);
+				$("#"+"total"+i).find("input[name='weight']").val(totalWeight);
+				
+			}
+			function getProductsByKey() {
+				$('#resetBtn').attr('disabled',true);
+				for(var i=1;i<=5;i++){
+					getDataByKey(i);
+				}
+				showTotal();
+			}
+			
+			//回车匹配
+			function getCode(){
+				var event = arguments.callee.caller.arguments[0] || window.event;
+				if(event.keyCode == 13){
+					getProductsByKey();
+				}
+			}
+			
+			function getDataByKey(i) {
+				//pageNo = 1;
+				var currentPageObj = eval("pageObj" + i);
+				switch(i) {
+				case 1: 
+					var url = "../../viewWmsProAdmin/countAllNumByDTO";
+					break;
+				case 2:
+					var url = "../../viewWmsProAdmin/countBHNumByDTO";
+					break;
+				case 3:
+					var url = "../../viewWmsProAdmin/countSHNumByDTO";
+					break;
+				case 4:
+					var url = "../../viewWmsProAdmin/countFuzzyAllNumByDTO";
+					break;
+				case 5:
+					var url = "../../viewWmsProAdmin/countFuzzyAllVMWNumByDTO";
+					break;
+				}
+				searchDTO = $("#searchForm").serializeNestedObject();
+				$.ajax({
+					url: url,
+					datatype: "json",
+					type: "post",
+					data: JSON.stringify(searchDTO),
+					success: function (data, status, xhr) {
+						$("#productTable" + i).empty();
+						currentPageObj.totalRecords = data;
+						//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+						if(currentPageObj.totalRecords % currentPageObj.pageSize != 0) {
+							currentPageObj.totalPages = Math.floor(currentPageObj.totalRecords / currentPageObj.pageSize) + 1;
+						} else {
+							currentPageObj.totalPages = currentPageObj.totalRecords / currentPageObj.pageSize;
+						}
+						//根据totalPages初始化页码插件
+						$("#sumPage"+i).html("共<strong class=\"allPage" + i + "\">" + currentPageObj.totalPages + "</strong>页");
+						$("#Pagination"+i).pagination(currentPageObj.totalPages, {paginationIndex:i});
+					}
+				});
+			}
+			
+			
+			function getSearchFieldList(){
+				$.ajax({
+					url: "../../viewWmsProAdmin/getAllSearchFieldList",
+					datatype: "json",
+					type: "get",
+					data: {},
+					success: function (data, status, xhr) {
+						fieldList = data;
+						getFieldList();
+					}
+				});
+			}
+			
+			
+		 	function getFieldList() {
+		 		for(var type in fieldList){
+					dealInput(type);
+					$("#"+type).keyup(function() {
+						if($("#"+type).val() == "") {
+							dealInput(type);
+						}
+				   	}); 
+				}			
+ 			}	
+
+			var testdataBsSuggest;
+			function dealInput(type){
+				var useArr = [];
+				for(var index=0;index<fieldList[type].length;index++){
+					var a = fieldList[type][index];
+					var useObj = {
+							/* "id":index,
+							"word":type, */
+							"description":a
+					}
+					useArr.push(useObj);
+				}
+	        	testdataBsSuggest=$("#"+type).bsSuggest({indexKey: 0,listAlign: "auto","data":{"value":useArr,"defaults":"http://lzw.me"}});
+			}
+			
+			/*管理员-角色-添加*/
+			function admin_role_add(title,url,w){
+				new UserCommon().layer_show(title,url,w);
+			}
+			function viewProcess(billNo) {
+				admin_role_add('<strong>查看流程</strong>',"viewProcess.html?billNo=" + billNo,'880');
+			}
+			
+			function getworkFlowData(){
+				$("#productTable5 tr").dblclick(function() {
+					var billNo = $(this).children("td:eq(1)").text();
+					viewProcess(billNo); 
+				});
+			}
+	</script>
+</head>
+<body>
+	<div class="bt-div">
+		<div class="bt-div-in" id="wpx">
+			<form id="searchForm" class="clearfix">
+				<div class="search-select-input " style="width:12%;margin-right:20px">
+	       			<div class="input-group">
+	       			<label  class="control-label">合同号： </label>
+	                     <input type="text" class="form-control" name="contractNo" id="contractNo" onkeydown="getCode()" onblur="getProductsByKey()" style="width: calc(100% - 60px);" />
+	                     <!-- <div class="input-group-btn">
+	                         <button type="button" class="btn btn-white dropdown-toggle" data-toggle="dropdown">
+	                             <span class="caret"></span>
+	                         </button>
+	                         <ul class="dropdown-menu dropdown-menu-right" role="menu">
+	                         </ul>
+	                     </div> -->
+                 	</div>
+	       		</div>
+	       		<div class="search-select-input ">
+	       			<div class="input-group">
+	       			<label  class="control-label">产品标准： </label>
+	                     <input type="text" class="form-control" name="dStandards" id="dStandard" onkeydown="getCode()" onblur="getProductsByKey()"/>
+	                     <div class="input-group-btn">
+	                         <button type="button" class="btn btn-white dropdown-toggle" data-toggle="dropdown">
+	                             <span class="caret"></span>
+	                         </button>
+	                         <ul class="dropdown-menu dropdown-menu-right" role="menu">
+	                         </ul>
+	                     </div>
+                 	</div>
+	       		</div>
+	       		
+	       		<div class="search-select-input ">
+	       			<div class="input-group">
+	       			<label  class="control-label">品名： </label>
+	                     <input type="text" class="form-control" name="proName" id="proName" onkeydown="getCode()" onblur="getProductsByKey()" />
+	                     <div class="input-group-btn">
+	                         <button type="button" class="btn btn-white dropdown-toggle" data-toggle="dropdown">
+	                             <span class="caret"></span>
+	                         </button>
+	                         <ul class="dropdown-menu dropdown-menu-right" role="menu">
+	                         </ul>
+	                     </div>
+                 	</div>
+	       		</div>
+	       		
+	       		<div class="search-select-input">
+	       			<div class="input-group">
+	       			<label  class="control-label">规格： </label>
+	                     <input type="text" class="form-control" name="dSpec" id="dSpec" onkeydown="getCode()" onblur="getProductsByKey()"/>
+	                     <div class="input-group-btn">
+	                         <button type="button" class="btn btn-white dropdown-toggle" data-toggle="dropdown">
+	                             <span class="caret"></span>
+	                         </button>
+	                         <ul class="dropdown-menu dropdown-menu-right" role="menu">
+	                         </ul>
+	                     </div>
+                 	</div>
+	       		</div>
+	       		<div class="search-select-input ">
+	       			<div class="input-group">
+	       			<label  class="control-label">钢种： </label>
+	                     <input type="text" class="form-control" name="dSteel" id="dSteel" onkeydown="getCode()" onblur="getProductsByKey()"/>
+	                     <div class="input-group-btn">
+	                         <button type="button" class="btn btn-white dropdown-toggle" data-toggle="dropdown">
+	                             <span class="caret"></span>
+	                         </button>
+	                         <ul class="dropdown-menu dropdown-menu-right" role="menu">
+	                         </ul>
+	                     </div>
+                 	</div>
+	       		</div>
+	       		<button type="button"  class="btn btn-default bt-div-bt" id="resetBtn" style="display:inline-block; vertical-align: -webkit-baseline-middle;"  onclick="reset();getProductsByKey();">
+					<span class="fa fa-refresh color-zn" ></span> 重置
+				</button>	
+	       		<!-- <input type="button" class="btn btn-default bt-div-bt"
+	       		 style="padding-left: 15px;background: #19aa8d!important;
+	       		 margin-top: 0px" id="search-g" 
+	       		 style="margin-top:1px;margin-left:30px;" 
+	       		 onclick="
+	       		 value="重置"/> -->
+			</form>
+			<!-- <button class="btn btn-default bt-div-bt" id="search-g" style="margin-top:1px;margin-left:30px;" onclick="getProductsByKey()">
+				<span class="glyphicon glyphicon-search color-zn"></span> 搜索
+			</button> -->
+		</div>
+	</div>
+		<div id="cen_right_top">
+		<h3 class="white"></h3>
+		<h3></h3>
+		<h3></h3>
+		<h3></h3>
+		<h3></h3>
+		<div class="div centerTable" style="display:block">
+			<table align="center" class="table table-striped text-center tableHidden" id="allproduct"> 
+		 		<thead>
+					<tr fieldType="controlSellGoal" fieldName="sellgoalId">
+					<th fieldType="num" fieldName="">序号</th>
+					<th fieldType="text" fieldName="proName">产品名称</th>
+					<th fieldType="text" fieldName="warehousecode">仓库</th>
+					<th fieldType="text" fieldName="contractNo">合同号</th>
+					<th fieldType="text" fieldName="dSteel">钢种</th>
+					<th fieldType="text" fieldName="dSpec">规格</th>
+					<th fieldType="text" fieldName="dStandards">标准</th>
+					<th fieldType="text" fieldName="dQuantity">库存数量(支)</th>
+					<th fieldType="text" fieldName="dWeight">库存重量(Kg)</th>
+					<th fieldType="text" fieldName="difDay">逾期天数</th>
+					<!-- <th fieldType="text" fieldName="totalQuantity">总支数</th> -->
+					</tr>
+				</thead>	
+				<tbody id="productTable1"> 
+				</tbody> 	
+			</table>
+		<!-- 分页 -->
+		<div class="pages">
+	        <div id="Pagination1"></div>
+	        <div class="searchPage">
+	          <span class="page-sum" id="sumPage1"></span>
+	          <span class="page-go">跳转<input type="text">页</span>
+	          <a class="page-btn" href="javascript:;">GO</a>
+	        </div>
+	    </div>
+	    <div id="total1" class="totalDiv">
+	     <span class="facSty">合计总支数(支)：</span><input type="text" name="quantity" readonly/><br/>
+	     <span class="facSty">合计总重量(Kg)：</span><input type="text" name="weight" readonly/>
+	    </div>
+		</div>
+		<div class="div centerTable ">
+			<table  class="table table-striped text-center tableHidden" id="allproduct1"> 
+		 		<thead>
+					<tr fieldType="controlSellGoal" fieldName="sellgoalId">
+					<th fieldType="num" fieldName="">序号</th>
+					<th fieldType="text" fieldName="proName">产品名称</th>
+					<th fieldType="text" fieldName="warehousecode">仓库</th>
+					<th fieldType="text" fieldName="contractNo">合同号</th>
+					<th fieldType="text" fieldName="dSteel">钢种</th>
+					<th fieldType="text" fieldName="dSpec">规格</th>
+					<th fieldType="text" fieldName="dStandards">标准</th>
+					<th fieldType="text" fieldName="dQuantity">库存数量(支)</th>
+					<th fieldType="text" fieldName="dWeight">库存重量(Kg)</th>
+					<th fieldType="text" fieldName="difDay">逾期天数</th>
+					</tr>
+				</thead>	
+				<tbody id="productTable2"> 
+				</tbody> 	
+			</table>
+		<!-- 分页 -->
+		<div class="pages">
+	        <div id="Pagination2"></div>
+	        <div class="searchPage">
+	          <span class="page-sum" id="sumPage2"></span>
+	          <span class="page-go">跳转<input type="text">页</span>
+	          <a class="page-btn" href="javascript:;">GO</a>
+	        </div>
+	    </div>
+	    <div id="total2" class="totalDiv">
+			<span class="facSty">合计总支数(支)：</span><input type="text" name="quantity" readonly/><br/>
+	     	<span class="facSty">合计总重量(Kg)：</span><input type="text" name="weight" readonly/>
+	    </div>
+		</div>
+		<div class="div centerTable">
+			<table  class="table table-striped text-center tableHidden" id="allproduct2"> 
+		 		<thead>
+					<tr fieldType="controlSellGoal" fieldName="sellgoalId">
+					<th fieldType="num" fieldName="">序号</th>
+					<th fieldType="text" fieldName="proName">产品名称</th>
+					<th fieldType="text" fieldName="warehousecode">仓库</th>
+					<th fieldType="text" fieldName="contractNo">合同号</th>
+					<th fieldType="text" fieldName="dSteel">钢种</th>
+					<th fieldType="text" fieldName="dSpec">规格</th>
+					<th fieldType="text" fieldName="dStandards">标准</th>
+					<th fieldType="text" fieldName="dQuantity">库存数量(支)</th>
+					<th fieldType="text" fieldName="dWeight">库存重量(Kg)</th>
+					<th fieldType="text" fieldName="difDay">交货逾期天数</th>
+					</tr>
+				</thead>	
+				<tbody id="productTable3"> 
+				</tbody> 	
+			</table>
+		<!-- 分页 -->
+		<div class="pages">
+	        <div id="Pagination3"></div>
+	        <div class="searchPage">
+	          <span class="page-sum" id="sumPage3"></span>
+	          <span class="page-go">跳转<input type="text">页</span>
+	          <a class="page-btn" href="javascript:;">GO</a>
+	        </div>
+	    </div>
+	    <div id="total3" class="totalDiv">
+			<span class="facSty">合计总支数(支)：</span><input type="text" name="quantity" readonly/><br/>
+	     	<span class="facSty">合计总重量(Kg)：</span><input type="text" name="weight" readonly/>
+	    </div>
+		</div>
+		<div class="div centerTable">
+			<table align="center" class="table table-striped text-center tableHidden" id="allproduct3"> 
+		 		<thead>
+					<tr fieldType="controlSellGoal" fieldName="sellgoalId">
+					<th fieldType="num" fieldName="">序号</th>
+					<th fieldType="text" fieldName="proName">产品名称</th>
+					<th fieldType="text" fieldName="warehousecode">仓库</th>
+					<th fieldType="text" fieldName="contractNo">合同号</th>
+					<th fieldType="text" fieldName="dSteel">钢种</th>
+					<th fieldType="text" fieldName="dSpec">规格</th>
+					<th fieldType="text" fieldName="dStandards">标准</th>
+					<th fieldType="text" fieldName="dQuantity">库存数量(支)</th>
+					<th fieldType="text" fieldName="dWeight">库存重量(Kg)</th>
+					<th fieldType="text" fieldName="difDay">逾期天数</th>
+					</tr>
+				</thead>	
+				<tbody id="productTable4"> 
+				</tbody> 	
+			</table>
+		<!-- 分页 -->
+		<div class="pages">
+	        <div id="Pagination4"></div>
+	        <div class="searchPage">
+	          <span class="page-sum" id="sumPage4"></span>
+	          <span class="page-go">跳转<input type="text">页</span>
+	          <a class="page-btn" href="javascript:;">GO</a>
+	        </div>
+	    </div>
+	    <div id="total4" class="totalDiv">
+	     	<span class="facSty">合计总支数(支)：</span><input type="text" name="quantity" readonly/><br/>
+	     	<span class="facSty">合计总重量(Kg)：</span><input type="text" name="weight" readonly/>
+	    </div>
+		</div>
+		<div class="div centerTable">
+			<div style="width:100%;height:auto;overflow-x:scroll">
+			 														<!-- zzpkc-table -->
+			<table align="center" class="table table-striped text-center tableHidden" id="allproduct4"> 
+		 		<thead>
+					<tr fieldType="controlSellGoal" fieldName="sellgoalId">
+						<!-- <th fieldType="num" fieldName="">序号</th>
+						<th fieldType="text" fieldName="contractNo">合同号</th>
+						<th fieldType="text" fieldName="cardNo">框号</th>					
+						<th fieldType="text" fieldName="produceMSpec">当前规格</th>
+						<th fieldType="text" fieldName="dSteel">钢种</th>
+						<th fieldType="text" fieldName="produceMName">当前工序</th>
+						<th fieldType="text" fieldName="dStandards">标准</th>
+						<th fieldType="text" fieldName="dQuantity">库存数量(支)</th>
+						<th fieldType="text" fieldName="dWeight">库存重量(Kg)</th>
+						<th fieldType="text" fieldName="produceMEndTime">上道工序完工时间</th>
+						<th fieldType="text" fieldName="difDay">停滞天数</th> -->
+						<th fieldType="num" fieldName="">序号</th>
+						<th fieldType="text" fieldName="cardNo">框号</th>					
+						<th fieldType="text" fieldName="contractNo">合同号</th>
+						<th fieldType="text" fieldName="dStandards">标准</th>
+						<th fieldType="text" fieldName="dSteel">钢种</th>
+						<th fieldType="text" fieldName="dFurnaceNo">炉号</th>
+						<th fieldType="text" fieldName="produceMSpec">当前规格</th>
+						<th fieldType="text" fieldName="produceMName">当前工序</th>
+						<th fieldType="text" fieldName="dSpec1">管坯规格</th>
+						<!-- <th fieldType="text" fieldName="dSpec2">成品规格</th>
+						<th fieldType="text" fieldName="dQuantity">管坯支数</th> -->
+						<th fieldType="text" fieldName="produceMNumber">流转支数(支)</th>
+						<th fieldType="text" fieldName="produceMWeight">流转重量(Kg)</th>
+						<!-- <th fieldType="text" fieldName="dNumber">合同数量</th> -->
+						<th fieldType="text" fieldName="feedingDate">投料日期</th>
+						<th fieldType="text" fieldName="deliveryDate">交货日期</th>
+						<th fieldType="text" fieldName="produceMEndTime">上道工序完工时间</th>
+						<th fieldType="text" fieldName="difDay">停滞天数</th>
+					</tr>
+				</thead>	
+				<tbody id="productTable5"> 
+				</tbody> 	
+			</table>
+			</div>
+		<!-- 分页 -->
+		<div class="pages">
+	        <div id="Pagination5"></div>
+	        <div class="searchPage">
+	          <span class="page-sum" id="sumPage5"></span>
+	          <span class="page-go">跳转<input type="text">页</span>
+	          <a class="page-btn" href="javascript:;">GO</a>
+	        </div>
+	    </div>
+	    <div id="total5" class="totalDiv">
+	 		 <span class="facSty">合计总支数(支)：</span><input type="text" name="quantity" readonly/><br/>
+	     	 <span class="facSty">合计总重量(Kg)：</span><input type="text" name="weight" readonly/>
+	    </div>
+		</div>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	
+</body>
+</html>

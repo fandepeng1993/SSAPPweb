@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>修改接口</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<script type="text/javascript" charset="utf-8" src="../../js/ueditor/ueditor.config.js"></script>
+	<script type="text/javascript" charset="utf-8" src="../../js/ueditor/ueditor.all.min.js"> </script>
+	<!--建议手动加在语言，避免在ie下有时因为加载语言失败导致编辑器加载失败-->
+	<!--这里加载的语言文件会覆盖你在配置项目里添加的语言类型，比如你在配置项目里配置的是英文，这里加载的中文，那最后就是中文-->
+	<script type="text/javascript" charset="utf-8" src="../../js/ueditor/lang/zh-cn/zh-cn.js"></script>
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		//实例化编辑器
+		//建议使用工厂方法getEditor创建和引用编辑器实例，如果在某个闭包下引用该编辑器，直接调用UE.getEditor('editor')就能拿到相关的实例
+		//var ue = UE.getEditor('editor');
+		var ue
+		function initEditor() {
+			ue = UE.getEditor('editor', {
+			    toolbars: [
+			        ['fullscreen', 'source', 'undo', 'redo', 'bold', 'simpleupload', 'insertimage', 
+			         'indent', 'italic', 'underline', 'strikethrough', 'subscript',
+			         'superscript', 'formatmatch', 'preview', 'horizontal', 'link', 'emotion', 
+			         'justifyleft', 'justifycenter', 'justifyright', 'justifyjustify', 'forecolor', 
+			         'backcolor', 'rowspacingtop', 'rowspacingbottom', 'lineheight', 'imageleft', 
+			         'imagecenter', 'inserttable']
+			    ],
+			    autoHeightEnabled: false,
+			    autoFloatEnabled: true
+			});
+			UE.getEditor('editor').setHeight(300);
+		}
+		
+		//用于展现表单的menuCode
+		var menuCode;
+		var ssInterface;
+		$(document).ready(function(){ 
+			menuCode = Request["menuCode"];
+			var interfaceId = Request["interfaceId"];
+			getInterface(interfaceId);
+		});
+		
+		//根据ss_form表取出数据构建form表单
+		function initForm() {
+			$.ajax({
+				url: "../../formAdmin/formsByMenuCode/" + menuCode,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					element = eval("(" + data + ")");
+					new UserCommon().createForm("updateIntForm", element, 4);
+					
+					setTimeout(function (){
+						new UserCommon().fillForm("updateIntForm", ssInterface);
+						initEditor();
+						UE.getEditor("editor").execCommand("cleardoc");
+						UE.getEditor("editor").execCommand('insertHtml', ssInterface.note);
+					},50);
+					//初始化层的大小
+					initLayerSize();
+				} 
+			});
+		}
+		
+		/**
+		 *	修改弹出框填写完成之后保存调用的函数
+		 */
+		function update() {
+			var formObj = $("#updateIntForm");
+			//var obj = $("#hello");
+			var msg = "不能为空！";
+			//$("#note1").val(UE.getEditor('editor1').getContent());
+			if(new UserCommon().show("edit-promit", formObj, msg)) {
+			 	var formObjJson = $("#updateIntForm").serializeNestedObject();
+			 	$.ajax({
+				      url: "../../ssIntAdmin/interface",
+				      datatype: "text",
+				      type: "put",
+				      data: JSON.stringify(formObjJson),
+				      success: function (data) {
+				    	  var json = eval("(" + data + ")");
+				    	  if(json.status == 1) {
+				    		  new UserCommon().check("success",json.msg,"intMgr.html","success");
+				    		  setTimeout(function (){
+				    			  window.parent.ini
+				    			  
+				    			  tTable();
+				    			  new UserCommon().layer_close();
+				    			  //window.parent.location.href = "intMgr.html?menuCode=" + menuCode;
+				    		  }, 1000);
+				    	  } else {
+				    		  new UserCommon().check("success",json.msg,null,"fail");
+				    	  }
+				      }
+				});
+			}
+		}
+		
+		function getInterface(interfaceId) {
+			$.ajax({
+				url: "../../ssIntAdmin/interface/" + interfaceId,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					ssInterface = eval("(" + data + ")");
+					initForm();
+				} 
+			});
+		}
+	</script>
+</head>
+<body>
+	<!-- 修改 -->
+	<div class="edit">
+		<div class="edit-content">
+			<div class="edit-in" style="height:390px">
+				<form id="updateIntForm">
+					<!-- <table class="yhtj">
+						<input type="hidden" name="interfaceId" id="interfaceId">
+						<p class="edit-p">
+							<label>接口名称：</label>
+							<input showName="接口名称" type="text" name="interfaceName">
+							<label>接口url：</label>
+							<input showName="接口url" type="text" name="url">
+						</p>
+		            	<input type="hidden" name="note" id="note1">
+		            </table> -->
+				</form>
+	            <!-- <p class="edit-p">
+	            	<span class="edit-p">详细信息：</span>
+	            	<script id="editor1" type="text/plain"></script>
+	            </p> -->
+			</div>
+			<div class="edit-bottom">
+				<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();"><i class="glyphicon glyphicon-remove"></i>&nbsp;关闭</button>
+				<button type="button" class="btn btn-xs edit-save btn-primary" onclick="update()"><i class="glyphicon glyphicon-ok"></i>&nbsp;保存</button>
+			</div>
+		</div>		
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span>
+			<span></span>
+			<div><img src="../../images/sanjiao.png" width="10"></div>
+		</div>
+	</div>
+</body>
+</html>

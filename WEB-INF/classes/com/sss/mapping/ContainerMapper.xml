@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<!-- 已知属性：pojoName_firstLowercase, pojoName_firstUppercase -->
+<!-- 已知属性：pkColumn, pkColumnType, pkFieldName, pkIfExpression, pkFieldJdbcType -->
+<!-- 已知属性：column, columnType, isNeed, fieldName, ifExpression, fieldJdbcType。构建循环字符串 -->
+<mapper namespace="com.sss.dao.IContainerDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.Container" >
+			<id column="id" property="id" jdbcType="INTEGER"/>
+			<result column="containerName" property="containerName" jdbcType="VARCHAR"/>
+			<result column="ipAddr" property="ipAddr" jdbcType="VARCHAR"/>
+			<result column="gateway" property="gateway" jdbcType="VARCHAR"/>
+			<result column="port" property="port" jdbcType="VARCHAR"/>
+			<result column="status" property="status" jdbcType="INTEGER"/>
+			<result column="createdate" property="createdate" jdbcType="VARCHAR"/>
+			
+			<association property="trialCus" javaType="com.sss.pojo.TrialCus">
+				<id column="ct_trialCus_id" property="id" jdbcType="INTEGER" />
+			    <result column="ct_trialCus_companyName" property="companyName" jdbcType="VARCHAR" />
+			    <result column="ct_trialCus_nickName" property="nickName" jdbcType="VARCHAR" />
+			    <result column="ct_trialCus_userName" property="userName" jdbcType="VARCHAR" />
+			    <result column="ct_trialCus_telephone" property="telephone" jdbcType="VARCHAR" />
+			    <result column="ct_trialCus_status" property="status" jdbcType="INTEGER" />
+			    <result column="ct_trialCus_authDuration" property="authDuration" jdbcType="VARCHAR" />
+			    <result column="ct_trialCus_authBeginDate" property="authBeginDate" jdbcType="VARCHAR" />
+			    <result column="ct_trialCus_createdate" property="createdate" jdbcType="VARCHAR" />
+			</association>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		master.*,
+  		tc.id as ct_trialCus_id,
+  		tc.companyName as ct_trialCus_companyName,
+  		tc.nickName as ct_trialCus_nickName,
+  		tc.userName as ct_trialCus_userName,
+  		tc.telephone as ct_trialCus_telephone,
+  		tc.status as ct_trialCus_status,
+  		tc.authDuration as ct_trialCus_authDuration,
+  		tc.authBeginDate as ct_trialCus_authBeginDate,
+  		tc.createdate as ct_trialCus_createdate
+    from 
+    	ss_container master
+    left join 
+    	ss_trialcus tc
+    on
+    	tc.containerId = master.id
+  </sql>
+  <!-- 分页相关，分页实体类 -->
+  <resultMap id="PageResultMap" type="com.sss.pojo.dto.PageModel" >
+    <result column="pageNo" property="pageNo" jdbcType="INTEGER" />
+    <result column="pageSize" property="pageSize" jdbcType="INTEGER" />
+    <result column="countNum" property="countNum" jdbcType="INTEGER" />
+    <collection property="results" resultMap="BaseResultMap"></collection>
+  </resultMap>
+  <!-- 分页相关方法，特殊需求主要修改部分为"数据总条数查询countNumQuery"和"数据信息查询sql，如associateQuery和complexAdvancedSearchQuery" -->
+  <!-- 条数信息：数据总条数 -->
+  <sql id="countNumQuery">
+  	select count(*) from ss_container
+  </sql>
+  <!-- 条数信息：复杂高级搜索数据总条数 -->
+  <sql id="countAdvancedSearchNumQuery">
+  	select count(*) 
+  	from 
+    	ss_container master
+    left join 
+    	ss_trialcus tc
+    on
+    	tc.containerId = master.id
+  	where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+  </sql>
+  <!--  数据信息：复杂高级搜索查询 ，无分页 -->
+  <sql id="complexAdvancedSearchQuery">
+  	<include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by master.createdate desc
+  </sql>
+  <!-- 数据信息：普通所有数据分页查询 -->
+  <select id="selectAllDataLazy"  resultMap="PageResultMap" parameterType="com.sss.pojo.dto.PageModel" >
+    select ${pageNo} as pageNo,
+    	${pageSize} as pageSize,
+    	(<include refid="countNumQuery" />) as countNum,
+    	pageResults.*
+    from
+	(
+	    <include refid="associateQuery" /> order by d.createdate desc
+	    limit ${(pageNo-1)*pageSize}, ${pageSize}
+	) pageResults
+  </select>
+  <!-- 数据信息：复杂高级搜索分页测试 -->
+  <select id="complexAdvancedSearchLazy"  resultMap="PageResultMap" >
+    select ${pageModel.pageNo} as pageNo,
+    	${pageModel.pageSize} as pageSize,
+    	(<include refid="countAdvancedSearchNumQuery" />) as countNum,
+    	pageResults.*
+    from
+	(
+	    <include refid="complexAdvancedSearchQuery" />
+	    limit ${(pageModel.pageNo-1)*pageModel.pageSize}, ${pageModel.pageSize}
+	) pageResults
+  </select>
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" />
+  </select>
+  <!-- 懒加载查询所有的接口 -->
+  <select id="selectListLazy" resultMap="BaseResultMap" >
+	select * from ss_container 
+	limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where master.id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_container
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <!-- 批量删除接口 -->
+  <delete id="deleteByPrimaryKeys" parameterType="java.util.List">
+    delete from ss_container
+    where id in 
+    <foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.Container" >
+    insert into ss_container 
+		(
+			id,
+			containerName,
+			ipAddr,
+			gateway,
+			port,
+			status,
+			createdate
+		)
+    values 
+		(
+			#{id,jdbcType=INTEGER},
+			#{containerName,jdbcType=VARCHAR},
+			#{ipAddr,jdbcType=VARCHAR},
+			#{gateway,jdbcType=VARCHAR},
+			#{port,jdbcType=VARCHAR},
+			#{status,jdbcType=INTEGER},
+			#{createdate,jdbcType=VARCHAR}
+		)
+  </insert>
+  <!-- 批量添加接口 -->
+  <insert id="insertEntitys" parameterType="java.util.List">
+	insert into ss_container 
+		(
+			id,
+			containerName,
+			ipAddr,
+			gateway,
+			port,
+			status,
+			createdate
+		)
+	values
+	<foreach collection="list" item="item" index="index" separator=",">
+		(
+				null,
+				#{item.containerName,jdbcType=VARCHAR},
+				#{item.ipAddr,jdbcType=VARCHAR},
+				#{item.gateway,jdbcType=VARCHAR},
+				#{item.port,jdbcType=VARCHAR},
+				#{item.status,jdbcType=INTEGER},
+				#{item.createdate,jdbcType=VARCHAR}
+		)
+	</foreach>
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.Container" >
+  	<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+    </selectKey>
+    insert into ss_container
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+				<if test="id != null and id != 0">
+					id,
+				</if>
+				<if test="containerName != null and containerName != ''">
+					containerName,
+				</if>
+				<if test="ipAddr != null and ipAddr != ''">
+					ipAddr,
+				</if>
+				<if test="gateway != null and gateway != ''">
+					gateway,
+				</if>
+				<if test="port != null and port != ''">
+					port,
+				</if>
+				<if test="status != null and status != 0">
+					status,
+				</if>
+				createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+				<if test="id != null and id != 0">
+					#{id,jdbcType=INTEGER},
+				</if>
+				<if test="containerName != null and containerName != ''">
+					#{containerName,jdbcType=VARCHAR},
+				</if>
+				<if test="ipAddr != null and ipAddr != ''">
+					#{ipAddr,jdbcType=VARCHAR},
+				</if>
+				<if test="gateway != null and gateway != ''">
+					#{gateway,jdbcType=VARCHAR},
+				</if>
+				<if test="port != null and port != ''">
+					#{port,jdbcType=VARCHAR},
+				</if>
+				<if test="status != null and status != 0">
+					#{status,jdbcType=INTEGER},
+				</if>
+				<if test="createdate == null or createdate == ''">
+					now(),
+				</if>
+				<if test="createdate != null and createdate != ''">
+					#{createdate,jdbcType=VARCHAR},
+				</if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.Container" >
+    update ss_container
+    <set >
+			<if test="id != null and id != 0">
+				id = #{id,jdbcType=INTEGER},
+			</if>
+			<if test="containerName != null and containerName != ''">
+				containerName = #{containerName,jdbcType=VARCHAR},
+			</if>
+			<if test="ipAddr != null and ipAddr != ''">
+				ipAddr = #{ipAddr,jdbcType=VARCHAR},
+			</if>
+			<if test="gateway != null and gateway != ''">
+				gateway = #{gateway,jdbcType=VARCHAR},
+			</if>
+			<if test="port != null and port != ''">
+				port = #{port,jdbcType=VARCHAR},
+			</if>
+			<if test="status != null and status != 0">
+				status = #{status,jdbcType=INTEGER},
+			</if>
+			<if test="createdate != null and createdate != ''">
+				createdate = #{createdate,jdbcType=VARCHAR},
+			</if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.Container" >
+    update ss_container
+    set 
+			id = #{id,jdbcType=INTEGER},
+			containerName = #{containerName,jdbcType=VARCHAR},
+			ipAddr = #{ipAddr,jdbcType=VARCHAR},
+			gateway = #{gateway,jdbcType=VARCHAR},
+			port = #{port,jdbcType=VARCHAR},
+			status = #{status,jdbcType=INTEGER},
+			createdate = #{createdate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="complexAdvancedSearchQuery" />
+  </select>
+</mapper>

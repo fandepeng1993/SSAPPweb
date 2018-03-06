@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>角色管理</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+	<link href="../../css/font-awesome.min.css" rel="stylesheet">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script>
+		function display(id) {
+			eval("var div=div"+id);
+			eval("var img=img"+id);
+			eval("var im=im"+id);
+			div.style.display=div.style.display=="block"?"none":"block";
+			img.src=div.style.display=="block"?"images/jian.png":"images/add.png";
+			im.src=div.style.display=="block"?"images/home.png":"images/home.png";
+			img.alt=div.style.display=="block"?"关闭":"展开";
+		}
+
+		//当前页面所属菜单的menuCode
+	    var menuCode;
+		//根据权限渲染页面
+		$(document).ready(function(){ 
+			menuCode = Request["menuCode"];
+			
+			$.ajax({
+			      url: "../../sessionAdmin/getPri",
+			      datatype: "json",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+			    	  var pathname = window.location.pathname;
+			    	 
+			    	  var url = pathname.substring(pathname.indexOf("/", 1) + 1, pathname.length);
+			    	 
+			    	  $.each(eval("(" + data + ")"), function(index, item) {
+			      			if(item.menuUrl == url) {
+			      				if(item.menuName == "查看") {
+			      					initTable();
+			      				} else if(item.menuName == "增加") {
+			      					$("#add-g").show();
+			      				} else if(item.menuName == "修改") {
+			      					$("#update-g").show();
+			      				} else if(item.menuName == "删除") {
+			      					$("#delete-g").show();
+			      				} else if(item.menuName == "操作权限") {
+			      					$("#quanxian").show();
+			      				} else if(item.menuName == "包含人员") {
+			      					$("#contain").show();
+			      				}
+			      			}
+			    	  });
+			      } 
+			});
+			
+			//取用户角色
+			$.ajax({
+			      url: "../../roleUserAdmin/getRUByUserId/" + currentUserId,
+			      datatype: "json",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+			    	  roleUsers = JSON.parse(data);
+			      } 
+			});
+		});
+
+		var roleUsers;
+		var roles = null;
+		function initTable() {
+		 	$.ajax({
+				url: "../../roleAdmin/roles",
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					$("#roleTable").empty();
+					roles = eval("(" + data + ")");
+					
+					//若不是超级管理员，剔除超级管理员角色(roleId=1)
+					if(currentUserNo != "admin") {
+						$.each(roles, function(index, item) {
+							if(item.roleId == 1) {
+								roles.splice(index,1);
+								return false;
+							}
+						});
+					}
+					totalRecords = roles.length;
+					
+					//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+					if(totalRecords % pageSize != 0) {
+						totalPages = Math.floor(totalRecords / pageSize) + 1;
+					} else {
+						totalPages = totalRecords / pageSize;
+					}
+					
+					//根据totalPages初始化页码插件
+					$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+					$("#Pagination").pagination(totalPages);
+					/* $.each(eval("(" + data + ")"), function(index, item) {
+						if(index < pageSize) {
+							addRoleInfo(index, item);
+						} else if(index > pageSize) {
+							return;
+						}
+					}); */
+				} 
+			});
+		}
+		
+		var pageSize = 5;
+		var pageNo = 1;//当前的页码
+		var totalRecords = 0;
+		var totalPages = 0;
+		
+		function circleInfos() {
+			$("#roleTable").empty();
+		 	$.each(roles, function(index, item) {
+		 		if(index >= ((pageNo-1)*pageSize) && index < (pageNo*pageSize)) {
+			 		addInfo(index, item);
+			 		} else if(index > (pageNo*pageSize)) {
+			 			return;
+			 		}
+      			});
+			//为checkbox添加监听事件
+			new UserCommon().checkboxListener();
+		}
+		/**
+		 * 填充查看所有角色的列表
+		 */
+		function addInfo(index, item) {
+			var str = "";
+			if(index%2 == 0) {
+				str = str + "<tr class=\"light checkboxTr\" style=\"font-size:12px;\" id=\"Tr" + item.roleId + "\" onclick=\"fillThisCB('" + item.roleId + "')\">";
+			} else {
+				str = str + "<tr class=\"active checkboxTr\" style=\"font-size:12px;\" id=\"Tr" + item.roleId + "\" onclick=\"fillThisCB('" + item.roleId + "')\">";
+			}
+			str = str + "<td><input type=\"checkbox\" name=\"selectFlag\" id=\"CB" + item.roleId + "\" value=" + item.roleId + " onclick=\"fillThisCB('" + item.roleId + "')\" class=\"check\"></td>" +
+							"<td title='" + (index+1) + "'>" + (index+1) + "</td>" + 
+						    "<td title='" + item.roleName + "'>" + item.roleName + "</td>" + 
+						    "<td title='" + item.roleDesc + "'>" + item.roleDesc + "</td>";
+		  	str = str + "<td title='" + item.createdate.substring(0, item.createdate.length-2) + "'>" + item.createdate.substring(0, item.createdate.length-2) + "</td>" +
+		  				"</tr>"; 
+			$("#roleTable").append(str);
+		}
+		
+		/**
+		*	判断当前用户是否有修改当前角色的权限
+		*/
+		function hasAuth(roleId) {
+			//判断是否有权修改系统管理员
+			var hasAuth = true;//是否有权限
+			
+			$.each(roles, function(index, item) {
+				if(roleId == item.roleId && item.roleName == "系统管理员") {
+					//若当前是修改系统管理员才进行判断。
+					var isAdmin = false;//是否是管理员
+					$.each(roleUsers, function(ruIndex, ruItem) {
+						if(ruItem.role.roleName == "系统管理员" || currentUserNo == "admin") {
+							isAdmin = true;
+							return false;
+						}
+					});
+					
+					if(!isAdmin) {
+						//若不是管理员，则设置没有权限。
+						hasAuth = false;
+					}
+				}
+				if(!hasAuth) return false;
+			});
+			if(!hasAuth) {
+				new UserCommon().check("success","抱歉，您无权修改系统管理员！",null,"warning");
+			}
+			
+			return hasAuth;
+		}
+		
+		/**
+		 * 选择修改后填充相关信息
+		 */
+		function fillUpdateSelect() {
+			var but = $("input[name='selectFlag']");
+			var selRoleId;
+			var num = 0;
+			for(var i=0; i<but.length; i++) {
+				if(but[i].checked) { 
+					if(num == 0) {
+						selRoleId = but[i].value;
+					}
+					num += 1;
+				}
+			} 
+			//判断是否有权修改系统管理员
+			if(!hasAuth(selRoleId)) return;
+			
+			if(num == 1) {
+				$.each(roles, function(index, item) {
+					if(item.roleId == selRoleId) {
+						admin_role_add('<strong>修改角色</strong>',"editRole.html?menuCode=" + menuCode + "&roleId=" + item.roleId, iframeJson.width*0.5);
+					}
+			    });
+			} else {
+				new UserCommon().check("success","请选择一个角色！",null,"warning");
+			}
+		}
+		
+		function deleteRoles() {
+			var str = "";
+			var hasDeleteAuth = true;
+			$("input[name='selectFlag']").each(function(){
+				if($(this).is(':checked')) {
+					//判断是否有权修改系统管理员
+					hasDeleteAuth = hasAuth($(this).val());
+					if(!hasDeleteAuth) return false;
+					str += $(this).val() + ",";
+				}
+			});
+			if(!hasDeleteAuth) return;
+			if(str != null && str.trim() != "") {
+				str = str.substring(0, str.length-1);
+				layer.confirm('要删除么？',function(index){
+					$.ajax({
+					      url: "../../roleAdmin/role/" + str,
+					      datatype: "text",
+					      type: "delete",
+					      data: {},
+					      success: function (data) {
+					    	  var json = eval("(" + data + ")");
+					    	  if(json.status == 1) {
+					    		  new UserCommon().check("success",json.msg,null,"success");
+					    		  initTable();
+					    		  layer.close(index);
+					    	  } else {
+					    		  new UserCommon().check("success",json.msg,null,"fail");
+					    	  }
+					      }
+					});
+				});
+			} else {
+				new UserCommon().check("success","请选择要删除的角色！",null,"warning");
+			}
+		}
+		
+		/**
+		 * 点击操作权限之后，初始化系统目录列表，以及初始化角色权限集pris
+		 */
+		function fillPriOperate() {
+			var but = $("input[name='selectFlag']");
+			var selRoleId;
+			var num = 0;
+			for(var i=0; i<but.length; i++) {
+				if(but[i].checked) { 
+					if(num == 0) {
+						selRoleId = but[i].value;
+					}
+					num += 1;
+					//alert(but[i].value);
+				}
+			}
+			if(num == 1) {
+				//判断是否有权修改系统管理员
+				if(!hasAuth(selRoleId)) return;
+				
+				admin_role_add('<strong>操作权限</strong>',"veiwRolePri.html?roleId=" + selRoleId, iframeJson.width, iframeJson.height);
+			} else {
+				new UserCommon().check("success","请选择一个角色！",null,"warning");
+			}
+		}
+		
+		function containUsers() {
+			var but = $("input[name='selectFlag']");
+			var selRoleId;
+			var num = 0;
+			for(var i=0; i<but.length; i++) {
+				if(but[i].checked) { 
+					if(num == 0) {
+						selRoleId = but[i].value;
+					}
+					num += 1;
+					//alert(but[i].value);
+				}
+			} 
+			if(num == 1) {
+				//判断是否有权修改系统管理员
+				if(!hasAuth(selRoleId)) return;
+				
+				admin_role_add('<strong>查看包含用户</strong>',"contain_user.html?roleId=" + selRoleId, iframeJson.width*0.8, iframeJson.height*0.9);
+			} else {
+				new UserCommon().check("success","请选中一个角色！",null,"warning");
+			}
+		}
+		
+		var roleId;
+		
+		/*管理员-角色-添加*/
+		function admin_role_add(title,url,w,h){
+			if(typeof(h) == "undefined") {
+				new UserCommon().layer_show(title,url,w);
+			} else {
+				new UserCommon().layer_showBySize(title,url,w,h);
+			}
+		}
+		function addRole() {
+			admin_role_add('<strong>角色添加</strong>',"addRole.html?menuCode=" + menuCode, iframeJson.width*0.5);
+		}
+		
+		function advancedSearch(dto) {
+			$.ajax({
+				url: "../../roleAdmin/selectByAdvancedSearch" ,
+				datatype: "json",
+				type: "post",
+				data: JSON.stringify(dto),
+				success: function (data, status, xhr) {
+					$("#roleTable").empty();
+					roles = data;
+					totalRecords = data.length;
+					//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+					if(totalRecords % pageSize != 0) {
+						totalPages = Math.floor(totalRecords / pageSize) + 1;
+					} else {
+						totalPages = totalRecords / pageSize;
+					}
+					
+					$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+					$("#Pagination").pagination(totalPages);
+				} 
+			});
+		}
+	</script>
+	
+</head>
+<body>
+	<div class="bt-div">
+		<div class="bt-div-in">
+			<button type="button" class="btn btn-default btn-xs bt-one hid" id="add-g" onclick="addRole()">
+				<span class="glyphicon glyphicon-plus color-add"></span> 添加
+			</button>
+			<button type="button" class="btn btn-default btn-xs bt-left" id="update-g" onclick="fillUpdateSelect()">
+				<span class="glyphicon glyphicon-edit color-edit"></span> 修改
+			</button>
+			<button type="button" class="btn btn-default btn-xs bt-left" id="delete-g" onclick="deleteRoles()">
+				<span class="glyphicon glyphicon-trash color-del"></span> 删除
+			</button>
+			<button type="button" class="btn btn-default btn-xs bt-big" id="quanxian" onclick="fillPriOperate()">
+				<span class="glyphicon glyphicon-pencil color-lb"></span> 操作权限
+			</button>
+			<button type="button" class="btn btn-default btn-xs bt-big" id="contain" onclick="containUsers()">
+				<span class="glyphicon glyphicon-user color-bh"></span> 包含人员
+			</button>
+			<button type="button" class="btn btn-default btn-xs bt-big" style="display: inline-block;" onclick="slideRight()">
+				<span class="glyphicon glyphicon-filter color-zn"></span> 高级筛选
+			</button>
+		</div>
+	</div>
+	<div class="bt-div-two-table">
+		<div class="table-responsive centerTable" >
+			<table class="table table-data-bottom text-center tableHidden ">
+				<thead>
+					<tr class="table-first-tr">
+						<th fieldType="checkbox">
+							<input type="checkbox" name="ifAll" onClick="checkAll()" class="all">
+						</th>
+						<th fieldType="num">序号</th>
+						<th>角色名</th>
+						<th>角色描述</th>
+						<th>创建时间</th>
+					</tr>
+				</thead>
+				<tbody id="roleTable">
+				</tbody>
+			</table> 
+		</div>
+		<div class="pages">
+	        <div id="Pagination"></div>
+	        <div class="searchPage">
+	          <span class="page-sum" id="sumPage"></span>
+	          <span class="page-go">跳转<input type="text">页</span>
+	          <a href="javascript:;" class="page-btn">GO</a>
+	        </div>
+	    </div>
+    </div>
+    <!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<div class="search-background" id="background" onclick="hidebg()"></div>
+</body>
+</html>

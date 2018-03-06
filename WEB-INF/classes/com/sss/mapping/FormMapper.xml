@@ -1,0 +1,439 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IFormDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.Form" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="menuCode" property="menuCode" jdbcType="VARCHAR" />
+    <result column="element" property="element" jdbcType="VARCHAR" />
+    <result column="elementId" property="elementId" jdbcType="VARCHAR" />
+    <result column="type" property="type" jdbcType="VARCHAR" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="isReadonly" property="isReadonly" jdbcType="VARCHAR" />
+    <result column="label" property="label" jdbcType="VARCHAR" />
+    <result column="errorMsg" property="errorMsg" jdbcType="VARCHAR" />
+    <result column="isEmpty" property="isEmpty" jdbcType="VARCHAR" />
+    <result column="options" property="options" jdbcType="VARCHAR" />
+    <result column="event" property="event" jdbcType="VARCHAR" />
+    <result column="defaultValue" property="defaultValue" jdbcType="VARCHAR" />
+    <result column="calendarType" property="calendarType" jdbcType="VARCHAR" />
+    <result column="elementIndex" property="elementIndex" jdbcType="INTEGER" />
+    <result column="isDisable" property="isDisable" jdbcType="VARCHAR" />
+    <result column="isVisible" property="isVisible" jdbcType="VARCHAR" />
+    <result column="isEditable" property="isEditable" jdbcType="VARCHAR" />
+    <result column="style" property="style" jdbcType="VARCHAR" />
+    <result column="isWrap" property="isWrap" jdbcType="VARCHAR" />
+    <result column="minSizeX" property="minSizeX" jdbcType="INTEGER" />
+    <result column="minSizeY" property="minSizeY" jdbcType="INTEGER" />
+    <result column="sizeX" property="sizeX" jdbcType="INTEGER" />
+    <result column="sizeY" property="sizeY" jdbcType="INTEGER" />
+    <result column="row" property="row" jdbcType="INTEGER" />
+    <result column="col" property="col" jdbcType="INTEGER" />
+    <result column="isLabelPortrait" property="isLabelPortrait" jdbcType="VARCHAR" />
+    <result column="itemlayout" property="itemlayout" jdbcType="INTEGER" />
+    <result column="dPlaceh" property="dPlaceh" jdbcType="VARCHAR" />
+  </resultMap>
+  <!-- <cache>
+  	<property name="eviction" value="FIFO"/>
+  	<property name="flushInterval" value="1"/>
+  	<property name="size" value="512"/>
+  	<property name="readOnly" value="true"/>
+  </cache> -->
+  <!-- 返回一个list的写法 -->
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    select * from ss_form 
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select * from ss_form
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selByMenuCode" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select * from ss_form
+    where menuCode = #{menuCode,jdbcType=VARCHAR} order by elementIndex asc
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_form
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteFormsByIds" parameterType="java.util.List" >
+    delete from ss_form
+    where id in 
+    <foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>  
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.Form" >
+    insert into ss_form (id, menuCode, element, elementId,
+      type, name, isReadonly, 
+      label, errorMsg, isEmpty, 
+      options, event, defaultValue, 
+      calendarType, elementIndex, isDisable, isVisible, isEditable, style, isWrap,
+      minSizeX, minSizeY, sizeX, sizeY, row, col, isLabelPortrait, itemlayout, dPlaceh)
+    values (#{id,jdbcType=INTEGER}, #{menuCode,jdbcType=VARCHAR}, #{element,jdbcType=VARCHAR}, #{elementId,jdbcType=VARCHAR},
+      #{type,jdbcType=VARCHAR}, #{name,jdbcType=VARCHAR}, #{isReadonly,jdbcType=VARCHAR}, 
+      #{label,jdbcType=VARCHAR}, #{errorMsg,jdbcType=VARCHAR}, #{isEmpty,jdbcType=VARCHAR}, 
+      #{options,jdbcType=VARCHAR}, #{event,jdbcType=VARCHAR}, #{defaultValue,jdbcType=VARCHAR}, 
+      #{calendarType,jdbcType=VARCHAR}, #{elementIndex,jdbcType=INTEGER}, #{isDisable,jdbcType=VARCHAR},
+      #{isVisible,jdbcType=VARCHAR}, #{isEditable,jdbcType=VARCHAR}, #{style,jdbcType=VARCHAR},
+      #{isWrap,jdbcType=VARCHAR}, #{minSizeX,jdbcType=INTEGER}, #{minSizeY,jdbcType=INTEGER}, 
+      #{sizeX,jdbcType=INTEGER}, #{sizeY,jdbcType=INTEGER}, #{row,jdbcType=INTEGER}, #{col,jdbcType=INTEGER}, 
+      #{isLabelPortrait,jdbcType=VARCHAR}, #{itemlayout,jdbcType=INTEGER},#{dPlaceh,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertEntitys" parameterType="java.util.List">
+	insert into ss_form (id, menuCode, element, elementId,
+      type, name, isReadonly, 
+      label, errorMsg, isEmpty, 
+      options, event, defaultValue, 
+      calendarType, elementIndex, isDisable, isVisible, isEditable, style, isWrap,
+      minSizeX, minSizeY, sizeX, sizeY, row, col, isLabelPortrait, itemlayout, dPlaceh)
+	values
+	<foreach collection="list" item="item" index="index" separator=",">
+		(null, #{item.menuCode,jdbcType=VARCHAR}, #{item.element,jdbcType=VARCHAR}, #{item.elementId,jdbcType=VARCHAR},
+      #{item.type,jdbcType=VARCHAR}, #{item.name,jdbcType=VARCHAR}, #{item.isReadonly,jdbcType=VARCHAR}, 
+      #{item.label,jdbcType=VARCHAR}, #{item.errorMsg,jdbcType=VARCHAR}, #{item.isEmpty,jdbcType=VARCHAR}, 
+      #{item.options,jdbcType=VARCHAR}, #{item.event,jdbcType=VARCHAR}, #{item.defaultValue,jdbcType=VARCHAR}, 
+      #{item.calendarType,jdbcType=VARCHAR}, #{item.elementIndex,jdbcType=INTEGER}, #{item.isDisable,jdbcType=VARCHAR},
+      #{item.isVisible,jdbcType=VARCHAR}, #{item.isEditable,jdbcType=VARCHAR}, #{item.style,jdbcType=VARCHAR},
+      #{item.isWrap,jdbcType=VARCHAR}, #{item.minSizeX,jdbcType=INTEGER}, #{item.minSizeY,jdbcType=INTEGER}, 
+      #{item.sizeX,jdbcType=INTEGER}, #{item.sizeY,jdbcType=INTEGER}, #{item.row,jdbcType=INTEGER}, #{item.col,jdbcType=INTEGER}, 
+      #{item.isLabelPortrait,jdbcType=VARCHAR}, #{item.itemlayout,jdbcType=INTEGER},#{item.dPlaceh,jdbcType=VARCHAR})
+	</foreach>
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.Form" >
+    insert into ss_form
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="menuCode != null" >
+        menuCode,
+      </if>
+      <if test="element != null" >
+        element,
+      </if>
+      <if test="elementId != null" >
+        elementId,
+      </if>
+      <if test="type == null" >
+        type,
+      </if>
+      <if test="type != null" >
+        type,
+      </if>
+      <if test="name != null" >
+        name,
+      </if>
+      <if test="isReadonly != null" >
+        isReadonly,
+      </if>
+      <if test="label != null" >
+        label,
+      </if>
+      <if test="errorMsg != null" >
+        errorMsg,
+      </if>
+      <if test="isEmpty != null" >
+        isEmpty,
+      </if>
+      <if test="options != null" >
+        options,
+      </if>
+      <if test="event != null" >
+        event,
+      </if>
+      <if test="defaultValue != null" >
+        defaultValue,
+      </if>
+      <if test="calendarType != null" >
+        calendarType,
+      </if>
+      <if test="elementIndex != null" >
+        elementIndex,
+      </if>
+      <if test="isDisable != null" >
+        isDisable,
+      </if>
+      <if test="isVisible != null" >
+        isVisible,
+      </if>
+      <if test="isEditable != null" >
+        isEditable,
+      </if>
+      <if test="style != null" >
+        style,
+      </if>
+      <if test="isWrap != null" >
+        isWrap,
+      </if>
+      <if test="minSizeX != null" >
+        minSizeX,
+      </if>
+      <if test="minSizeY != null" >
+        minSizeY,
+      </if>
+      <if test="sizeX != null" >
+        sizeX,
+      </if>
+      <if test="sizeY != null" >
+        sizeY,
+      </if>
+      <if test="row != null" >
+        row,
+      </if>
+      <if test="col != null" >
+        col,
+      </if>
+      <if test="isLabelPortrait != null" >
+        isLabelPortrait,
+      </if>
+      <if test="itemlayout != null" >
+        itemlayout,
+      </if>
+      <if test="dPlaceh != null" >
+        dPlaceh,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="menuCode != null" >
+        #{menuCode,jdbcType=VARCHAR},
+      </if>
+      <if test="element != null" >
+        #{element,jdbcType=VARCHAR},
+      </if>
+      <if test="elementId != null" >
+        #{elementId,jdbcType=VARCHAR},
+      </if>
+      <if test="type == null" >
+        '',
+      </if>
+      <if test="type != null" >
+        #{type,jdbcType=VARCHAR},
+      </if>
+      <if test="name != null" >
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="isReadonly != null" >
+        #{isReadonly,jdbcType=VARCHAR},
+      </if>
+      <if test="label != null" >
+        #{label,jdbcType=VARCHAR},
+      </if>
+      <if test="errorMsg != null" >
+        #{errorMsg,jdbcType=VARCHAR},
+      </if>
+      <if test="isEmpty != null" >
+        #{isEmpty,jdbcType=VARCHAR},
+      </if>
+      <if test="options != null" >
+        #{options,jdbcType=VARCHAR},
+      </if>
+      <if test="event != null" >
+        #{event,jdbcType=VARCHAR},
+      </if>
+      <if test="defaultValue != null" >
+        #{defaultValue,jdbcType=VARCHAR},
+      </if>
+      <if test="calendarType != null" >
+        #{calendarType,jdbcType=VARCHAR},
+      </if>
+      <if test="elementIndex != null" >
+        #{elementIndex,jdbcType=INTEGER},
+      </if>
+      <if test="isDisable != null" >
+        #{isDisable,jdbcType=VARCHAR},
+      </if>
+      <if test="isVisible != null" >
+        #{isVisible,jdbcType=VARCHAR},
+      </if>
+      <if test="isEditable != null" >
+        #{isEditable,jdbcType=VARCHAR},
+      </if>
+      <if test="style != null" >
+        #{style,jdbcType=VARCHAR},
+      </if>
+      <if test="isWrap != null" >
+        #{isWrap,jdbcType=VARCHAR},
+      </if>
+      <if test="minSizeX != null" >
+      	#{minSizeX,jdbcType=INTEGER},
+      </if>
+      <if test="minSizeY != null" >
+      	#{minSizeY,jdbcType=INTEGER},
+      </if>
+      <if test="sizeX != null" >
+      	#{sizeX,jdbcType=INTEGER},
+      </if>
+      <if test="sizeY != null" >
+      	#{sizeY,jdbcType=INTEGER},
+      </if>
+      <if test="row != null" >
+      	#{row,jdbcType=INTEGER},
+      </if>
+      <if test="col != null" >
+      	#{col,jdbcType=INTEGER},
+      </if>
+      <if test="isLabelPortrait != null" >
+      	#{isLabelPortrait,jdbcType=VARCHAR},
+      </if>
+      <if test="itemlayout != null" >
+      	#{itemlayout,jdbcType=INTEGER},
+      </if>
+      <if test="dPlaceh != null" >
+      	#{dPlaceh,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.Form" >
+    update ss_form
+    <set >
+      <if test="menuCode != null" >
+        menuCode = #{menuCode,jdbcType=VARCHAR},
+      </if>
+      <if test="element != null" >
+        element = #{element,jdbcType=VARCHAR},
+      </if>
+      <if test="elementId != null" >
+        elementId = #{elementId,jdbcType=VARCHAR},
+      </if>
+      <if test="type == null" >
+        type = '',
+      </if>
+      <if test="type != null" >
+        type = #{type,jdbcType=VARCHAR},
+      </if>
+      <if test="name != null" >
+        name = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="isReadonly != null" >
+        isReadonly = #{isReadonly,jdbcType=VARCHAR},
+      </if>
+      <if test="label != null" >
+        label = #{label,jdbcType=VARCHAR},
+      </if>
+      <if test="errorMsg != null" >
+        errorMsg = #{errorMsg,jdbcType=VARCHAR},
+      </if>
+      <if test="isEmpty != null" >
+        isEmpty = #{isEmpty,jdbcType=VARCHAR},
+      </if>
+      <if test="options != null" >
+        options = #{options,jdbcType=VARCHAR},
+      </if>
+      <if test="event != null" >
+        event = #{event,jdbcType=VARCHAR},
+      </if>
+      <if test="defaultValue != null" >
+        defaultValue = #{defaultValue,jdbcType=VARCHAR},
+      </if>
+      <if test="calendarType != null" >
+        calendarType = #{calendarType,jdbcType=VARCHAR},
+      </if>
+      <if test="elementIndex != null" >
+        elementIndex = #{elementIndex,jdbcType=INTEGER},
+      </if>
+      <if test="isDisable != null" >
+        isDisable = #{isDisable,jdbcType=VARCHAR},
+      </if>
+      <if test="isVisible != null" >
+        isVisible = #{isVisible,jdbcType=VARCHAR},
+      </if>
+      <if test="isEditable != null" >
+        isEditable = #{isEditable,jdbcType=VARCHAR},
+      </if>
+      <if test="style != null" >
+        style = #{style,jdbcType=VARCHAR},
+      </if>
+      <if test="isWrap != null" >
+        isWrap = #{isWrap,jdbcType=VARCHAR},
+      </if>
+      <if test="minSizeX != null" >
+      	minSizeX = #{minSizeX,jdbcType=INTEGER},
+      </if>
+      <if test="minSizeY != null" >
+      	minSizeY = #{minSizeY,jdbcType=INTEGER},
+      </if>
+      <if test="sizeX != null" >
+      	sizeX = #{sizeX,jdbcType=INTEGER},
+      </if>
+      <if test="sizeY != null" >
+      	sizeY = #{sizeY,jdbcType=INTEGER},
+      </if>
+      <if test="row != null" >
+      	row = #{row,jdbcType=INTEGER},
+      </if>
+      <if test="col != null" >
+      	col = #{col,jdbcType=INTEGER},
+      </if>
+      <if test="isLabelPortrait != null" >
+      	isLabelPortrait = #{isLabelPortrait,jdbcType=VARCHAR},
+      </if>
+      <if test="itemlayout != null" >
+      	itemlayout = #{itemlayout,jdbcType=INTEGER},
+      </if>
+      <if test="dPlaceh != null" >
+      	dPlaceh = #{dPlaceh,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.Form" >
+    update ss_form
+    set menuCode = #{menuCode,jdbcType=VARCHAR},
+      element = #{element,jdbcType=VARCHAR},
+      elementId = #{elementId,jdbcType=VARCHAR},
+      type = #{type,jdbcType=VARCHAR},
+      name = #{name,jdbcType=VARCHAR},
+      isReadonly = #{isReadonly,jdbcType=VARCHAR},
+      label = #{label,jdbcType=VARCHAR},
+      errorMsg = #{errorMsg,jdbcType=VARCHAR},
+      isEmpty = #{isEmpty,jdbcType=VARCHAR},
+      options = #{options,jdbcType=VARCHAR},
+      event = #{event,jdbcType=VARCHAR},
+      defaultValue = #{defaultValue,jdbcType=VARCHAR},
+      calendarType = #{calendarType,jdbcType=VARCHAR},
+      elementIndex = #{elementIndex,jdbcType=INTEGER},
+      isDisable = #{isDisable,jdbcType=VARCHAR},
+      isVisible = #{isVisible,jdbcType=VARCHAR},
+      isEditable = #{isEditable,jdbcType=VARCHAR},
+      style = #{style,jdbcType=VARCHAR},
+      isWrap = #{isWrap,jdbcType=VARCHAR},
+	  minSizeX = #{minSizeX,jdbcType=INTEGER},
+	  minSizeY = #{minSizeY,jdbcType=INTEGER},
+	  sizeX = #{sizeX,jdbcType=INTEGER},
+	  sizeY = #{sizeY,jdbcType=INTEGER},
+	  row = #{row,jdbcType=INTEGER},
+	  col = #{col,jdbcType=INTEGER},
+	  isLabelPortrait = #{isLabelPortrait,jdbcType=VARCHAR},
+	  itemlayout = #{itemlayout,jdbcType=INTEGER},
+	  dPlaceh = #{dPlaceh,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	select * from ss_form
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    select * from ss_form
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+  </select>
+</mapper>

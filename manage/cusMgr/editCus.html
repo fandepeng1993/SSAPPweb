@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>修改客户信息</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script src="../../js/json/LAreaData2.js" type="text/javascript"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.autocomplete.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		var aH3;
+		var aDiv;
+		function initTab() {
+			aH3=$("#cen_right_top").children("h3");
+			aDiv=$("#cen_right_top").children("div");
+			for(var i=0;i<aH3.length;i++)
+			{
+				aH3[i].index=i;
+				aH3[i].onclick=function() {
+					for(var i=0;i<aH3.length;i++) {
+						aH3[i].className="";
+						aDiv[i].style.display="none";
+					}
+					this.className="white";
+					aDiv[this.index].style.display="block";
+				}
+			}
+		}
+		
+		//用于展现表单的menuCode
+		var menuCode;
+		var customer;
+		var selPri;
+		$(document).ready(function(){ 
+			menuCode = Request["menuCode"];
+			selPri = Request["selPri"];
+			var customerId = Request["customerId"];
+			getCustomer(customerId);
+			initTable(customerId);
+			initTab();
+		});
+		
+		//根据ss_form表取出数据构建form表单
+		function initForm() {
+			$.ajax({
+				url: "../../formAdmin/formsByMenuCode/" + menuCode,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					element = eval("(" + data + ")");
+					new UserCommon().createForm("updateCusForm", element, 2);
+					new UserCommon().fillForm("updateCusForm", customer);
+					
+					if(customer.salesman != null) {
+						$("#userName").val(customer.salesman.userName);
+					}
+					initAreaAndType();
+					initAreaAndTypeData();
+					//为radio添加监听事件
+					new UserCommon().radioListener();
+					
+					$("#createdate").parent().parent().hide();
+					$("#userName").parent().append("<a name=\"selLeader\" id=\"selLeader\" class=\"btn btn-xs\" style=\"margin-left:5px;width:30px;height:20px;border:1px solid #999;font-weight:bold;\"" + 
+									"onClick=\"selectUser()\">...</a>");
+					getCompany();
+					//初始化层的大小
+					initLayerSize();
+				} 
+			});
+		}
+		
+		function selectUser() {
+			window.parent.admin_role_add('<strong>选择用户</strong>',"../userMgr/select_user.html?userId=" + currentUserId + "&selPri=" + selPri, '800');
+		}
+		
+		/**
+		 *	修改弹出框填写完成之后保存调用的函数
+		 */
+		function updateForm() {
+			fillAreaInput();
+			fillTypeInput();
+			$("#creatorId").val(currentUserId);
+			//看业务员是否为"",若是,则将#userId改为""
+			if($("#userName").val() == "") {
+				$("#userId").val("");
+			}
+			//看业务员被赋值没有，若有则赋值分配人为currentUserId
+			if($("#userId").val() != "") {
+				$("#assignPeopleId").val(currentUserId);
+			} else {
+				$("#assignPeopleId").val("");
+			}
+			var formObj = $("#updateCusForm");
+			//var obj = $("#hello");
+			var msg = "不能为空！";
+			if(new UserCommon().show("edit-promit", formObj, msg)) {
+			 	var formObjJson = $("#updateCusForm").serializeNestedObject();
+			 	$.ajax({
+				      url: "../../cusAdmin/customer",
+				      datatype: "text",
+				      type: "put",
+				      data: JSON.stringify(formObjJson),
+				      success: function (data) {
+				    	  var json = eval("(" + data + ")");
+				    	  if(json.status == 1) {
+				    		  new UserCommon().check("success",json.msg,null,"success");
+				    		  setTimeout(function (){
+				    			  window.parent.initTable(window.parent.ajaxUrl);
+				    			  new UserCommon().layer_close();
+				    			  //window.parent.location.href = "cusMgr.html?menuCode=" + menuCode;
+				    		  }, 1000);
+				    	  } else {
+				    		  new UserCommon().check("success",json.msg,null,"fail");
+				    	  }
+				      }
+				});
+			} else {
+				for(var i=0;i<aH3.length;i++) {
+					aH3[i].className="";
+					aDiv[i].style.display="none";
+				}
+				aH3[0].className="white";
+				aDiv[0].style.display="block";
+				new UserCommon().show("edit-promit", formObj, msg);
+			}
+		}
+		
+		function getCustomer(customerId) {
+			$.ajax({
+				url: "../../cusAdmin/customer/" + customerId,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					customer = eval("(" + data + ")");
+					initForm();
+				} 
+			});
+		}
+		
+		function initAreaAndType() {
+			//初始化省市区选择
+			$("#areaDTO").parent().html("<select id=\"selProvince\" >" + 
+						"<option value=\"0\">--请选择省份--</option>" + 
+						"</select>" + 
+						"<select id=\"selCity\" >" + 
+							"<option value=\"0\">--请选择城市--</option>" + 
+						"</select>" + 
+						"<select id=\"selDistrict\" >" + 
+							"<option value=\"0\">--请选择区/县--</option>" + 
+						"</select>");
+			
+			$.each(provs_data, function (k, p) { 
+				var option = "<option value='" + p.value + "' text='" + p.text + "'>" + p.text + "</option>";
+				$("#selProvince").append(option);
+			});
+			 
+			$("#selProvince").change(function () {
+				var selValue = $(this).val(); 
+				$("#selCity option:gt(0)").remove();
+				$("#selDistrict option:gt(0)").remove(); 
+				
+				var cityArr = eval("citys_data." + selValue);
+				$.each(cityArr, function (k, p) {
+					var option = "<option value='" + p.value + "' text='" + p.text + "'>" + p.text + "</option>";
+					$("#selCity").append(option);
+				});
+			});
+			 
+			$("#selCity").change(function () {
+				var selValue = $(this).val();
+				$("#selDistrict option:gt(0)").remove(); 
+				
+				var districtArr = eval("dists_data." + selValue);
+				$.each(districtArr, function (k, p) {
+					var option = "<option value='" + p.value + "'  text='" + p.text + "'>" + p.text + "</option>";
+					$("#selDistrict").append(option);
+				}); 
+			}); 
+			
+			//初始化客户类型选择
+			$("#typeDTO").parent().html("<select id=\"typeSel\" >" + 
+						"<option value=\"交易类型\">交易类型</option>" + 
+						"<option value=\"顾问类型\">顾问类型</option>" + 
+						"</select>" +
+						"<label><input type=\"radio\" checked=\"checked\" class=\"radius-left\" name=\"typeRadio\" value=\"新客户\">新客户</label>" +
+						"<label><input type=\"radio\" class=\"radius-left\" name=\"typeRadio\" value=\"意向客户\">意向客户</label>" +
+						"<label><input type=\"radio\" class=\"radius-left\" name=\"typeRadio\" value=\"潜在客户\">潜在客户</label>" +
+						"<label><input type=\"radio\" class=\"radius-left\" name=\"typeRadio\" value=\"正式客户\">正式客户</label>" +
+						"<label><input type=\"radio\" class=\"radius-left\" name=\"typeRadio\" value=\"VIP客户\">VIP客户</label>");
+		}
+
+		function initAreaAndTypeData() {
+			var areaData = customer.area.split(",");
+			var typeData = customer.type.split("|");
+			
+			if(areaData != "") {
+				$("#selProvince").find("option[text='" + areaData[0] + "']").attr("selected",true);
+				if(areaData.length != 1) {
+					var provSelValue = $("#selProvince").val();
+					var cityArr = citys_data[provSelValue];
+					$.each(cityArr, function (k, p) {
+						var option = "<option value='" + p.value + "' text='" + p.text + "'>" + p.text + "</option>";
+						$("#selCity").append(option);
+					});
+					$("#selCity").find("option[text='" + areaData[1] + "']").attr("selected",true);
+					
+					var citySelValue = $("#selCity").val();
+					var districtArr = dists_data[citySelValue];
+					$.each(districtArr, function (k, p) {
+						var option = "<option value='" + p.value + "' text='" + p.text + "'>" + p.text + "</option>";
+						$("#selDistrict").append(option);
+					}); 
+					$("#selDistrict").find("option[text='" + areaData[2] + "']").attr("selected",true);
+				}
+			}
+			
+			$("#typeSel").val(typeData[0]);
+			$("input[type='radio'][value='" + typeData[1] + "']").iCheck('check');
+		}
+
+		function fillAreaInput() {
+			var selProvince = $("#selProvince").find("option:selected").text();
+			var selCity = $("#selCity").find("option:selected").text();
+			var selDistrict = $("#selDistrict").find("option:selected").text();
+			var areaStr = "";
+			if(selProvince != "--请选择省份--") {
+				areaStr = areaStr + selProvince + ",";
+			}
+			if(selCity != "--请选择城市--") {
+				areaStr = areaStr + selCity + ",";
+			}
+			if(selDistrict != "--请选择区/县--") {
+				areaStr = areaStr + selDistrict + ",";
+			}
+			$("#area").val(areaStr.substring(0, areaStr.length - 1));
+		}
+		
+		function fillTypeInput() {
+			var typeSel = $("#typeSel").val();
+			var typeRadio = $('input[name="typeRadio"]:checked').val();
+			$("#type").val(typeSel + "|" + typeRadio);
+		}
+		
+		function getCompany() {
+			var keyWords = $("#customerName").val();
+			//根据关键字查询相关企业名称
+			$("#customerName").autocomplete({
+				source:function(query,process){
+		            var matchCount = this.options.items;//返回结果集最大数量
+		            $.get("../../cusAdmin/customers",{"iccid":query,"matchCount":matchCount},function(respData){
+		            	respData = $.parseJSON(respData);//解析返回的数据
+	            		return process(respData);
+	            	});
+		        },
+		        formatItem:function(item){
+		            return item["customerName"];
+		        },
+		        setValue:function(item){
+		            return {'data-value':item["customerName"], 'real-value':item["customerName"]};
+		        }
+			});
+		}
+		
+		//联系人列表部分
+		var contacts = null;
+		function initTable(customerId) {
+			$.ajax({
+				url: "../../contactAdmin/getContactsByCusId/" + customerId,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					$("#contactTable").empty();
+					contacts = eval("(" + data + ")");
+					circleInfos();
+				} 
+			});
+		}
+
+		function circleInfos() {
+			 $("#contactTable").empty();
+			 $.each(contacts, function(index, item) {
+				 new UserCommon().fillTable("contactTable",item,index);
+				 //为checkbox添加监听事件
+				 new UserCommon().checkboxListener();
+		      });
+		}
+		
+		/**
+		 * 根据reportId填充单个用户详细信息查看表单
+		 */
+		function fillDetail(id) {
+			$.each(contacts, function(index, item) {
+				if(item.id == id) {
+					window.parent.admin_role_add('<strong>联系人查看</strong>',"viewContact.html?menuCode=E00_02&contactId=" + item.id, iframeJson.width*0.8);
+				}
+		    });
+		}
+		
+		/**
+		 * 选择修改后填充相关信息
+		 */
+		function fillUpdateForm() {
+			var but = $("input[name='selectFlag']");
+			var selConIds;
+			var num = 0;
+			for(var i=0; i<but.length; i++) {
+				if(but[i].checked) { 
+					if(num == 0) {
+						selConIds = but[i].value;
+					}
+					num += 1;
+					//alert(but[i].value);
+				}
+			} 
+			if(num == 1) {
+				$.each(contacts, function(index, item) {
+					if(item.id == selConIds) {
+						window.parent.admin_role_add('<strong>联系人修改</strong>',"editContact.html?menuCode=E00_02&contactId=" + item.id, iframeJson.width*0.8);
+					}
+			    });
+			} else {
+				new UserCommon().check("success","请选择一个联系人！",null,"warning");
+			}
+		}
+
+		function deleteContacts() {
+			var str = "";
+			$("input[name='selectFlag']").each(function(){
+				if($(this).is(':checked')) str += $(this).val() + ",";
+			});
+			
+			if(str != null && str.trim() != "") {
+				str = str.substring(0, str.length-1);
+				layer.confirm('要删除么？',function(index){
+					$.ajax({
+					      url: "../../contactAdmin/contact/" + str,
+					      datatype: "text",
+					      type: "delete",
+					      data: {},
+					      success: function (data) {
+					    	  var json = eval("(" + data + ")");
+					    	  if(json.status == 1) {
+					    		  new UserCommon().check("success","删除成功！",null, "success");
+					    		  //局部更新
+					    		  var arr = str.split(",");
+					    		  for(var i=contacts.length-1; i>=0; i--) {
+					    			  if(arr.contains(contacts[i].id)) {
+					    				  contacts.splice(i,1);
+					    			  }
+					    		  }
+					    		  circleInfos();
+					    		  layer.close(index);
+					    	  } else {
+					    		  new UserCommon().check("success",json.msg,null,"fail");
+					    	  }
+					      }
+					});
+				});
+			} else {
+				new UserCommon().check("success","请选择要删除的联系人！",null,"warning");
+			}
+		}
+		
+		/*管理员-角色-添加*/
+		function admin_role_add(title,url,w){
+			new UserCommon().layer_show(title,url,w);
+		}
+		function addContact() {
+			window.parent.admin_role_add('<strong>联系人添加</strong>',"addContact.html?menuCode=E00_02&customerId=" + customer.id, iframeJson.width*0.8);
+		}
+	</script>
+</head>
+<body>
+	<div class="edit">
+		<div class="edit-content">
+			<div class="edit-in">
+				<div id="cen_right_top">
+					<h3 class="white">客户基本信息</h3>
+					<h3>联系人</h3>
+					<div class="div" style="display:block">
+						<form id="updateCusForm">
+						</form>
+					</div>
+					<div class="div">
+						<div class="bt-div">
+							<div class="bt-div-in">
+								<button class="btn btn-default btn-xs bt-one" style="display:block;float:left" onclick="addContact()">
+									<span class="glyphicon glyphicon-plus color-add"></span> 添加
+								</button>
+								<button class="btn btn-default btn-xs bt-two" style="display:block;float:left" onclick="fillUpdateForm()">
+									<span class="glyphicon glyphicon-edit color-edit"></span> 修改
+								</button>
+								<button class="btn btn-default btn-xs bt-three" style="display:block" onclick="deleteContacts()">
+									<span class="glyphicon glyphicon-trash color-del"></span> 删除
+								</button>
+							</div>
+						</div>
+						<div class="bt-div-two-table">
+							<div class="table-responsive">
+								<table class="table table-data-bottom">
+									<thead>
+										<tr class="table-first-tr" fieldType="controlCB" fieldName="id">
+											<th fieldType="checkbox" fieldName="id"><input type="checkbox" name="ifAll" class="all"></th>
+											<th fieldType="num" fieldName="">序号</th>
+											<th fieldType="text" fieldName="name">联系人</th>
+											<th fieldType="text" fieldName="sex">性别</th>
+											<th fieldType="text" fieldName="officeTel">办公电话</th>
+											<th fieldType="text" fieldName="telephone">手机</th>
+											<th fieldType="datetime" fieldName="createdate">发布时间</th>
+											<th fieldType="text" fieldName="creator.userName">发布人</th>
+											<th fieldType="detailInfo" fieldName="id">详细信息</th>
+										</tr>
+									</thead>
+									<tbody id="contactTable">
+									</tbody>
+								</table> 
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="edit-bottom">
+				<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();"><i class="glyphicon glyphicon-remove"></i>&nbsp;关闭</button>
+				<button type="button" class="btn btn-xs edit-save btn-primary" onclick="updateForm()"><i class="glyphicon glyphicon-ok"></i>&nbsp;保存</button>
+			</div>
+		</div>	
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span>
+			<span></span>
+			<div><img src="../../images/sanjiao.png" width="10"></div>
+		</div>
+	</div>
+</body>
+</html>

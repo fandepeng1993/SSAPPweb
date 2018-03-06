@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>供应商修改</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script src="../../js/json/LAreaData2.js" type="text/javascript"></script>
+	<script src="../../js/json/CityJson.js" type="text/javascript"></script>
+    <script src="../../js/json/ProJson.js" type="text/javascript"></script>
+    <script src="../../js/json/DistrictJson.js" type="text/javascript"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.autocomplete.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/underscore.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+
+		//用于展现表单的menuCode
+		var menuCode;
+		var addText;
+		var supply;
+		var addContact;
+		var addPower;
+		$(document).ready(function(){
+			menuCode = Request["menuCode"];
+			supplyId = Request["supplyId"];
+			getSupply(supplyId);
+		});
+		
+		//根据ss_form表取出数据构建form表单
+		function initForm() {
+			$.ajax({
+				url: "../../formAdmin/formsByMenuCode/" + menuCode,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					element = eval("(" + data + ")");
+					new UserCommon().createForm("updateSupplyForm", element, 4);
+					new UserCommon().fillForm("updateSupplyForm", supply);
+					$("#addressArea").val(supply.address);
+					$("#addressArea").parent().append("<a name=\"selLeader\" id=\"selLeader\" class=\"btn btn-xs\" " + 
+							"onClick=\"initAreaAndType()\">修改</a>");
+					addtext = $("form[name='cloneForm']").eq(0).clone();
+					addPower = $("form[name='powerForm']").eq(0).clone();
+					addContact = $("form[name='contactForm']").eq(0).clone();
+					//$("form[name='cloneForm']").eq(0).find(".del_con").css("display","none");
+					//$("form[name='powerForm']").eq(0).find(".del_con1").css("display","none");
+					//$("form[name='contactForm']").eq(0).find(".del_con2").css("display","none");
+					var contacts = supply.contact;
+					/* if(contacts == null || contacts == ""){
+						$("#test2").css("display","none");
+					}else{ */
+						fillContact(contacts);
+					//}
+					fillPower();
+					
+					var annualOutputs = supply.annualOutput.split("|");
+					var strs = "";
+					if(annualOutputs != "") {
+						for (var i = 0; i < annualOutputs.length; i++) {
+							var annualOutputss = annualOutputs[i].split(":");
+							if(i>0) cloneForms();
+							$("form[name='cloneForm']").eq(i).find("select[name='annualIron']").val(annualOutputss[0]);
+							$("form[name='cloneForm']").eq(i).find("input[name='weight']").val(annualOutputss[1]);
+
+							/* strs = strs + "<form name=\"cloneForm\">"+"<span>年生产量:</span>"+"<select name=\"annualIron\">" +
+							"<option value ='" + annualOutputss[0] +"' selected=\"selected\">" + annualOutputss[0] + "</option>" +
+						    "<option value =\"元钢\">元钢</option>" +
+							"<option value =\"无缝钢\">无缝钢</option>" +
+							"<option value=\"焊管\">焊管</option>" +
+							"</select>" +
+							"<input type=\"text\" name=\"weight\" value='" + annualOutputss[1] + "'/>" +
+							"<button class=\"del_con\" type=\"button\" onclick=\"removeForm(this)\">删除</button></form>"; */
+						}
+					}
+					
+					/* $("#test").append(strs); */
+					
+					//initAreaAndType();
+					$("#createDate").parent().parent().hide();
+					//初始化层的大小
+					initLayerSize();
+				} 
+			});
+		}
+		
+		var formObjJson = {};
+		function getformObjJson(){
+			var annualIrons = $("select[name='annualIron']");
+			var weights = $("input[name='weight']");
+			var strs = "";
+			var annualOutPuts;
+			for (var i = 0; i < annualIrons.length; i++) {
+				if(annualIrons.eq(i).val() != "-1") {
+					strs = strs + annualIrons.eq(i).val() + ":" + weights.eq(i).val() + "|";
+				}
+			}
+			if(strs != "") annualOutPuts = strs.substring(0, strs.length-1);
+			
+			var cLength = $("form[name='contactForm']").length;
+			var arr = [];
+			for(var i=0;i<cLength;i++){
+				var name = $("form[name='contactForm']").eq(i).find("input[name='contactName']").val();
+				var position = $("form[name='contactForm']").eq(i).find("input[name='contactPosition']").val();
+				var tel = $("form[name='contactForm']").eq(i).find("input[name='contactTel']").val();
+				var email = $("form[name='contactForm']").eq(i).find("input[name='contactE-mail']").val();
+				var conObj = {
+						"姓名":name,
+						"职务":position,
+						"电话":tel,
+						"邮箱":email
+				};
+				arr.push(conObj);
+			}
+			var constrs = "";
+			var useconstrs;
+			for(var i=0;i<arr.length;i++){
+				constrs = constrs + JSON.stringify(arr[i]) + "|";
+			}
+			if(constrs != "") useconstrs = constrs.substring(0, constrs.length-1);
+			
+			var pLength = $("form[name='powerForm']").length;
+			var proarr = [];
+			for(var i=0;i<pLength;i++){
+				var dname = $("form[name='powerForm']").eq(i).find("input[name='deviceName']").val();
+				var dsize = $("form[name='powerForm']").eq(i).find("input[name='deviceSize']").val();
+				var dnumber = $("form[name='powerForm']").eq(i).find("input[name='deviceNumber']").val();
+				var proObj = {
+						"machineType":dname,
+						"measure":dsize,
+						"number":dnumber
+				};
+				proarr.push(proObj);
+			}
+			formObjJson = $("#updateSupplyForm").serializeNestedObject();
+		 	formObjJson.annualOutput = annualOutPuts;
+		 	formObjJson.contact = useconstrs;
+		 	formObjJson.powers = proarr;
+		}
+		/**
+		 *	添加弹出框填写完成之后保存调用的函数
+		 */
+		function updateForm() {
+			getformObjJson();
+			fillAreaInput();
+			var formObj = $("#updateSupplyForm");
+			var msg = "不能为空！";
+			if(new UserCommon().show("edit-promit", formObj, msg)) {
+				if(checkData()){
+				 	$.ajax({
+						url: "../../supplyAdmin/supplyStrong",
+						datatype: "text",
+						type: "put",
+						data: JSON.stringify(formObjJson),
+						success: function (data) {
+							var json = eval("(" + data + ")");
+							if(json.status == 1) {
+								new UserCommon().check("success","修改成功！",null,"success");
+								setTimeout(function (){
+									window.parent.initTable(window.parent.ajaxUrl);
+									new UserCommon().layer_close();
+									//window.parent.location.href = "supplyMgr.html?menuCode=" + menuCode;
+								}, 1000);
+							} else {
+								new UserCommon().check("success",json.msg,null,"fail");
+							}
+						}
+					});
+				}
+			}
+		}
+		
+		function getSupply(supplyId) {
+			$.ajax({
+				url: "../../supplyAdmin/supply/" + supplyId,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					supply = eval("(" + data + ")");
+					initForm();
+					
+				} 
+			});
+		}
+		
+		function fillContact(contacts){
+			if(contacts != null && contacts != ""){
+				var conArr = [];
+				conArr = contacts.split("|");
+				var cLength = conArr.length;
+				for(var i=0;i<cLength;i++){
+					if(i>0){
+						cloneContactForms();
+					}
+					$("form[name='contactForm']").eq(i).find("input[name='contactName']").val(JSON.parse(conArr[i]).姓名);
+					$("form[name='contactForm']").eq(i).find("input[name='contactPosition']").val(JSON.parse(conArr[i]).职务);
+					$("form[name='contactForm']").eq(i).find("input[name='contactTel']").val(JSON.parse(conArr[i]).电话);
+					$("form[name='contactForm']").eq(i).find("input[name='contactE-mail']").val(JSON.parse(conArr[i]).邮箱);
+				}
+			}
+		}
+		
+		function cloneContactForms(){
+			var length=$("form[name='contactForm']").length;
+/* 			if(length == 1 ){
+				$('#test2').css("display","block");
+			} */
+			$('#test2').append(addContact.prop("outerHTML"));
+			var contH=$('#test2').height();
+		    $("form[name='contactForm']:last").find('legend').html('联系人'+(length+1));
+		    var Ohe=$('.table-responsive').height();
+		    var tops=$("form[name='contactForm']:last").offset().top;
+		    $(window).scrollTop(tops+20);
+		    $('.del_con2').on('click',function(){
+		    	var index = $(this).parent().parent().parent().parent().parent().index();
+				$(this).parent().parent().parent().remove();
+				if(index != -1) updateconNum(index);
+			});
+		}
+		
+		function clonePowerForms() {
+			var length=$("#test1 form[name='powerForm']").length;
+/* 			if(length == 1 ){
+				$('#test1').css("display","block");
+			} */
+			$('#test1').append(addPower.prop("outerHTML"));
+			var contH=$('#test1').height();
+		    $("form[name='powerForm']:last").find('legend').html('生产能力'+(length+1));
+		    var Ohe=$('.table-responsive').height();
+		    var tops=$("form[name='powerForm']:last").offset().top;
+		    $(window).scrollTop(tops+20);
+		    $('.del_con1').on('click',function(){
+		    	var index = $(this).parent().parent().parent().parent().parent().index();
+				$(this).parent().parent().parent().remove();
+				if(index != -1) updateNum(index);
+			});
+		}
+		
+		function updateNum (index) {
+			var numLegend = $("legend[name='numLegend']");
+			for(var i=index; i<numLegend.length; i++) {
+				numLegend.eq(i).html("生产能力" + (i+1));
+			}
+		}
+		
+		function updateconNum (index) {
+			var numLegend = $("legend[name='numLegend0']");
+			for(var i=index; i<numLegend.length; i++) {
+				numLegend.eq(i).html("联系人" + (i+1));
+			}
+		}
+		
+		function fillPower(){
+			var powers = supply.powers;
+			var pLength = powers.length;
+			/* if(pLength == 0){
+				$("#test1").css("display","none");
+			}else{ */
+				for(var i = 0 ;i< pLength; i++){
+					if(i > 0){
+						clonePowerForms();
+					}
+					$("form[name='powerForm']").eq(i).find("input[name='deviceName']").val(powers[i].machineType);
+					$("form[name='powerForm']").eq(i).find("input[name='deviceSize']").val(powers[i].measure);
+					$("form[name='powerForm']").eq(i).find("input[name='deviceNumber']").val(powers[i].number);
+				}
+			//}
+			
+		}
+		
+		function checkData() {
+			var result = true;
+			var formObjs = $("form[name='contactForm']");
+			for(var i=0; i<formObjs.length; i++) {
+				var formObj = formObjs.eq(i);
+				result = new UserCommon().show("edit-promit", formObj, "不能为空！");
+				if(!result) {
+					new UserCommon().show("edit-promit", formObj, "不能为空！");
+					return false;
+				}
+			}
+			return result;
+		}
+		
+		function cloneForms() {
+			$('#test').append(addtext.prop("outerHTML"));
+		    $('.del_con').on('click',function(){
+		    	var index = $(this).parent().index();
+		    	if(index !=0) $(this).parent().remove();
+			});
+		}
+		
+		function removeForm(_this) {
+			var index = $(_this).parent().parent().parent().parent().parent().index();
+			if(index !=0) $(_this).parent().remove();
+		}
+		function initAreaAndType() {
+			//初始化省市区选择
+			new AreaCascade().initWithoutAdmin("addressArea");
+			$("#selLeader").remove();
+		}
+		function fillAreaInput() {
+			var areaStr = new AreaCascade().getAddress();
+			if(areaStr == "undefined") {
+				$("#address").val($("#addressArea").val());
+				
+			} else {
+				$("#address").val(areaStr);
+			}
+		}
+
+	</script>
+</head>
+<body>
+	<div class="edit">
+		<div class="edit-content">
+			<div class="edit-in">
+				<form id="updateSupplyForm">
+				</form>
+				<div id="test">
+					<form name="cloneForm">
+						<span style="padding-left: 25px;">
+							年生产量: 
+						</span>
+						<select name="annualIron" style="margin-top: 10px;">
+						  <option value ="-1">请选择</option>
+						  <option value ="元钢">元钢</option>
+						  <option value ="无缝钢">无缝钢</option>
+						  <option value="焊管">焊管</option>
+						</select>
+						<input type="text" name="weight" placeholder="请输入重量" style="margin-top: 10px;" />
+						
+						<button type="button" class="btn btn-xs" onclick="removeForm(this)">删除</button>
+						<!-- <a class="btn btn-default btn-xs del_con" style="position: absolute;right: 100px;top: 40px;">
+						   <span class="glyphicon glyphicon-trash color-del">
+						   </span> 删除
+		                </a> -->
+					</form>
+					<button onclick="cloneForms()" class="btn btn-xs" style="top:300px;right:355px;margin-top:-23px;margin-left:396px;float:left;">增加</button>
+				</div>
+				<div id="test2">
+					<form name="contactForm">
+						<div class="addcontact">
+						<fieldset style="display: block; -webkit-margin-start: 25px; -webkit-margin-end: 25px; -webkit-padding-before: 0.35em; -webkit-padding-start: 0.75em; -webkit-padding-end: 0.75em; -webkit-padding-after: 0.625em; border-image-source: initial; border-image-slice: initial; border-image-width: initial; border-image-outset: initial; border-image-repeat: initial; min-width: -webkit-min-content; border-width: 2px; border-style: groove; border-color: threedface;">
+				    			<legend name="numLegend0" style="display: block; width: auto;padding: 7px;font-size: 18px;line-height: inherit;color: #333;border: 0;margin-bottom: 0px;">联系人1</legend>
+						<span>姓名:</span>					
+						<input type="text" name="contactName" isempty="true" placeholder="请输入姓名"/>
+						<span style="width:15px">职务:</span>					
+						<input type="text" name="contactPosition" isempty="true" placeholder="请输入职务"/>
+						<div class="telUse" style="margin:16px 0 16px 0px">
+						<span>电话:</span>					
+						<input name="contactTel" type="tel" label="手机号码" errormsg="格式错误！" isempty="true" placeholder="请输入电话"/>
+						<span>E-mail:</span>					
+						<input name="contactE-mail" type="email" label="E-mail" errormsg="格式错误！" isempty="true" placeholder="请输入E-mail"/>
+						</div>
+						<a class="btn btn-xs" style="float:left;margin-left:620px;margin-top:-80px;">
+						   <span class="glyphicon glyphicon-trash color-del">
+						   </span> 删除
+		                </a>
+		                	</fieldset>
+						</div>
+					</form>
+			</div>
+			
+			</div>
+				<button type="button" onclick="cloneContactForms()" class="btn btn-primary" style="top:360px;right:45px;margin-top:-25px;margin-left:600px;float:left;">增加联系人</button>
+			<div id="test1">
+				<form name="powerForm">
+					<div class="power">
+							<fieldset style="display: block; -webkit-margin-start: 25px; -webkit-margin-end: 25px; -webkit-padding-before: 0.35em; -webkit-padding-start: 0.75em; -webkit-padding-end: 0.75em; -webkit-padding-after: 0.625em; border-image-source: initial; border-image-slice: initial; border-image-width: initial; border-image-outset: initial; border-image-repeat: initial; min-width: -webkit-min-content; border-width: 2px; border-style: groove; border-color: threedface;">
+				    			<legend name="numLegend" style="display: block; width: auto;padding: 7px;font-size: 18px;line-height: inherit;color: #333;border: 0;margin-bottom: 0px;">生产能力1</legend>
+				    				<!-- <span style="color: red; font-size: 18px;"class='Lq'>*</span> -->
+									<img src="../../images/wenjuan/wjname.png" style="height: 16px;width: 16px;"/>
+								    <span>设备名称:</span><input type="text" name="deviceName" label="设备名称" errormsg="不能为空！"/>
+									<!-- <span style="color: red; font-size: 18px" class='Lq'>*</span> -->
+									<img src="../../images/wenjuan/wjname.png" style="height: 16px;width: 16px;"/>
+									<span>设备型号:</span><input type="text" name="deviceSize" label="设备型号" errormsg="不能为空！"/><br /> 
+									<div style="margin:16px 0 16px 0px" class="number">
+									<!-- <span style="color: red; font-size: 18px" class="Lq">*</span> -->
+									<img src="../../images/wenjuan/wjname.png" style="height: 16px;width: 16px;"/>
+									<span>设备数量:</span><input name="deviceNumber" id="dept" class="select" style="width:182px" label="设备数量" errormsg="不能为空！" />
+									</div>
+									<a class="btn btn-xs del_con1" style="float:left;margin-left:620px;margin-top:-80px;">
+									   <span class="glyphicon glyphicon-trash color-del">
+									   </span> 删除
+					                </a>
+			    			</fieldset>
+		    			</div>
+		    		</form>
+		   		</div>
+		   		<button type="button" onclick="clonePowerForms()" class="btn btn-primary" style="top:360px;margin-left:600px;margin-top:-134px;float:left;">增加能力</button>
+			<div class="edit-bottom">
+				<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();"><i class="glyphicon glyphicon-remove"></i>&nbsp;关闭</button>
+				<button type="button" class="btn btn-xs edit-save btn-primary" onclick="updateForm()"><i class="glyphicon glyphicon-ok"></i>&nbsp;保存</button>
+			</div>
+		</div>	
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span>
+			<span></span>
+			<div><img src="../../images/sanjiao.png" width="10"></div>
+		</div>
+	</div>
+</body>
+</html>

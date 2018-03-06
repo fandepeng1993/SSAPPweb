@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>查看包含评委</title>
+	<link href="../../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome.min.css" rel="stylesheet">
+    <link href="../../css/plugins/iCheck/custom.css" rel="stylesheet">
+	<link href="../../css/plugins/sweetalert/sweetalert.css" rel="stylesheet">
+	<link href="../../css/plugins/iCheck/custom.css" rel="stylesheet">
+	<link href="../../css/user.common.css" rel="stylesheet">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+	
+	var raters = null;
+	var topicId;
+	var defaultIMG = "../../images/default.png";
+	$(document).ready(function(){
+		topicId = Request["topicId"];
+		$("#search-g").show();
+		$("#add-g").show();
+		$("#delete-g").show();
+	 	$.ajax({
+			url: "../../pptTopicUserAdmin/getUsersByTopicId/" + topicId,
+			datatype: "json",
+			type: "get",
+			data: {},
+			success: function (data, status, xhr) {
+				$("#userTable").empty();
+				raters = eval("(" + data + ")");
+				
+				pageObj1.totalRecords = raters.length;
+				
+				//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+				if(pageObj1.totalRecords % pageObj1.pageSize != 0) {
+					pageObj1.totalPages = Math.floor(pageObj1.totalRecords / pageObj1.pageSize) + 1;
+				} else {
+					pageObj1.totalPages = pageObj1.totalRecords / pageObj1.pageSize;
+				}
+				
+				//根据totalPages初始化页码插件
+				$("#sumPage1").html("共<strong class=\"allPage1\">" + pageObj1.totalPages + "</strong>页");
+				$("#Pagination1").pagination(pageObj1.totalPages, {paginationIndex:1});
+			} 
+		});
+	});
+	
+	var pageObj1 = {
+			"pageSize": 10,
+			"pageNo": 1,
+			"totalRecords": 0,
+			"totalPages": 0
+	};
+	
+	/* 遍历展现数据 */
+	function circleInfos() {
+		$("#userTable").empty();
+		$.each(raters, function(index, item) {
+			if(index >= ((pageObj1.pageNo-1)*pageObj1.pageSize) && index < (pageObj1.pageNo*pageObj1.pageSize)) {
+				new UserCommon().fillTable("userTable", item, index);
+			} else if(index > (pageObj1.pageNo*pageObj1.pageSize)) {
+				return;
+			}
+		});
+		//为checkbox添加监听事件
+		new UserCommon().checkboxListener();
+	}
+	
+	/* 根据关键字查询 */
+	function getUserByKey() {
+		var keyWords = $("#keyWords").val();
+		$.ajax({
+			url: "../../pptTopicUserAdmin/getPPTTopicUsersByKey?topicId=" + topicId + "&keyWords=" + encodeURI(keyWords),
+			datatype: "json",
+			type: "get",
+			data: {},
+			success: function (data, status, xhr) {
+				$("#userTable").empty();
+				raters = data;
+				pageObj1.totalRecords = raters.length;
+				
+				//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+				if(pageObj1.totalRecords % pageObj1.pageSize != 0) {
+					pageObj1.totalPages = Math.floor(pageObj1.totalRecords / pageObj1.pageSize) + 1;
+				} else {
+					pageObj1.totalPages = pageObj1.totalRecords / pageObj1.pageSize;
+				}
+				
+				//根据totalPages初始化页码插件
+				$("#sumPage1").html("共<strong class=\"allPage1\">" + pageObj1.totalPages + "</strong>页");
+				$("#Pagination1").pagination(pageObj1.totalPages, {paginationIndex:1});
+			} 
+		});
+	} 
+	
+	/* 选择评委 */
+	function addRaters() {
+		admin_role_add('<strong>选择评委</strong>',"selectUser.html?topicId=" + topicId, iframeJson.width*0.8, iframeJson.height*0.9);
+	}
+	
+	/* 批量删除评委 */
+	function deleteRaters() {
+		var formObj = {
+			"topicId": topicId,
+			"userIds": []
+		};
+		var arr = new Array();
+		$("input[name='selectFlag']").each(function(){
+			if($(this).is(':checked')) {
+				arr.push($(this).val());
+			}
+		});
+		formObj.userIds = arr;
+		if(formObj.userIds == null || formObj.userIds == "") {
+			new UserCommon().check("success","请选择要删除的用户！",null,"warning");
+		} else {
+			layer.confirm('确定要删除所选定用户么？',function(index){
+				$.ajax({
+				      url: "../../pptTopicUserAdmin/deletePPTTopicUsers",
+				      datatype: "text",
+				      type: "delete",
+				      data: JSON.stringify(formObj),
+				      success: function (data) {
+				    	  var json = eval("(" + data + ")");
+				    	  if(json.status == 1) {
+				    		  new UserCommon().check("success",json.msg,"containRater.html?topicId=" + topicId,"success");
+				    	  } else {
+				    		  new UserCommon().check("success",json.msg,null,"fail");
+				    	  }
+				      }
+				});
+			});
+		}
+	}
+	
+	/*管理员-角色-添加*/
+	function admin_role_add(title,url,w){
+		new UserCommon().layer_show(title,url,w);
+	}
+	
+	</script>
+</head>
+<body>
+	<div class="bt-div">
+		<div class="bt-div-in">
+			<label>姓名或工号：</label>
+			<input type="text" id="keyWords">
+			<button type="button" id="search-g" class="btn btn-default bt-div-bt" onclick="getUserByKey()">
+				<span class="glyphicon glyphicon-search color-zn"></span> 搜索
+			</button>
+			<button id="add-g" class="btn btn-default btn-xs bt-one"
+				onclick="addRaters()">
+				<span class="glyphicon glyphicon-plus color-add"></span> 添加
+			</button>
+			<button id="delete-g" class="btn btn-default btn-xs bt-three"
+				onclick="deleteRaters()">
+				<span class="glyphicon glyphicon-trash color-del"></span> 删除
+			</button>
+		</div>
+	</div>
+	<div class="bt-div-two-table">
+		<div class="table-responsive centerTable">
+			<form id="deleteRUForm">
+				<input type="hidden" name="roleId" id="roleId">
+				<table class="table table-data-bottom text-center">
+					<thead>
+						<tr fieldType="controlCB" fieldName="userId" style="background:#ebebeb;">
+		                	<th fieldType="checkbox" fieldName="userId">
+								<input type="checkbox" name="ifAll" class="all">
+							</th>
+							<th fieldType="num" fieldName="">序号</th>
+							<th fieldType="text" fieldName="user.userNo">用户工号</th>
+							<th fieldType="viewUserDetail" fieldName="user.userName">姓名</th>
+							<th fieldType="text" fieldName="user.sex">性别</th>
+						</tr>
+					</thead>
+					<tbody id="userTable">
+					</tbody>
+				</table>
+				<!-- 分页 -->
+				<div class="pages">
+			        <div id="Pagination1"></div>
+			        <div class="searchPage">
+			          <span class="page-sum" id="sumPage1"></span>
+			          <span class="page-go">跳转<input type="text">页</span>
+			          <a class="page-btn" href="javascript:;">GO</a>
+			        </div>
+			    </div>
+			</form> 
+		</div>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+</body>
+</html>

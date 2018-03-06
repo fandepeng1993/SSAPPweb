@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IPPTTopicDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.PPTTopic">
+	<id column="topic_id" property="topicId" jdbcType="INTEGER" />
+	<result column="topic_content" property="topicContent" jdbcType="VARCHAR" />
+	<result column="topic_createTime" property="topicCreateTime" jdbcType="VARCHAR" />
+	<result column="topic_createMan" property="topicCreateMan" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <!-- 查询所有 -->
+  <select id="selectList" resultMap="BaseResultMap">
+  	select topic_id,topic_content,topic_createMan,topic_createTime from ss_ppt_topic 
+  </select>
+  
+  <!-- 根据关键字查询所有 -->
+  <select id="getPPTTopicsByKey" resultMap="BaseResultMap" parameterType="java.lang.String">
+  	select topic_id,topic_content,topic_createMan,topic_createTime from ss_ppt_topic where topic_content like  "%"#{keyWords, jdbcType=VARCHAR}"%"
+  </select>
+  
+  <!-- 根据主键查询 -->
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+  	select topic_id,topic_content,topic_createMan,topic_createTime from ss_ppt_topic where topic_id = #{id, jdbcType=INTEGER}
+  </select>
+  
+  <!-- 根据主键修改 -->
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.PPTTopic">
+  	update ss_ppt_topic 
+  	<set>
+  		<if test="topicContent!=null">
+  			topic_content = #{topicContent,jdbcType=VARCHAR},
+  		</if>
+  		<if test="topicCreateMan!=null">
+  			topic_createMan = #{topicCreateMan,jdbcType=VARCHAR},
+  		</if>
+  		<if test="topicCreateTime!=null">
+  			topic_createTime = #{topicCreateTime,jdbcType=VARCHAR},
+  		</if>
+  	</set>
+  	where topic_id = #{topicId,jdbcType=INTEGER}
+  </update>
+  
+  <!-- 根据主键删除 -->
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_ppt_topic
+    where topic_id = #{topicId,jdbcType=INTEGER}
+  </delete>
+  
+  <!-- 根据主键批量删除 -->
+  <delete id="deleteByPrimaryKeys" parameterType="java.util.List">
+  	delete from ss_ppt_topic
+  	where 
+  		<foreach collection="list" item="item" index="index" separator=",">
+  			topic_id = #{item.ids, jdbcType=INTEGER}
+  		</foreach>
+  </delete>
+  
+  <!-- 将封装好的PPTTopic对象插入数据库中，并返回主键id -->
+  <insert id="insertPPTTopic" parameterType="com.sss.pojo.PPTTopic">
+  	<selectKey keyProperty="topicId" order="AFTER" resultType="java.lang.Integer">
+            select LAST_INSERT_ID() AS topicId
+    </selectKey>
+  	insert into ss_ppt_topic (topic_content,topic_createMan,topic_createTime) values(#{topicContent, jdbcType=VARCHAR},#{topicCreateMan, jdbcType=VARCHAR},now());
+  </insert>
+  
+  <!-- 根据Topic信息，更新数据库 -->
+  <update id="updatePPTTopic" parameterType="com.sss.pojo.PPTTopic">
+  	update ss_ppt_topic 
+  	<set>
+  		<if test="topicContent!=null">
+  			topic_content = #{topicContent,jdbcType=VARCHAR},
+  		</if>
+  		<if test="topicCreateMan!=null">
+  			topic_createMan = #{topicCreateMan,jdbcType=VARCHAR},
+  		</if>
+  			topic_createTime = now(),
+  	</set>
+  	where topic_id = #{topicId,jdbcType=INTEGER}
+  </update>
+  
+</mapper>

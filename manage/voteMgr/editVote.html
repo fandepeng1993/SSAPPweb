@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>修改问卷</title>
+<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+<script type="text/javascript" src="../../js/checkUser.js"></script>
+<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+<script type="text/javascript" src="../../js/UserUtil.js"></script>
+<script type="text/javascript" src="../../js/UserCommon.js"></script>
+<script type="text/javascript">
+
+	var questionCount = 1;
+	var selectorCount = []
+	var addtext;
+	//用于展现表单的menuCode
+	var menuCode;
+	var voteId;
+	$(document).ready(function() {
+		menuCode = Request["menuCode"];
+		voteId = Request["voteId"];
+		getVote(voteId);
+	});
+	
+	function initCalendar() {
+		laydate({
+		    elem: '#enddate', //目标元素。由于laydate.js封装了一个轻量级的选择器引擎，因此elem还允许你传入class、tag但必须按照这种方式 '#id .class'
+		    event: 'focus', //响应事件。如果没有传入event，则按照默认的click
+		    format: 'YYYY/MM/DD hh:mm:ss', 
+		    istime:true
+		});
+	} 
+	function getVote(id) {
+		$.ajax({
+			url: "../../ssVoteAdmin/vote/" + id,
+			datatype: "json",
+			type: "get",
+			data: {},
+			success: function (data, status, xhr) {
+				vote = eval("(" + data + ")");
+				initForm();
+			} 
+		});
+	}
+	
+	function getQuestion(voteId){
+		$.ajax({
+			url: "../../voteQuestionAdmin/voteQuestions/" + voteId,
+			datatype: "json",
+			type: "get",
+			data: {},
+			success: function (data, status, xhr) {
+			qus =   data ;
+				for(var i =0;i<qus.length;i++){
+					if(i>0){
+						addQuestion();
+					}
+					if(qus[i].isMultiselect==0){
+						$("input[class='singlebox']").eq(i).attr("checked","checked");
+					} else if (qus[i].isMultiselect==1){
+						$("input[class='doublebox']").eq(i).attr("checked","checked");
+					}
+					$("input[name='qId']").eq(i).val(qus[i].id);
+					$("input[name='question']").eq(i).val(qus[i].questionName);
+					var quId = qus[i].id;
+					getItems(quId,i);
+				}
+			}
+			
+		});
+	}
+	
+	function getItems(quId, index){
+		$.ajax({
+			url: "../../voteQuestionItemAdmin/voteQuestionItems/" + quId,
+			datatype: "json",
+			type: "get",
+			data: {},
+			success: function (data, status, xhr) {
+				items = data;
+				for(var j =0;j<items.length;j++){
+					if(j>0){
+						addselector($("input[name='addButton']").eq(index));
+					}
+					$("form[name='cloneForm']").eq(index).find("input[name='selector']").eq(j).val(items[j].optionName);
+					$("form[name='cloneForm']").eq(index).find("input[name='itemId']").eq(j).val(items[j].id);
+				}
+				new UserCommon().radioListener();
+			} 
+		});
+	}
+	//根据ss_form表取出数据构建form表单
+	function initForm() {
+		fillselectdept();
+		fillBaseDatas();
+		//初始化层的大小
+		initLayerSize();
+		initCalendar();
+		getQuestion(voteId);
+		addtext = $("form[name='cloneForm']").eq(0).clone();
+		$("form[name='cloneForm']").eq(0).find(".del_con").css("display","none");
+		new UserCommon().radioListener();
+		
+	}
+	//查看所有部门
+	function fillselectdept(){
+		var deptId = vote.votePri;
+		$.ajax({
+		      url: "../../deptAdmin/depts/",
+		      datatype: "text",
+		      type: "get",
+		      data: {},
+		      success: function (data, status, xhr) {
+		    	  	$("#dept").empty();
+		    	  	var deptStr = "<option value=\"-1\">请选择</option>";
+					$.each(eval("(" + data + ")"), function(index, deptItem) {
+						if(vote.votePri != null && vote.votePri == deptItem.deptId) {
+							//对部门设定选中
+							deptStr = deptStr + "<option value=\"" + deptItem.deptId + "\" selected=\"selected\">" + deptItem.deptName + "</option>";
+						} else {
+							deptStr = deptStr + "<option value=\"" + deptItem.deptId + "\">" + deptItem.deptName + "</option>";
+						}
+					});
+					$("#dept").html(deptStr);
+			      }
+			});
+		}
+	
+	function fillBaseDatas(){
+		$("#voteName").val(vote.title);
+		$("#enddate").val(vote.enddate.substring(0,19));
+	}
+ 	//增加问题
+	function addQuestion() {
+		var length=$("form[name='cloneForm']").length; 
+		$('#test').append(addtext.prop("outerHTML"));
+		var contH=$('#test').height();
+		$("form[name='cloneForm']:last").find("input[class='singlebox']").attr("checked","checked");
+	    $("form[name='cloneForm']:last").find('legend').html('问题'+(length+1));
+	    var Ohe=$('.table-responsive').height();
+	    var tops=$("form[name='cloneForm']:last").offset().top;
+	    if((contH-Ohe)>=0){
+		   $('.table-responsive').scrollTop(contH-Ohe+62); 
+	    }
+	    $('.del_con').on('click',function(){
+	    	var index = $(this).parent().parent().parent().parent().parent().index();
+			$(this).parent().parent().parent().parent().remove();
+			if(index != -1) updateNum(index);
+		});
+	  	//为radio添加监听事件
+		new UserCommon().radioListener();
+	}
+	function updateNum (index) {
+		var numLegend = $("legend[name='numLegend']");
+		for(var i=index; i<numLegend.length; i++) {
+			numLegend.eq(i).html("问题" + (i+1));
+		}
+	}
+ 	//增加选项
+ 	var index;
+	function addselector(arg) {
+		var Obj = arg;
+		index = Obj.parent().parent().parent().parent().parent().index();
+		if (!selectorCount['' + index]) {
+			selectorCount['' + index] = 2
+		} else {
+			++selectorCount['' + index]
+		}
+		
+		var newChoose = $("<p class=selectorCount" + index + selectorCount[index] + ">" +"<span style=\"color: red; font-size: 18px\">*</span>"+"<input type='hidden' name='itemId'/>"+
+		"<span style=\"width:63px;padding-left:3px; display:inline-block\" >选项"+ selectorCount[index]+":</span>"+
+		"<input type='text' name='selector' label='选项名称' errormsg='不能为空！'>" +"</p>");
+		/* Obj.closest(".div").append(newChoose); */
+		 $(newChoose).hide();
+		Obj.closest(".div").append(newChoose);
+		$(newChoose).slideDown();
+	} 
+	//删除选项
+	function deleteselector(arg) {
+		var Obj = arg;
+		var index = Obj.parent().parent().parent().parent().parent().index();
+		
+		if (selectorCount[index] > 0) {
+			
+			Obj.closest('.div').find('.selectorCount' + index + selectorCount[index]).slideUp(function(){
+ 				$(this).remove();
+ 			})
+			selectorCount[index]--
+		}
+	}
+	
+	function createVote(){
+		var title = $("#titleForm input[name='vote']").val();
+		var date = $("#titleForm input[name='date']").val();
+		var votePri = $("#titleForm select[name='select']").val();
+		var JsonObj1 = {
+				"id":voteId,
+				"title":title,
+				"enddate":date,
+				"votePri":votePri
+		};
+		return JsonObj1;
+	}
+	
+	function createMap(){
+		var qLength=$("form[name='cloneForm']").length; 
+		var mapArr = [];
+		for(var i=0 ;i<qLength;i++){
+			var map = new Map();
+			var qId = $("form[name='cloneForm']").eq(i).find("input[name='qId']").val();
+			var qName = $("form[name='cloneForm']").eq(i).find("input[name='question']").val();
+			var state = $("form[name='cloneForm']").eq(i).find("input[type='radio']:checked").val();
+			var JsonObj2 = {
+					"id":qId,
+					"questionName":qName,
+					"isMultiselect":state
+			};
+			var iLength = $("form[name='cloneForm']").eq(i).find("input[name='selector']").length;
+			var arr = [];
+			for(var j=0;j<iLength;j++){
+				var pId = $("form[name='cloneForm']").eq(i).find("input[name='itemId']").eq(j).val();
+				var pName =  $("form[name='cloneForm']").eq(i).find("input[name='selector']").eq(j).val();
+				var JsonObj3 = {
+						"id":pId,
+						"optionName":pName
+				};
+				arr.push(JsonObj3);
+			}
+			map.key = JsonObj2;
+			map.value = arr;
+			mapArr.push(map);
+		}
+		
+		return mapArr;
+	}
+	
+	function getVoteDTO(){
+		var vote = createVote();
+		var mapArr = createMap();
+		var voteDTO = {
+				"vote":vote,
+				"mapList":mapArr
+		}
+		return voteDTO;
+	}
+	
+	function checkVote() {
+		var pkq = true;
+		var formObjs = $("form[name='con1']");
+		for(var i=0; i<formObjs.length; i++) {
+			var formObj = formObjs.eq(i);
+			pkq = new UserCommon().show("edit-promit", formObj, "不能为空！");
+			if(!pkq) {
+				new UserCommon().show("edit-promit", formObj, "不能为空！");
+				return false;
+			}
+		}
+		return pkq;
+	}
+	
+	function checkData() {
+		var result = true;
+		var formObjs = $("form[name='cloneForm']");
+		for(var i=0; i<formObjs.length; i++) {
+			var formObj = formObjs.eq(i);
+			result = new UserCommon().show("edit-promit", formObj, "不能为空！");
+			if(!result) {
+				new UserCommon().show("edit-promit", formObj, "不能为空！");
+				return false;
+			}
+		}
+		return result;
+	}
+	
+	/*
+	 *	修改弹出框填写完成之后保存调用的函数
+	 */
+	function update(){
+		if(checkVote()) {
+			 if(checkData()){
+				$.ajax({
+					url : "../../ssVoteAdmin/updatevoteDTO",
+					datatype : "text",
+					type : "post",
+					data : JSON.stringify(getVoteDTO()),
+					success : function(data) {
+						var json = eval("(" + data + ")")
+						if (json.status == 1) {
+							new UserCommon().check("success", "更新成功！", null,"success");
+							setTimeout(function() {
+									window.parent.initTable(window.parent.ajaxUrl);
+									new UserCommon().layer_close();
+				  			  		//window.parent.location.href = "voteMgr.html?menuCode=" + menuCode;
+							 }, 1000);
+						} else {
+							new UserCommon().check("success", json.msg, null,"fail");
+						}
+					}
+				});
+	    	  }
+	 		}
+ 		} 
+
+	
+</script>
+</head>
+<body>
+<div class="table-responsive" style="height:450px; overflow-y:scroll; padding-left:5%; padding-right:5%;">
+	<form id="titleForm" name="con1">
+		<span style="color: red; font-size: 18px;"class='Lq'>*</span>
+		<img src="../../images/wenjuan/wjname.png" style="height: 16px;width: 16px;"/>
+	    <span>问卷名称:</span><input type="text" name="vote" id="voteName" label="问卷名称" errormsg="不能为空！"/>
+		<span style="color: red; font-size: 18px" class='Lq'>*</span>
+		<img src="../../images/wenjuan/wjtime.png" style="height: 16px;width: 16px;"/>
+		<span>截止日期：</span><input  type="datetime"  name="date" id="enddate" label="截止日期" errormsg="不能为空！"/><br /> 
+		<div style="margin:16px 0 16px 0" class="votepri">
+		<span style="color: red; font-size: 18px" class="Lq">*</span>
+		<img src="../../images/wenjuan/wjquanxian.png" style="height: 16px;width: 16px;"/>
+		<span>投票权限:</span><select name="select" id="dept" class="select" style="width:182px" label="投票部门" errormsg="不能为空！" "></select>	
+	 	</div>
+	 </form>
+	 <div id="test">   	
+		 <form style="position:relative;" name="cloneForm">
+				<div class="addtext">
+				<fieldset
+			  	style="display: block; -webkit-margin-start: 25px; -webkit-margin-end: 25px; -webkit-padding-before: 0.35em; -webkit-padding-start: 0.75em; -webkit-padding-end: 0.75em; -webkit-padding-after: 0.625em; border-image-source: initial; border-image-slice: initial; border-image-width: initial; border-image-outset: initial; border-image-repeat: initial; min-width: -webkit-min-content; border-width: 2px; border-style: groove; border-color: threedface;">
+			    <legend name="numLegend" style="display: block; width: 80px;padding: 7px;font-size: 21px;line-height: inherit;color: #333;border: 0;margin-bottom: 0px;">问题1</legend>
+			    <div  class="div">
+					<p  class="question">
+					<span style="color: red; font-size: 18px" class='Lq'>*</span>
+					<span style="width:56px; display:inline-block;">
+						问题名: 
+					</span>
+						<input type="hidden" name="qId"/>
+						<input type="text" name="question" label="问题名" errormsg="不能为空！"/>
+						<input type="radio" value="0" class="singlebox" name="box" />单选
+						<input type="radio" value="1" class="doublebox" name="box" />多选
+					</p>
+					<p  class="selector">
+					<span style="color: red; font-size: 18px" class='Lq'>*</span>
+					<span style="width:56px; display:inline-block;">选项1:</span>
+						<input type="hidden" name="itemId"/>
+						<input type="text" name="selector" label="选项名称" errormsg="不能为空！">
+						<input type="button" name="addButton" onclick="addselector($(this))" value="增加选项" class="addItemsQ"/>
+						<input type="button" onclick="deleteselector($(this))" value="删除选项" class="addItemsQ"/>
+					</p>
+					<a class="btn btn-default btn-xs del_con" style="position: absolute;right: 60px;top: 40px;">
+					   <span class="glyphicon glyphicon-trash color-del">
+					   </span> 删除
+	                </a>
+			  </fieldset>
+			  </div>
+		 </form>
+	 </div>			
+		<div id="buttionDiv" class="buttionDiv">
+		<input type="button" onclick="addQuestion()" value="增加问题" class="addItemsQ oneAddQ " />  
+		<div class="edit-bottom">
+			<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();"><i class="glyphicon glyphicon-remove"></i>&nbsp;关闭</button>
+			<button type="button" class="btn btn-xs edit-save btn-primary" onclick="update()"><i class="glyphicon glyphicon-ok"></i>&nbsp;保存</button>
+		</div>
+		</div>
+	
+	</div>	
+
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert"
+				aria-hidden="true">&times;</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span> <span></span>
+			<div>
+				<img src="../../images/sanjiao.png" width="10">
+			</div>
+		</div>
+	</div>
+</body>
+</html>

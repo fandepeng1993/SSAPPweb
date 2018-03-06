@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>退货通知单流程申请</title>
+<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+<script src="../../js/json/LAreaData2.js" type="text/javascript"></script>
+<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+<script type="text/javascript" src="../../js/bootstrap.autocomplete.js"></script>
+<script type="text/javascript" src="../../js/checkUser.js"></script>
+<script type="text/javascript" src="../../js/UserCommon.js"></script>
+<script type="text/javascript" src="../../js/UserUtil.js"></script>
+<script type="text/javascript" src="../../js/oaProcessJson.js"></script>
+<script type="text/javascript">
+	var slectValFrom = null;
+	function initLaydate(id) {
+		if ($("#" + id).attr("id")) {
+			laydate({
+				elem : '#' + id, //目标元素。由于laydate.js封装了一个轻量级的选择器引擎，因此elem还允许你传入class、tag但必须按照这种方式 '#id .class'
+				event : 'focus' //响应事件。如果没有传入event，则按照默认的click
+			});
+		}
+	}
+
+	//当前页面所属菜单的menuCode
+	var menuCode;
+	var deptName;
+	var deptId;
+	var userno;
+	//初始化页面
+	$(document).ready(function() {
+		processDefinitionKey = Request["processDefinitionKey"];
+		getProcessJson(function() {
+			menuCode = eval("processJson." + processDefinitionKey + ".menuCode");
+			/* alert(menuCode); */
+			queryDept(currentDeptId);
+		});
+	});
+
+	//获取当前用户的部门
+	function queryDept(id) {
+		$.ajax({
+			url : "../../deptAdmin/dept/" + id,
+			datatype : "json",
+			type : "get",
+			data : {},
+			success : function(data) {
+				var deptJson = eval("(" + data + ")");
+				deptName = deptJson.deptName;
+				deptId = deptJson.deptId;
+				/* alert("deptId: "+deptId); */
+				initForm();
+			}
+		});
+	}
+
+	//构建form表单
+	function initForm() {
+		$.ajax({
+			url : "../../formAdmin/formsByMenuCode/" + menuCode,
+			datatype : "json",
+			type : "get",
+			data : {},
+			success : function(data, status, xhr) {
+				element = eval("(" + data + ")");
+				new UserCommon().createForm("addProForm", element, 4);
+				//填充初值				
+				$("#createdate").val(new Date().format("yyyy-MM-dd"));
+				$("#userNo").val(currentUserNo);
+				$("#userName").val(currentUserName);
+				$("#deptId").val(deptId);
+				$("#deptName").val(deptName);
+				//初始化层的大小
+				initLayerSize();
+				/* initCalendar(); */
+			}
+		});
+	}
+	//当前页面所有gridTables组件的数组
+	var gridTables = [];
+	$(document).ready(function() {
+		gridTables.push(new GridTable("addProForm", "processTable"));
+	});
+	
+	function getGridTableObj(tbodyId) {
+		var gridTableObj;
+		$.each(gridTables, function(index,item) {
+			if(item.tableId == tbodyId) {
+				gridTableObj = item;
+			}
+		});
+		return gridTableObj;
+	}
+	
+	function selectTr(that) {
+		selectValFrom = $(that);
+		var gridTableObj = getGridTableObj(selectValFrom.parent().attr("id"));
+		if(typeof(gridTableObj) != "undefined") gridTableObj.selectTr(that);
+	}
+
+	function insert(that) {
+		var gridTableObj = getGridTableObj($(that).attr("relateTableId"));
+		if(typeof(gridTableObj) != "undefined") gridTableObj.insert();
+	}
+	
+	function deleteFormTr(that) {
+		var gridTableObj = getGridTableObj($(that).attr("relateTableId"));
+		if(typeof(gridTableObj) != "undefined") gridTableObj.deleteFormTr();
+	}
+	
+	//获取第一个表单数据
+	function createFormObjJson(){
+		var formObjJson = $("#addProForm").serializeNestedObject();
+		return formObjJson;
+	}
+	//获取第二个表单数据
+	function createTableObjJson(){
+		 var table = document.getElementById("tableTd"); 
+		 var td = table.getElementsByTagName("td");
+		 var tr = table.getElementsByTagName("tr");
+		 var len = tr.length;
+		 var length = td.length;
+		 var arr = [];
+		 for(var i=0;i<length;i++){
+			 if(i==0||(i-0==8)||((i-0)%8==0)){
+				 var steel=td[i].innerHTML;
+			 }
+			 if(i==1||(i-1==8)||((i-1)%8==0)){
+				 var heatNumber=td[i].innerHTML;
+			 }
+			 if(i==2||(i-2==8)||((i-2)%8==0)){
+				 var specification=td[i].innerHTML;
+			 }
+			 if(i==3||(i-3==8)||((i-3)%8==0)){
+				 var numbers=td[i].innerHTML;
+			 }
+			 if(i==4||(i-4==8)||((i-4)%8==0)){
+				 var meter=td[i].innerHTML;
+			 }
+			 if(i==5||(i-5==8)||((i-5)%8==0)){
+				 var actualWeight=td[i].innerHTML;
+			 }
+			 if(i==6||(i-6==8)||((i-6)%8==0)){
+				 var standard=td[i].innerHTML;
+			 }
+			 if(i==7||(i-7==8)||((i-7)%8==0)){
+				 var remark=td[i].innerHTML;
+				 var tableObjJson = {
+							"steel":steel,
+							"heatNumber":heatNumber,
+							"specification":specification,
+							"numbers":numbers,
+							"meter":meter,
+							"actualWeight":actualWeight,
+							"standard":standard,
+							"remark":remark			
+				}; 
+				 arr.push(tableObjJson); 
+			 }
+		 }
+		return arr;
+	}
+
+	function getFormDTO(){
+		var formObjJson = createFormObjJson();
+		var tableObjJson = createTableObjJson();
+		var formDTO = {
+				"formObjJson":formObjJson,
+				"tableObjJson":tableObjJson
+		}
+		return formDTO;
+	}
+	function save() {
+		//根据要发起的流程，确定url
+		var url = "../../OAProcessMgrAdmin/startProcess/" + currentUserNo + "," + processDefinitionKey;
+		var formObj = $("#addProForm");
+		var msg = "不能为空！";
+		if (new UserCommon().show("edit-promit", formObj, msg)) {
+			$.ajax({
+				url : url,
+				datatype : "text",
+				type : "post",
+				data : JSON.stringify(getFormDTO()),
+				success : function(data) {
+					if (data.status == 1) {
+						new UserCommon().check("success", data.msg, null,"success");
+						setTimeout(function() {
+							new UserCommon().layer_close();
+							//window.parent.location.href = "dReportMgr.html?menuCode=" + menuCode;
+						}, 1000);
+					} else {
+						new UserCommon().check("success", data.msg, null,"fail");
+					}
+				}
+			});
+		}
+	}
+</script>
+</head>
+<body>
+	<div class="edit" style="height: 600px">
+		<div class="edit-content">
+			<div class="edit-in">
+				<form id="addProForm"></form>
+			</div>
+			<div>
+				<p class="processtableHead">明细资料</p>
+			</div>
+			<div class="edit-way">
+				<button type="button" class="save" relateTableId="processTable" onclick="insert(this)">
+					<i class="insert"></i>&nbsp;增加&nbsp;
+				</button>
+				<button type="button" class="update" onclick="update()">
+					<i class="iupdate"></i>&nbsp;修改&nbsp;
+				</button>
+				<button type="button" class="delete" relateTableId="processTable" onclick="deleteFormTr(this)">
+					<i class="idelete"></i>&nbsp;删除&nbsp;
+				</button>
+			</div>
+			<div class="table-responsive centerTable" style="height:200px">
+				<table class="table table-data-bottom text-center" id="tableTd" border="1px">
+					<thead>
+						<tr class="table-first-tr" fieldType="controlCB" fieldName="id">
+							<th fieldType="text" fieldName="steel">钢种</th>
+							<th fieldType="text" fieldName="heatNumber">炉号</th>
+							<th fieldType="text" fieldName="specification">规格</th>
+							<th fieldType="text" fieldName="numbers">支数</th>
+							<th fieldType="text" fieldName="meter">米数</th>
+							<th fieldType="text" fieldName="actualWeight">重量</th>
+							<th fieldType="text" fieldName="standard">标准</th>
+							<th fieldType="text" fieldName="remark">备注</th>
+						</tr>
+					</thead>
+					<tbody id="processTable" ></tbody>
+				</table>				
+			</div>
+			<div class="edit-bottom">
+				<button type="button" class="btn btn-xs edit-close btn-primary"
+					onclick="new UserCommon().layer_close();">
+					<i class="glyphicon glyphicon-remove"></i>&nbsp;关闭
+				</button>
+				<button type="button" class="btn btn-xs edit-save btn-primary"
+					onclick="save()">
+					<i class="glyphicon glyphicon-ok"></i>&nbsp;提交
+				</button>
+			</div>
+		</div>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert"
+				aria-hidden="true">&times;</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span> <span></span>
+			<div>
+				<img src="../../images/sanjiao.png" width="10">
+			</div>
+		</div>
+	</div>
+</body>
+</html>

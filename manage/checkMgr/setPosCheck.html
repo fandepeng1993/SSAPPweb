@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>设置岗位考核项目</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		
+		var positionId;
+		var deptId;
+		var menuCode;
+		//该岗位对应的考核项目集
+		var checkPoses;
+		
+		$(document).ready(function(){ 
+			positionId = Request["positionId"];
+			deptId = Request["deptId"];
+			menuCode = Request["menuCode"];
+			showPri();
+		});
+		
+		function showPri() {
+			$("#checkPosTable").empty();
+			//对该岗位对应的考核项目集进行设置
+			$.ajax({
+				url: "../../checkPosAdmin/checkPosByPosId/" + positionId,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					checkPoses = data;
+				} 
+			});
+			
+			//获取所有该部门的考核项目
+			$.ajax({
+				url: "../../checkAdmin/checksFromDeptId/" + deptId,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					var str = "";
+					var menuStr = "<thead>" +
+					                "<tr>" +
+						              "<th fieldType=\"num\">序号</th>" +
+						              "<th>考核项目名称</th>" +
+						              "<th fieldType=\"selectZ\">选中</th>" +
+						              "<th>金额</th>" +
+						              "<th>考核公式</th>" +
+							        "</tr>" +
+								  "</thead>";
+					$("#checkPosTable").append(menuStr);
+					fillTable(data);
+				} 
+			});
+		}
+		
+		/**
+		 *	初始化填充checkbox和金额
+		 */
+		var fillCheckbox = function() {
+			$.each(eval("(" + checkPoses + ")"), function(index, item) {
+				if ($("#but" + item.check.id).length > 0) { 
+					$("#but" + item.check.id).attr('checked','true');  
+					$("#salary" + item.check.id).val(item.salary);
+					$("#checkFormula" + item.check.id).val(item.checkFormula);
+				}
+			});
+		}
+		
+		/**
+		 *	填充该部门的考核项目列表，并根据该岗位对应的考核项目集对checkbox进行初始化。
+		 */
+		function fillTable(data) {
+	    	  //$("#checkPosTable").empty();
+	      	  var menuStr = "<tbody id='tbody'>";
+	      	  var obj = eval("(" + data + ")");
+	      	  $.each(obj, function(index, item) {
+      	  		  menuStr = menuStr + "<tr class=\"font-Thirteen vertical\">" +
+									"<td align=\"center\">" + (index+1) + "</td>" + 
+									"<td align=\"center\">" + item.name + "</td>";
+				  menuStr = menuStr + "<td align=\"center\">" +
+									"<input type=\"checkbox\" id=\"but" + item.id + "\" name=\"checkIds\" value=\"" + item.id + "\">" +
+									"</td>" + 
+									"<td align=\"center\">" +
+									"<input type=\"text\" id=\"salary" + item.id + "\" name=\"salarys\">元" +
+									"</td>" +
+									"<td align=\"center\">" +
+									"<textarea style='width:250px;height:50px;' id=\"checkFormula" + item.id + "\" name=\"checkFormulas\"></textarea>" +
+									"</td>" +
+									"</tr>";
+	      	  });
+			  menuStr = menuStr + "</tbody>";
+			  $("#checkPosTable").append(menuStr);
+			 new UserCommon().checkboxListener();
+			  //填充checkbox和金额
+			  setTimeout(fillCheckbox, 50);
+		}
+		
+		function saveCheckPos() {
+			//构建提交Json数组
+			//$("#positionId").val(positionId);
+			var checkPosesArray = [];
+			var checkIds = $("input[name='checkIds']");
+			var salarys = $("input[name='salarys']");
+			var checkFormulas = $("textarea[name='checkFormulas']");
+			for(var i=0; i<checkIds.length; i++) {
+				if(checkIds.eq(i).is(':checked')) {
+					//构建一个CheckPos对象
+					var checkPosObj = {
+							"position": {"positionId":positionId},
+							"check": {}
+						};
+					checkPosObj.check.id = checkIds.eq(i).val();
+					if(salarys.eq(i).val() == "") {
+						new UserCommon().check("success","请填写金额栏！",null,"warning");
+						salarys.eq(i).focus();
+						return;
+					} else if(isNaN(salarys.eq(i).val())) {
+						new UserCommon().check("success","金额栏请填写数字！",null,"warning");
+						salarys.eq(i).focus();
+						return;
+					}
+					checkPosObj.salary = salarys.eq(i).val();
+					checkPosObj.checkFormula = checkFormulas.eq(i).val();
+					checkPosesArray.push(checkPosObj);
+				}
+			}
+		 	$.ajax({
+			      url: "../../checkPosAdmin/updateCheckPoses/" + positionId,
+			      datatype: "text",
+			      type: "put",
+			      data: JSON.stringify(checkPosesArray),
+			      success: function (data) {
+			    	  var json = eval("(" + data + ")");
+			    	  if(json.status == 1) {
+			    		  new UserCommon().check("success",json.msg,"checkMgr.html","success");
+			    		  parent.window.fillCheckTable(parent.window.positionId,false);
+			    		  setTimeout(function (){
+			    			  new UserCommon().layer_close();
+			    			  //window.parent.location.href = "checkMgr.html?menuCode=" + menuCode;
+			    		  }, 1000);
+			    	  } else {
+			    		  new UserCommon().check("success",json.msg,null,"fail");
+			    	  }
+			      }
+			});
+		}
+		
+	</script>
+</head>
+<body>
+	<!-- 考核项列表 -->
+	<div class="content">
+		<div class="content-right" style="width:100% ;">
+			<div class="content-right-top">
+				<span>考核项列表</span>
+			</div>
+			<div class="table-auto">
+			 	<form id="checkPosForm" class="centerTable setChecks">
+					<input type="hidden" name="positionId" id="positionId">
+		            <table class="table table-role text-center"  id="checkPosTable"></table> 
+	            </form>
+	        </div>
+		</div>
+		<div class="edit-bottom">
+			<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();"><i class="glyphicon glyphicon-remove"></i>&nbsp;关闭</button>
+			<button type="button" class="btn btn-xs edit-save btn-primary" onclick="saveCheckPos()"><i class="glyphicon glyphicon-ok"></i>&nbsp;保存</button>
+		</div>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+</body>
+</html>

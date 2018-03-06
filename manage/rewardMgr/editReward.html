@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>修改打赏情况</title>
+	
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.cookie.js"></script>
+	<!-- angularjs自动化表单部分 -->
+	<script type="text/javascript" src="../../js/loadAngularResource.js"></script>
+	<script src="../../js/json/CityJson.js" type="text/javascript"></script>
+    <script src="../../js/json/ProJson.js" type="text/javascript"></script>
+    <script src="../../js/json/DistrictJson.js" type="text/javascript"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.autocomplete.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap-suggest.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		//用于展现表单的menuCode
+		var menuCode;
+		var reward;
+		var element;
+		var selPri = 1;
+		$(document).ready(function(){
+			menuCode = Request["menuCode"];
+			var rewardId = Request["rewardId"];
+			getReward(rewardId);
+		});
+		
+		//根据ss_form表取出数据构建form表单
+		function initForm() {
+			$.ajax({
+				url: "../../formAdmin/formsByMenuCode/" + menuCode,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					element = eval("(" + data + ")");
+					
+					if(!useAngularForm) {
+						$("#createSubmitForm").remove();
+						
+						new UserCommon().createForm("updateRewardForm", element, 4);
+						new UserCommon().fillForm("updateRewardForm", reward);
+						$("#userName").val(reward.payTo.userName);
+						$("#payTime").parent().parent().hide();
+						$("#userName").parent().append("<a name=\"selLeader\" id=\"selLeader\" class=\"btn btn-xs\" style=\"margin-left:5px;width:30px;height:20px;border:1px solid #999;font-weight:bold;\"" + 
+						"onClick=\"selectUser()\">...</a>");
+						//初始化层的大小
+						initLayerSize();
+					}
+				} 
+			});
+		}
+		
+		//自动化创建表单之后需要调用的函数
+		function afterCreateCustomForm() {
+			new UserCommon().fillForm("updateRewardForm", reward);
+			$("#userName").val(reward.payTo.userName);
+			$("#payTime").parentsUntil("li").parent().hide();
+			$("#userName_button").bind("click", function() {
+				selectUser();
+			});
+		}
+		
+		function selectUser() {
+			window.parent.admin_role_add('<strong>选择用户</strong>',"../userMgr/select_user.html?userId=" + currentUserId + "&selPri=" + selPri, '800');
+		}
+		
+		var allData;
+		/**
+		 *	添加弹出框填写完成之后保存调用的函数
+		 */
+		function updateForm() {
+			var formObj = $("#updateRewardForm");
+			var msg = "不能为空！";
+			if(new UserCommon().show("edit-promit", formObj, msg)) {
+			 	var formObjJson = $("#updateRewardForm").serializeNestedObject();
+			 	$.ajax({
+					url: "../../rewardAdmin/reward",
+					datatype: "text",
+					type: "put",
+					data: JSON.stringify(formObjJson),
+					success: function (data) {
+						var json = eval("(" + data + ")");
+						if(json.status == 1) {
+							new UserCommon().check("success","修改成功！",null,"success");
+							setTimeout(function (){
+								window.parent.initTable(window.parent.ajaxUrl);
+								new UserCommon().layer_close();
+								//window.parent.location.href = "rewardMgr.html?menuCode=" + menuCode;
+							}, 1000);
+						} else {
+							new UserCommon().check("success",json.msg,null,"fail");
+						}
+					}
+				});
+			}
+		}
+		
+		function getReward(rewardId) {
+			$.ajax({
+				url: "../../rewardAdmin/reward/" + rewardId,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					reward = eval("(" + data + ")");
+					initForm();
+				} 
+			});
+		}
+		
+		
+	</script>
+</head>
+<body>
+	<div class="edit">
+		<div class="edit-content">
+			<div class="edit-in">
+				<form id="updateRewardForm">
+					<div id="createSubmitForm" ng-app="app" ng-controller="creatSubmitFormCtrl" class="previewText">
+						<div style="border:1px solid #d9d9d9;max-height: 500px;">
+							<div gridster='gridsterOpts' ng-style="{width:((gridsterOpts.columns)*200)+1+'px'}">
+								<ul>
+									<li gridster-item="item" ng-repeat="item in sercoundItems" ng-style="{zIndex:100-item.row}">
+										<my-directivelist>
+										</my-directivelist>
+									</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+			<div class="edit-bottom">
+				<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();"><i class="glyphicon glyphicon-remove"></i>&nbsp;关闭</button>
+				<button type="button" class="btn btn-xs edit-save btn-primary" onclick="updateForm()"><i class="glyphicon glyphicon-ok"></i>&nbsp;保存</button>
+			</div>
+		</div>	
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span>
+			<span></span>
+			<div><img src="../../images/sanjiao.png" width="10"></div>
+		</div>
+	</div>
+</body>
+</html>

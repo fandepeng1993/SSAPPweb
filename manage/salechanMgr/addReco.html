@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>新增记录</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		var pid,rootId,userName,salechanId;
+		var currentUserId = window.parent.currentUserId;
+		var parentIframe;
+		var brotherWindow;
+		$(document).ready(function(){
+			//初始化层的大小
+			initLayerSize();
+			userName = Request["userName"];
+			rootId = Request["rootId"];
+			pid = Request["pid"];
+			salechanId = Request["salechanId"];
+			$("#replyContent").show();
+			$("#replyContent").val("@"+userName+": ");
+			$("#addReply").show();
+			$("#delReply").show();
+			parentIframe = $("iframe",parent.document);
+			brotherWindow = $("iframe",parent.document)[parentIframe.length-2].contentWindow;
+		});
+		var str,content;
+		function addReply () {
+			str = $("#replyContent").val();
+			//$("#show").html(replace_em(str));
+			//提交时去除@字符串
+			if(str.charAt(0) == "@" && str.indexOf(":") != -1) {
+			  var replyUserName = $.trim(str.split(":")[0]);
+			  if(replyUserName == "@"+ userName) {
+			   content = $.trim(str.substring(str.indexOf(":")+1, str.length));
+			  }
+			} else {
+			 		content = str;
+			}
+		    if (content == null || content == "") {
+		    	new UserCommon().check("success","评论不能为空哦！",null,"fail");
+		    	return;
+		    }
+			var json = {
+					user:{
+						userId:currentUserId
+					},
+					parentRecord:{
+						id:pid
+					},
+					rootId:rootId,
+					progressContent:content,
+					saleChance:{
+						id:salechanId
+					},
+					isleaf:0
+			};
+			$.ajax({
+				  url: "../../salechanRecoAdmin/salechanReco",
+				  datatype: "text",
+				  type: "post",
+				  data: JSON.stringify(json),
+				  success: function (data) {
+					  var json = eval("(" + data + ")");
+					  if(json.status == 1) {
+						  new UserCommon().check("success","添加成功",null,"success");
+						  setTimeout(function (){
+							  //initTable(salechanId);
+							  brotherWindow.initTable(brotherWindow.salechanId);
+							  new UserCommon().layer_close();
+						  }, 1000);
+					  } else {
+						  new UserCommon().check("success",json.msg,null,"fail");
+						  //new UserCommon().layer_close();
+					  }
+				  }
+				});
+		}
+		
+	</script>
+</head>
+<body>
+	<textarea id="replyContent" rows="3" cols="" ></textarea>
+	<button id="addReply" type="button" class="btn btn-xs edit-close btn-primary" onclick="addReply()"><i class="glyphicon glyphicon-remove"></i>&nbsp;保存</button>
+	<button id="delReply" type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();"><i class="glyphicon glyphicon-remove"></i>&nbsp;关闭</button>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+</body>
+</html>

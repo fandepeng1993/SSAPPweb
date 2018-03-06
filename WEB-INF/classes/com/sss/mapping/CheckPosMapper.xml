@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.ICheckPosDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.CheckPos" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="salary" property="salary" jdbcType="DECIMAL" />
+    <result column="checkFormula" property="checkFormula" jdbcType="VARCHAR" />
+    
+    <association property="position" javaType="com.sss.pojo.Position">
+		<id column="cp_position_id" property="positionId" jdbcType="INTEGER" />
+	    <result column="cp_dept_id" property="dept.deptId" jdbcType="INTEGER" />
+	    <result column="cp_position_name" property="positionName" jdbcType="VARCHAR" />
+	</association>
+	<association property="check" javaType="com.sss.pojo.Check">
+		<id column="cc_check_id" property="id" jdbcType="INTEGER" />
+		<result column="cc_check_name" property="name" jdbcType="VARCHAR" />
+		<result column="cc_check_checkFormula" property="checkFormula" jdbcType="VARCHAR" />
+	    <result column="cc_check_deptId" property="dept.deptId" jdbcType="VARCHAR" />
+	    <result column="cc_check_createDate" property="createDate" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		cp.*,
+  		p.position_id as cp_position_id,
+  		p.dept_id as cp_dept_id,
+  		p.position_name as cp_position_name,
+  		c.id as cc_check_id,
+  		c.name as cc_check_name,
+  		c.checkFormula as cc_check_checkFormula,
+  		c.deptId as cc_check_deptId,
+  		c.createdate as cc_check_createDate
+    from 
+    	ss_check_pos cp
+   	left join
+   		ss_position p
+   	on
+   		cp.positionId = p.position_id
+   	left join
+   		ss_check c
+   	on
+   		cp.checkId = c.id
+  </sql>
+  <!-- 返回一个list的写法 -->
+  <select id="selectList" resultMap="BaseResultMap"  >
+    <include refid="associateQuery" />
+  </select>
+  <select id="selectListByPosId" resultMap="BaseResultMap"  >
+    <include refid="associateQuery" />
+    where cp.positionId = #{posId,jdbcType=INTEGER}
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where cp.id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selByCheckIdAndPosId" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where cp.checkId = #{checkId,jdbcType=INTEGER} and cp.positionId = #{positionId,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_check_pos
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByPrimaryKeys" >
+    delete from ss_check_pos
+    where id in
+    <foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.CheckPos" >
+    insert into ss_check_pos (id, checkId, positionId, 
+      salary, checkFormula)
+    values (#{id,jdbcType=INTEGER}, #{check.id,jdbcType=INTEGER}, #{position.positionId,jdbcType=INTEGER}, 
+      #{salary,jdbcType=DECIMAL},  #{checkFormula,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.CheckPos" >
+  	<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID 
+    </selectKey>
+    insert into ss_check_pos
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="check != null and check.id != null" >
+        checkId,
+      </if>
+      <if test="position != null and position.positionId != null" >
+        positionId,
+      </if>
+      <if test="salary != null" >
+        salary,
+      </if>
+      <if test="checkFormula != null" >
+        checkFormula,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="check != null and check.id != null" >
+        #{check.id,jdbcType=INTEGER},
+      </if>
+      <if test="position != null and position.positionId != null" >
+        #{position.positionId,jdbcType=INTEGER},
+      </if>
+      <if test="salary != null" >
+        #{salary,jdbcType=DECIMAL},
+      </if>
+      <if test="checkFormula != null" >
+        #{checkFormula,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.CheckPos" >
+    update ss_check_pos
+    <set >
+      <if test="check != null and check.id != null" >
+        checkId = #{check.id,jdbcType=INTEGER},
+      </if>
+      <if test="position != null and position.positionId != null" >
+        positionId = #{position.positionId,jdbcType=INTEGER},
+      </if>
+      <if test="salary != null" >
+        salary = #{salary,jdbcType=DECIMAL},
+      </if>
+      <if test="checkFormula != null" >
+        checkFormula = #{checkFormula,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.CheckPos" >
+    update ss_check_pos
+    set checkId = #{check.id,jdbcType=INTEGER},
+      positionId = #{position.positionId,jdbcType=INTEGER},
+      salary = #{salary,jdbcType=DECIMAL},
+      checkFormula = #{checkFormula,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+  </select>
+</mapper>

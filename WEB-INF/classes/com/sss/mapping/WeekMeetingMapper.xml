@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IWeekMeetingDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.WeekMeeting" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="title" property="title" jdbcType="VARCHAR" />
+    <result column="monthWeek" property="monthWeek" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    <result column="status" property="status" jdbcType="INTEGER" />
+    <association property="creator" javaType="com.sss.pojo.User">
+		<id column="wu_user_id" property="userId" jdbcType="INTEGER" />
+	    <!-- <result column="wu_position_id" property="position.positionId" jdbcType="INTEGER" /> -->
+	    <result column="wu_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="wu_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="wu_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="wu_user_status" property="status" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		w.*,
+  		u.user_id as wu_user_id,
+  		u.user_name as wu_user_name,
+  		u.user_no as wu_user_no,
+  		<!-- u.position_id as wu_position_id, -->
+  		u.sex as wu_user_sex,
+  		u.status as wu_user_status
+    from 
+    	ss_weekmeeting w
+   	left join
+   		ss_user u
+   	on
+   		w.creator = u.user_id
+  </sql>
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    select * from ss_weekmeeting order by createdate desc
+  </select>
+  <select id="selectByUserIds"  resultMap="BaseResultMap"  >
+  	<include refid="associateQuery" />
+  	where w.creator in 
+	    <foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+		  #{item}  
+		</foreach>  
+	group by w.monthWeek
+    order by w.createdate desc
+  </select>
+  <select id="countByUserIds"  resultType="java.lang.Integer" >
+  	select count(*) from (
+	  	select id from ss_weekmeeting
+	  	where creator in 
+		    <foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+			  #{item}  
+			</foreach>  
+		group by monthWeek
+	) t
+  </select>
+  <select id="selectByUserIdsLazy"  resultMap="BaseResultMap"  >
+  	<include refid="associateQuery" />
+  	where w.creator in 
+	    <foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+		  #{item}  
+		</foreach>  
+	group by w.monthWeek
+    order by w.createdate desc
+    limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="selectByUIdAndWeek"  resultMap="BaseResultMap"  >
+  	<include refid="associateQuery" />
+  	where w.creator = #{userId,jdbcType=INTEGER} and w.monthWeek = #{week,jdbcType=VARCHAR}
+  	order by w.createdate desc
+  </select>
+  <select id="selectByUIdsAndWeek"  resultMap="BaseResultMap"  >
+  	<include refid="associateQuery" />
+  	where w.creator in 
+	    <foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+		  #{item}  
+		</foreach>  
+  		and w.monthWeek = #{week,jdbcType=VARCHAR}
+  	order by w.createdate desc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where w.id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_weekmeeting
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.WeekMeeting" >
+    insert into ss_weekmeeting (id, creator.userId, title, 
+      monthWeek, createdate, status
+      )
+    values (#{id,jdbcType=INTEGER}, #{creator.userId,jdbcType=INTEGER}, #{title,jdbcType=VARCHAR}, 
+      #{monthWeek,jdbcType=VARCHAR}, 
+      #{createdate,jdbcType=VARCHAR}, #{status,jdbcType=INTEGER}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.WeekMeeting" >
+    insert into ss_weekmeeting
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="creator != null and creator.userId != 0">
+        creator,
+      </if>
+      <if test="title != null" >
+        title,
+      </if>
+      <if test="monthWeek != null" >
+        monthWeek,
+      </if>
+      <if test="status != null" >
+        status,
+      </if>
+      	createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="creator != null and creator.userId != 0">
+        #{creator.userId,jdbcType=INTEGER},
+      </if>
+      <if test="title != null" >
+        #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="monthWeek != null" >
+        #{monthWeek,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null" >
+        #{status,jdbcType=INTEGER},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.WeekMeeting" >
+    update ss_weekmeeting
+    <set >
+      <if test="creator != null and creator.userId != 0">
+        creator = #{creator.userId,jdbcType=INTEGER},
+      </if>
+      <if test="title != null" >
+        title = #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="monthWeek != null" >
+        monthWeek = #{monthWeek,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null" >
+        status = #{status,jdbcType=INTEGER},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.WeekMeeting" >
+    update ss_weekmeeting
+    set creator = #{creator.userId,jdbcType=INTEGER},
+      title = #{title,jdbcType=VARCHAR},
+      monthWeek = #{monthWeek,jdbcType=VARCHAR},
+      createdate = #{createdate,jdbcType=VARCHAR},
+      status = #{status,jdbcType=INTEGER}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by w.createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by w.createdate desc
+  </select>
+</mapper>

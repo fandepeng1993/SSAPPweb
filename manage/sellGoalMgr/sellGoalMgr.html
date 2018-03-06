@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="../../css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+<script src="../../js/jquery-1.11.1.min.js"></script>
+<link href="../../css/animate.min.css" rel="stylesheet">
+<link href="../../css/style.min.css" rel="stylesheet">
+<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+<script type="text/javascript" src="../../js/UserUtil.js"></script>
+<script type="text/javascript" src="../../js/UserCommon.js"></script>
+<script type="text/javascript" src="../../js/checkUser.js"></script>
+<style type="text/css">
+.pkq{height:30px;width:50px;background:#F5F5F5;text-align:center;}
+.leiqiu td{height:35px!important;width:58px!important;padding:0px!important;text-align:center;overflow:hidden}
+.dleiqiu td{height:35px!important;width:58px!important;padding:0px!important;text-align:center;overflow:hidden}
+tr th{text-align: center;}
+</style>
+<script type="text/javascript">
+	var aH3;
+	var aDiv;
+	function initTab() {
+		aH3=$("#cen_right_top").children("h3");
+		aDiv=$("#cen_right_top").children("div");
+		for(var i=0;i<aH3.length;i++)
+		{
+			aH3[i].index=i;
+			aH3[i].onclick=function() {
+				for(var i=0;i<aH3.length;i++) {
+					aH3[i].className="";
+					aDiv[i].style.display="none";
+				}
+				this.className="white";
+				aDiv[this.index].style.display="block";
+			}
+		}
+	}
+
+	//当前页面所属菜单的menuCode
+	var menuCode;
+	var selPri;
+	//根据权限渲染页面
+	$(document).ready(function(){ 
+		menuCode = Request["menuCode"];
+		initTab();
+		var year = new Date().getFullYear();
+		$(aH3[0]).html((year-1) + "年");
+		$(aH3[1]).html(year + "年");
+		$(aH3[2]).html((year+1) + "年");
+		$.ajax({
+			url: "../../sessionAdmin/getPri",
+			datatype: "json",
+			type: "get",
+			data: {},
+			success: function (data, status, xhr) {
+				var pathname = window.location.pathname;
+				var url = pathname.substring(pathname.indexOf("/", 1) + 1, pathname.length);
+				$.each(eval("(" + data + ")"), function(index, item) {
+					if(item.menuUrl == url) {
+						setSelPriByMenuName(item.menuName);
+						if(item.menuName == "增加") {
+							$("#add-g").show();
+						}
+					}
+				});
+				
+				switch(selPri) {
+	    	  	case 1:
+	    	  		initTable("goals0","../../sellgoalAdmin/sellgoalsByYear/" + (year-1));
+					initTable("goals1","../../sellgoalAdmin/sellgoalsByYear/" + year);
+					initTable("goals2","../../sellgoalAdmin/sellgoalsByYear/" + (year+1));
+  					lookShow();
+	    	  		break;
+	    	  	case 3:
+	    	  		initTable("goals0","../../sellgoalAdmin/getSellgoalsByUserId/" + currentUserId + "," + (year-1));
+					initTable("goals1","../../sellgoalAdmin/getSellgoalsByUserId/" + currentUserId + "," + year);
+					initTable("goals2","../../sellgoalAdmin/getSellgoalsByUserId/" + currentUserId + "," + (year+1));
+  					lookShow();
+  					break;
+	    	  	}
+		    } 
+		});
+	});
+
+	function lookShow() {
+		$("#excel-g").show();
+	}
+
+//可编辑的Td范围(firstTdIndex < cur <= lastTdIndex)
+var firstTdIndex = 3;
+var lastTdIndex = 15;
+
+//加载数据
+		 /* initTable("goals0","../../sellgoalAdmin/sellgoalsByYear/" + (year-1)); */
+function initTable(tbodyId,url) {
+	$.ajax({
+		url : url,
+		datatype : "json",
+		type : "get",
+		data : {},
+		success : function(data, status, xhr) {
+			//alert(JSON.stringify(data));
+			sellgoals = data;
+			$.each(eval("(" + sellgoals + ")"), function(index, item) {
+				new UserCommon().fillTable(tbodyId, item, index);
+				//new UserCommon().fillTable("goals1", item, index);
+			});
+			//addEventForTd();
+			var editableTableUtil = new EditableTableUtil(tbodyId, firstTdIndex, lastTdIndex, 1);     
+			editableTableUtil.addEventForTd();
+			//new UserCommon().createEditableTable(tbodyId, firstTdIndex, lastTdIndex);
+			
+			var sumtr="<tr class=\"dleiqiu\" id=\"total\">" + "<td colspan=\"3\">合计(吨)</td>"+"<td class=\"sumPl\"></td>"
+		          +"<td class=\"sumJa\"></td>"+"<td class=\"sumFb\"></td>"
+		          +"<td class=\"sumMar\"></td>"+"<td class=\"sumAp\"></td>"+"<td class=\"sumMay\"></td>"+"<td class=\"sumJu\"></td>"
+		          +"<td class=\"sumJl\"></td>"+"<td class=\"sumAg\"></td>"+"<td class=\"sumSe\"></td>"+"<td class=\"sumOc\"></td>"
+		          +"<td class=\"sumNo\"></td>"+"<td class=\"sumDe\"></td>"+
+		          "</tr>";
+			 $("#" + tbodyId).append(sumtr);
+			 arr = eval('(' + sellgoals.replace(/\],\[/g, ',') + ')');
+			 var sumJan=0,sumFeb=0 ,sumPla=0,sumMar=0,sumApr=0,sumMay=0
+			     sumJu=0,sumJl=0,sumAg=0,sumSe=0,sumOc=0,sumNo=0,sumDe=0;
+			 for(var k=0; k<arr.length; k++) {
+				 /* for(var i=2; i<15; i++) {
+					 var fieldName = $("#goals").prev().children("tr").children("th").eq(i).attr("fieldName");
+					
+				 } */
+				 sumPla += parseFloat(arr[k].plangoal); sumJl  += parseFloat(arr[k].july);
+				 sumJan += parseFloat(arr[k].january);  sumAg  += parseFloat(arr[k].august);
+				 sumFeb += parseFloat(arr[k].february); sumSe  += parseFloat(arr[k].september);
+				 sumMar += parseFloat(arr[k].march);    sumOc  += parseFloat(arr[k].october);
+				 sumApr += parseFloat(arr[k].april);    sumNo  += parseFloat(arr[k].november);
+				 sumMay += parseFloat(arr[k].may);      sumDe  += parseFloat(arr[k].december);
+				 sumJu  += parseFloat(arr[k].june);
+				 $("#" + tbodyId + " .sumPl").text(sumPla);  $("#" + tbodyId + " .sumJl").text(sumJl);
+		         $("#" + tbodyId + " .sumJa").text(sumJan);  $("#" + tbodyId + " .sumAg").text(sumAg);
+		         $("#" + tbodyId + " .sumFb").text(sumFeb);  $("#" + tbodyId + " .sumSe").text(sumSe);
+		         $("#" + tbodyId + " .sumMar").text(sumMar); $("#" + tbodyId + " .sumOc").text(sumOc);
+		         $("#" + tbodyId + " .sumAp").text(sumApr);  $("#" + tbodyId + " .sumNo").text(sumNo);
+		         $("#" + tbodyId + " .sumMay").text(sumMay);  $("#" + tbodyId + " .sumDe").text(sumDe);
+		         $("#" + tbodyId + " .sumJu").text(sumJu);
+			 }
+		} 
+	});
+}
+
+/*管理员-角色-添加*/
+function admin_role_add(title,url,w){
+	new UserCommon().layer_show(title,url,w);
+}
+function addSellGoal() {
+	admin_role_add('<strong>添加销售目标</strong>',"addSellGoal.html?menuCode=" + menuCode,'600');
+}
+function exportExcel() {
+	window.location.href = "../../sellgoalAdmin/exportExcel/" + currentUserId;
+}
+</script>
+</head>
+<title>指标分配</title>
+<body class="gray-bg">
+	<div class="bt-div" >
+		<div class="bt-div-in">
+			<button id="add-g" class="btn btn-default btn-xs bt-one" style="background:#fff;color:#000;" onclick="addSellGoal()">
+				<span class="glyphicon glyphicon-plus color-add"></span> 添加
+			</button>
+			<button id="excel-g" class="btn btn-default btn-xs bt-one" style="background:#fff;color:#000;width:90px" onclick="exportExcel()">
+				<span class="glyphicon glyphicon-save color-add"></span> 导出Excel
+			</button>
+		</div>
+	</div>
+	<div id="cen_right_top">
+		<h3 class="white"></h3>
+		<h3></h3>
+		<h3></h3>
+		<div class="div setChecks" style="display:block" >
+			<form id="goalform0">
+				<table align="center" class="table table-striped table-bordered text-center tableHidden" id="showgoal"> 
+			 		<thead>
+						<tr fieldType="controlSellGoal" fieldName="sellgoalId">
+							<th fieldType="num" fieldName="">序号</th>
+							<th fieldType="sellGoal" fieldName="user.userName">姓名</th>
+							<th fieldType="sellGoal" fieldName="planyear">年限</th>
+							<th fieldType="sellGoal" fieldName="plangoal">年计划</th>
+							<th fieldType="sellGoal" fieldName="january">1月</th>
+							<th fieldType="sellGoal" fieldName="february">2月</th>
+							<th fieldType="sellGoal" fieldName="march">3月</th>
+							<th fieldType="sellGoal" fieldName="april">4月</th>
+							<th fieldType="sellGoal" fieldName="may">5月</th>
+							<th fieldType="sellGoal" fieldName="june">6月</th>
+							<th fieldType="sellGoal" fieldName="july">7月</th>
+							<th fieldType="sellGoal" fieldName="august">8月</th>
+							<th fieldType="sellGoal" fieldName="september">9月</th>
+							<th fieldType="sellGoal" fieldName="october">10月</th>
+							<th fieldType="sellGoal" fieldName="november">11月</th>
+							<th fieldType="sellGoal" fieldName="december">12月</th>
+						</tr>
+					</thead>	
+					<tbody id="goals0"> 
+					</tbody> 	
+				</table>
+			</form>
+		</div>
+		<div class="div setChecks">
+			<form id="goalform1">
+				<table align="center" class="table table-striped table-bordered tableHidden" id="showgoal"> 
+			 		<thead>
+						<tr fieldType="controlSellGoal" fieldName="sellgoalId">
+							<th fieldType="num" fieldName="">序号</th>
+							<th fieldType="sellGoal" fieldName="user.userName">姓名</th>
+							<th fieldType="sellGoal" fieldName="planyear">年限</th>
+							<th fieldType="sellGoal" fieldName="plangoal">年计划</th>
+							<th fieldType="sellGoal" fieldName="january">1月</th>
+							<th fieldType="sellGoal" fieldName="february">2月</th>
+							<th fieldType="sellGoal" fieldName="march">3月</th>
+							<th fieldType="sellGoal" fieldName="april">4月</th>
+							<th fieldType="sellGoal" fieldName="may">5月</th>
+							<th fieldType="sellGoal" fieldName="june">6月</th>
+							<th fieldType="sellGoal" fieldName="july">7月</th>
+							<th fieldType="sellGoal" fieldName="august">8月</th>
+							<th fieldType="sellGoal" fieldName="september">9月</th>
+							<th fieldType="sellGoal" fieldName="october">10月</th>
+							<th fieldType="sellGoal" fieldName="november">11月</th>
+							<th fieldType="sellGoal" fieldName="december">12月</th>
+						</tr>
+					</thead>	
+					<tbody id="goals1"> 
+					</tbody> 	
+				</table>
+			</form>
+		</div>
+		<div class="div setChecks">
+			<form id="goalform2">
+				<table align="center" class="table table-striped table-bordered tableHidden" id="showgoal"> 
+			 		<thead>
+						<tr fieldType="controlSellGoal" fieldName="sellgoalId">
+							<th fieldType="num" fieldName="">序号</th>
+							<th fieldType="sellGoal" fieldName="user.userName">姓名</th>
+							<th fieldType="sellGoal" fieldName="planyear">年限</th>
+							<th fieldType="sellGoal" fieldName="plangoal">年计划</th>
+							<th fieldType="sellGoal" fieldName="january">1月</th>
+							<th fieldType="sellGoal" fieldName="february">2月</th>
+							<th fieldType="sellGoal" fieldName="march">3月</th>
+							<th fieldType="sellGoal" fieldName="april">4月</th>
+							<th fieldType="sellGoal" fieldName="may">5月</th>
+							<th fieldType="sellGoal" fieldName="june">6月</th>
+							<th fieldType="sellGoal" fieldName="july">7月</th>
+							<th fieldType="sellGoal" fieldName="august">8月</th>
+							<th fieldType="sellGoal" fieldName="september">9月</th>
+							<th fieldType="sellGoal" fieldName="october">10月</th>
+							<th fieldType="sellGoal" fieldName="november">11月</th>
+							<th fieldType="sellGoal" fieldName="december">12月</th>
+						</tr>
+					</thead>	
+					<tbody id="goals2"> 
+					</tbody> 	
+				</table>
+			</form>
+		</div>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+</body>
+</html>

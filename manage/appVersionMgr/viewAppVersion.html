@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>查看app版本信息</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		//用于展现表单的menuCode
+		//var menuCode;
+		var appVersion;
+		$(document).ready(function(){ 
+			//menuCode = Request["menuCode"];
+			var id = Request["id"];
+			getAppVersion(id);
+			initLayerSize();
+		});
+		
+		//根据ss_form表取出数据构建form表单
+		function initForm() {
+			$("#detailForm input[name='version']")[0].value = appVersion.version;
+			$("#detailForm select[name='type']").val(appVersion.type);
+			$("#detailForm textarea[name='content']")[0].value = appVersion.content;
+			
+			if(appVersion.type == "ios") {
+				$("#iosAppStoreUrl").val(appVersion.iosAppStoreUrl);
+				$("#iosAppStoreDiv").show();
+			}
+		}
+		
+		function getAppVersion(id) {
+			$.ajax({
+				url: "../../appVersionAdmin/appVersion/" + id,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					appVersion = eval("(" + data + ")");
+					initForm();
+				} 
+			});
+		}
+	</script>
+</head>
+<body>
+	<div class="edit">
+		<div class="edit-content">
+			<div class="edit-in">
+				<form class="yhtj" id="detailForm">
+					<p class="edit-p">
+						<div class="zsy">
+						  <div class="zsy-common">
+						    <div class="zsy-common-left">
+						      <label>
+						        <span style="color:red;font-size:18px">*</span>版本号：
+						       </label>
+						    </div>
+						    <div class="zsy-common-right">
+						      <input type="text" name="version" label="标题" errormsg="不能为空！" isempty="false" class="input-text">
+						    </div>
+						  </div>
+						  <div class="zsy-common">
+						    <div class="zsy-common-left">
+						      <label>
+						        	<span style="color:red;font-size:18px">*</span>适用系统：
+						       </label>
+						    </div>
+						    <div class="zsy-common-right">
+						      <select name="type" label="类型" errormsg="不能为空！" isempty="false" >
+						      	<option value="android">android</option>
+						      	<option value="ios">ios</option>
+						      </select>
+						    </div>
+						  </div>
+						</div>
+						<div class="zsy" id="iosAppStoreDiv" style="display:none;">
+						  <div class="zsy-common">
+						    <div class="zsy-common-left">
+						      <label>
+						        appStore路径：
+						       </label>
+						    </div>
+						    <div class="zsy-common-right">
+						      <input type="text" id="iosAppStoreUrl" name="iosAppStoreUrl" label="appStore路径" errormsg="不能为空！" isempty="true" class="input-text" style="width:310px">
+						    </div>
+						  </div>
+						</div>
+						<div class="zsy">
+						  <div class="zsy-common">
+						    <div class="zsy-common-left">
+						      <label>
+						        <span style="color:red;font-size:18px">*</span>版本内容：
+						      </label>
+						    </div>
+						    <div class="zsy-common-right">
+						    	<textarea iseditable="true" name="content" isreadonly="false" isdisable="true" isvisible="true" label="版本内容" errormsg="不能为空！" isempty="true" style=""></textarea>
+						    </div>
+						  </div>
+						</div>
+					</p>
+	            </form>
+			</div>
+			<div class="edit-bottom">
+				<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();">
+				<i class="glyphicon glyphicon-remove"></i>&nbsp;关闭
+				</button>
+			</div>		
+		</div>	
+	</div>
+</body>
+</html>

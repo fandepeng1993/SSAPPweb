@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IUserMsgMarkDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.UserMsgMark" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="isRead" property="isRead" jdbcType="TINYINT" />
+    <result column="readTime" property="readtime" jdbcType="VARCHAR" />
+    
+    <association property="user" javaType="com.sss.pojo.User">
+		<id column="uu_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="uu_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="uu_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="uu_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="uu_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="uu_user_status" property="status" jdbcType="VARCHAR" />
+	    <result column="uu_user_photoUrl" property="photoUrl" jdbcType="VARCHAR" />
+	</association>
+	<association property="jpush" javaType="com.sss.pojo.JPush">
+		<id column="uj_jpush_id" property="jpushId" jdbcType="INTEGER" />
+	    <result column="uj_jpush_title" property="title" jdbcType="VARCHAR" />
+	    <result column="uj_jpush_content" property="content" jdbcType="VARCHAR" />
+	    <result column="uj_jpush_tag" property="tag" jdbcType="VARCHAR" />
+	    <result column="uj_jpush_alias" property="alias" jdbcType="VARCHAR" />
+	    <result column="uj_jpush_sendtime" property="sendtime" jdbcType="VARCHAR" />
+	    <result column="uj_jpush_category" property="category" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <resultMap id="keyValueMap" type="com.sss.pojo.dto.KeyValueDTO" >
+  	<result column="category" property="key" jdbcType="VARCHAR" />
+    <result column="value" property="value" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		um.*,
+  		u.user_id as uu_user_id,
+  		u.user_name as uu_user_name,
+  		u.user_no as uu_user_no,
+  		u.position_id as uu_position_id,
+  		u.sex as uu_user_sex,
+  		u.status as uu_user_status,
+  		u.photoUrl as uu_user_photoUrl,
+  		j.jpush_id as uj_jpush_id,
+  		j.title as uj_jpush_title,
+  		j.content as uj_jpush_content,
+  		j.tag as uj_jpush_tag,
+  		j.alias as uj_jpush_alias,
+  		j.sendtime as uj_jpush_sendtime,
+  		j.category as uj_jpush_category
+    from 
+    	ss_usermsgmark um
+   	left join
+   		ss_user u
+   	on
+   		um.userId = u.user_id
+   	left join
+   		ss_jpush j
+   	on
+   		um.jpushId = j.jpush_id
+  </sql>
+  
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by j.sendtime desc
+  </select>
+  <select id="selListByUserId"  resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" /> 
+    where um.userId = #{userId,jdbcType=INTEGER}
+    order by j.sendtime desc
+  </select>
+  
+  <select id="selByUserIdAndCate"  resultMap="BaseResultMap" >
+    <include refid="associateQuery" /> 
+    where um.userId = #{userId,jdbcType=INTEGER} and j.category = #{category,jdbcType=INTEGER}
+    order by j.sendtime desc
+  </select>
+  <select id="unreadCountsByUId"  resultMap="keyValueMap" parameterType="java.lang.Integer" >
+    select count(*) as value, j.category as category
+    from 
+    	ss_usermsgmark um
+    left join 
+    	ss_jpush j
+    on 
+    	um.jpushId = j.jpush_id
+    where um.userId = #{userId,jdbcType=INTEGER} and um.isRead = 0
+    group by j.category
+  </select>
+  
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where um.id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_usermsgmark
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.UserMsgMark" >
+    insert into ss_usermsgmark (id, jpushId, userId, 
+      isRead, readTime)
+    values (#{id,jdbcType=INTEGER}, #{jpush.jpushId,jdbcType=INTEGER}, #{user.userId,jdbcType=INTEGER}, 
+      #{isRead,jdbcType=TINYINT}, #{readtime,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.UserMsgMark" >
+    insert into ss_usermsgmark
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="jpush.jpushId != null" >
+        jpushId,
+      </if>
+      <if test="user.userId != null" >
+        userId,
+      </if>
+      <if test="isRead != null" >
+        isRead,
+      </if>
+      <if test="readtime != null" >
+        readTime,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="jpush.jpushId != null" >
+        #{jpush.jpushId,jdbcType=INTEGER},
+      </if>
+      <if test="user.userId != null" >
+        #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="isRead != null" >
+        #{isRead,jdbcType=TINYINT},
+      </if>
+      <if test="readtime != null" >
+        #{readtime,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.UserMsgMark" >
+    update ss_usermsgmark
+    <set >
+      <if test="jpush.jpushId != null" >
+        jpushId = #{jpush.jpushId,jdbcType=INTEGER},
+      </if>
+      <if test="user.userId != null" >
+        userId = #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="isRead != null" >
+        isRead = #{isRead,jdbcType=TINYINT},
+      </if>
+      <if test="readtime != null" >
+        readTime = #{readtime,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="readByCategory" >
+    update ss_usermsgmark um
+    left join 
+    	ss_jpush j
+    on 
+    	um.jpushId = j.jpush_id
+    set um.isRead = 1, um.readTime = now()
+    where j.category = #{category,jdbcType=VARCHAR} and um.userId = #{userId,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.UserMsgMark" >
+    update ss_usermsgmark
+    set jpushId = #{jpush.jpushId,jdbcType=INTEGER},
+      userId = #{user.userId,jdbcType=INTEGER},
+      isRead = #{isRead,jdbcType=TINYINT},
+      readTime = #{readtime,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by j.sendtime desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by j.sendtime desc
+  </select>
+</mapper>

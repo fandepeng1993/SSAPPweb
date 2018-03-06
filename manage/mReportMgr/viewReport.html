@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>查看工作月报</title>
+	
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.cookie.js"></script>
+	<!-- angularjs自动化表单部分 -->
+	<script type="text/javascript" src="../../js/loadAngularResource.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		function initCalendar() {
+			laydate({
+			    elem: '#hello', //目标元素。由于laydate.js封装了一个轻量级的选择器引擎，因此elem还允许你传入class、tag但必须按照这种方式 '#id .class'
+			    event: 'focus' //响应事件。如果没有传入event，则按照默认的click
+			});
+			laydate({
+			    elem: '#hello1', //目标元素。由于laydate.js封装了一个轻量级的选择器引擎，因此elem还允许你传入class、tag但必须按照这种方式 '#id .class'
+			    event: 'focus' //响应事件。如果没有传入event，则按照默认的click
+			});
+		}
+		
+		//当前页面所属菜单的menuCode
+	    var menuCode;
+		var mReport;
+		var element;
+		$(document).ready(function(){ 
+			menuCode = Request["menuCode"];
+			var reportId = Request["reportId"];
+			getMReport(reportId);
+		});
+		
+		//根据ss_form表取出数据构建form表单
+		function initForm() {
+			$.ajax({
+				url: "../../formAdmin/formsByMenuCode/" + menuCode,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					element = eval("(" + data + ")");
+					
+					if(!useAngularForm) {
+						$("#createSubmitForm").remove();
+						
+						new UserCommon().createForm("detailForm", element, 4);
+						
+						setTimeout(function (){
+							new UserCommon().fillForm("detailForm",mReport);
+							initCalendar();
+						},50);
+						//初始化层的大小
+						initLayerSize();
+					}
+				} 
+			});
+		}
+		
+		//自动化创建表单之后需要调用的函数
+		function afterCreateCustomForm() {
+			new UserCommon().fillForm("detailForm",mReport);
+		}
+		
+		function getMReport(noticeId) {
+			$.ajax({
+				url: "../../mReportAdmin/monthlyReport/" + noticeId,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					mReport = eval("(" + data + ")");
+					initForm();
+				} 
+			});
+		}
+	</script>
+</head>
+<body>
+	<div class="edit">
+		<div class="edit-content">
+			<div class="edit-in">
+				<form class="yhtj" id="detailForm">
+					<div id="createSubmitForm" ng-app="app" ng-controller="creatSubmitFormCtrl" class="previewText">
+						<div style="border:1px solid #d9d9d9;max-height: 500px;">
+							<div gridster='gridsterOpts' ng-style="{width:((gridsterOpts.columns)*200)+1+'px'}">
+								<ul>
+									<li gridster-item="item" ng-repeat="item in sercoundItems" ng-style="{zIndex:100-item.row}">
+										<my-directivelist>
+										</my-directivelist>
+									</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+	            </form>
+			</div>
+			<div class="edit-bottom">
+				<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();">
+				<i class="glyphicon glyphicon-remove"></i>&nbsp;关闭
+				</button>
+			</div>
+		</div>	
+	</div>
+</body>
+</html>

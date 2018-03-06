@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>活动中流程实例列表</title>
+<link rel="stylesheet" type="text/css" href="../../../css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="../../../css/user.common.css">
+<link rel="stylesheet" href="../../../css/font-awesome.min.css" >
+<script type="text/javascript" src="../../../js/jquery-1.11.1.min.js"></script>
+<script type="text/javascript" src="../../../js/checkUser.js"></script>
+<script type="text/javascript" src="../../../js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery.pagination.js"></script>
+<script type="text/javascript" src="../../../js/laydate/laydate.js"></script>
+<script type="text/javascript" src="../../../js/plugins/layer/layer.min.js"></script>
+<script type="text/javascript" src="../../../js/checkUser.js"></script>
+<script type="text/javascript" src="../../../js/UserUtil.js"></script>
+<script type="text/javascript" src="../../../js/UserCommon.js"></script>
+<!-- <script type="text/javascript" src="../../../js/oaProcessJson.js"></script> -->
+<script type="text/javascript">
+	var processDefinitionId;
+	$(document).ready(function() {
+		processDefinitionId = Request["processDefinitionId"];
+		initTable();
+		//初始化层的大小
+		initLayerSize();
+	});
+	
+	var tasks = null;
+	function initTable() {
+		$.ajax({
+			url : "../../../ProcessDefinitionlController/getProcessInstanceRU/" + processDefinitionId,
+			datatype : "json",
+			type : "get",
+			data : {},
+			success : function(data, status, xhr) {
+				$("#processTable").empty();
+				tasks = data;
+				totalRecords = data.length;
+	
+				//totalRecords =  data .length;
+				//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+				if (totalRecords % pageSize != 0) {
+					totalPages = Math.floor(totalRecords / pageSize) + 1;
+				} else {
+					totalPages = totalRecords / pageSize;
+				}
+				//根据totalPages初始化页码插件
+				$("#sumPage").html( "共<strong class=\"allPage\">" + totalPages + "</strong>页");
+				$("#Pagination").pagination(totalPages);
+				
+			}
+		});
+	}
+	
+	var pageSize = 10;
+	var pageNo = 1;//当前的页码
+	var totalRecords = 0;
+	var totalPages = 0;
+	function circleInfos() {
+		$("#processTable").empty();
+		$.each(tasks, function(index, item) {
+			if (index >= ((pageNo - 1) * pageSize) && index < (pageNo * pageSize)) {
+				new UserCommon().fillTable("processTable", item, index);
+			} else if (index > (pageNo * pageSize)) {
+				return;
+			}
+		});
+		//为checkbox添加监听事件
+		inittAble()
+	}
+	
+	function admin_role_add(title, url, w) {
+		new UserCommon().layer_show(title, url, w);
+	}
+	
+	//点击按钮打开流程查看表单
+	function selProcessTask(processInstanceId) {
+		var runProcess="runProcess";
+		var src = "../../../OAProcessMgrAdmin/getProcessImg/" + processInstanceId;
+		$.each(tasks,function(index,item){
+			if(item.processInstanceId == processInstanceId){
+				admin_role_add('<strong>流程详细</strong>', "selProcessTaskIntanceHI.html?processInstanceId="+ item.processInstanceId  + "&src=" +src+ "&runProcess=" +runProcess+ "&processDefinitionKey=" +item.processDefinitionKey, iframeJson.width * 1);
+			}
+		});
+	}
+</script>
+</head>
+<body>
+	<div class="bt-div-two-table" style="height: 600px">
+		<div class="table-responsive centerTable">
+			<table class="table table-data-bottom text-center tableHidden">
+				<thead>
+					<tr class="table-first-tr" fieldType="radioTable" fieldName="id">
+						<th fieldType="num" fieldName="">序号</th>
+						<th fieldType="text" fieldName="processInstanceId">流程实例ID</th>
+						<th fieldType="text" fieldName="business">业务ID</th>
+						<th fieldType="text" fieldName="startUser">发起人</th>
+						<th fieldType="text" fieldName="deptName">所属部门</th>
+						<th fieldType="text" fieldName="startACT">启动流程的活动ID</th>
+						<th fieldType="text" fieldName="startTime">发起时间</th>
+						<th fieldType="selProcessTask" fieldName="processInstanceId">流程详情</th>
+					</tr>
+				</thead>
+				<tbody id="processTable">
+				</tbody>
+			</table>
+		</div>
+		<!-- 分页 -->
+		<div class="pages">
+			<div id="Pagination"></div>
+			<div class="searchPage">
+				<span class="page-sum" id="sumPage"></span>
+				<span class="page-go">跳转<input type="text">页</span> 
+				<a class="page-btn" href="javascript:;">GO</a>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

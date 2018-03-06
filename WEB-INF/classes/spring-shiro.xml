@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans  
+                        http://www.springframework.org/schema/beans/spring-beans-3.1.xsd  
+                        http://www.springframework.org/schema/context  
+                        http://www.springframework.org/schema/context/spring-context-3.1.xsd  
+                        http://www.springframework.org/schema/mvc  
+                        http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+						http://www.springframework.org/schema/tx
+         				http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+         				http://www.springframework.org/schema/aop 
+         				http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+         				http://www.springframework.org/schema/task 
+         				http://www.springframework.org/schema/task/spring-task-3.0.xsd">
+
+	<!-- Shiro部分 -->
+	
+	<!-- 继承自AuthorizingRealm的自定义Realm,即指定Shiro验证用户登录的类为自定义的SSAuthorizingRealm.java -->
+	<!-- 在执行loginController中的login(token)方法时，进入到该bean中 -->
+	<bean id="myRealm" class="com.sss.shiro.SSAuthorizingRealm">
+		<!-- shiro加密版本：若使用shiro自带的加密接口，则对加密算法进行相关配置 -->
+		<property name="credentialsMatcher">
+			<bean class="com.sss.shiro.LimitRetryHashedMatcher">
+				<property name="hashAlgorithmName" value="MD5"></property> <!-- 加密算法的名称 -->
+				<property name="hashIterations" value="1"></property> <!-- 配置加密的次数 -->
+				<property name="wrongTimes" value="5"></property> <!-- 自定义
+				，密码错误次数 -->
+				<property name="lockTime" value="300"></property> <!-- 自定义，密码错误次数过多后锁定用户时长，单位/秒 -->
+			</bean>
+		</property>
+	</bean>
+
+	<bean id="chainDefinitionSectionMetaSource" class="com.sss.shiro.ChainDefinitionSectionMetaSource">
+		<property name="filterChainDefinitions">
+			<value>
+				<!-- /login = authc /logout = logout -->
+				/reportUpload/** = anon
+				/trialCusAdmin/** = anon
+				/messagePushServlet/** = anon
+				/uploadServlet/** = anon
+				/sessionAdmin/** = anon
+				/loginAdmin/** = anon
+				/blogAdmin/** = anon
+				/css/** = anon
+				/fonts/** = anon
+				/images/** = anon
+				/img/** = anon
+				/js/** = anon
+				/app/** = anon
+				/form/** = anon
+				/knowledgeBase/** = anon
+				/login.html = anon
+				/statusPage/** = anon
+				/diagram-viewer/** = anon
+				/editor-app/** = anon
+				/modeler.html = anon
+				/ = anon
+			</value>
+		</property>
+	</bean>
+
+	<!-- Shiro主过滤器本身功能十分强大,其强大之处就在于它支持任何基于URL路径表达式的、自定义的过滤器的执行 -->
+	<!-- Web应用中,Shiro可控制的Web请求必须经过Shiro主过滤器的拦截,Shiro对基于Spring的Web应用提供了完美的支持 -->
+	<bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+		<!-- Shiro的核心安全接口,这个属性是必须的 -->
+		<property name="securityManager" ref="securityManager" />
+		<!-- 要求登录时的链接 -->
+		<property name="loginUrl" value="/login.html" />
+		<!-- 登录成功后要跳转的连接 -->
+		<property name="successUrl" value="/system/main" />
+		<!-- 用户访问未对其授权的资源时,所显示的连接 -->
+		<property name="unauthorizedUrl" value="/statusPage/unauthorizedPage.html" />
+		<!-- Shiro连接约束配置,即过滤链的定义 -->
+		<!-- 此处可配合我的这篇文章来理解各个过滤连的作用http://blog.csdn.net/jadyer/article/details/12172839 -->
+		<!-- 下面value值的第一个'/'代表的路径是相对于HttpServletRequest.getContextPath()的值来的 -->
+		<!-- anon：它对应的过滤器里面是空的,什么都没做,这里.do和.jsp后面的*表示参数,比方说login.jsp?main这种 -->
+		<!-- authc：该过滤器下的页面必须验证后才能访问,它是Shiro内置的一个拦截器org.apache.shiro.web.filter.authc.FormAuthenticationFilter -->
+		<!-- <property name="filterChainDefinitions"> <value> /mydemo/login=roles[] 
+			/mydemo/getVerifyCodeImage=authc /main**=authc /user/info**=authc /listUser**=authc,perms[admin:manage] 
+			</value> </property> -->
+		<!-- shiro连接约束配置,在这里使用自定义的动态获取资源类 -->
+		<property name="filterChainDefinitionMap" ref="chainDefinitionSectionMetaSource" />
+		<!-- 对指定的key设置对应的过滤器 -->
+		<property name="filters">
+			<map>
+				<entry key="roles">
+					<bean class="com.sss.shiro.filter.CustomRolesAuthorizationFilter" />
+				</entry>
+				<entry key="authc">
+					<bean class="com.sss.shiro.filter.CustomFormAuthenticationFilter" />
+				</entry>
+				<entry key="dataAuth">
+					<bean class="com.sss.shiro.filter.CustomDataAuthorizationFilter" />
+				</entry>
+				<entry key="kickout" value-ref="kickoutSessionFilter" >
+				</entry>
+			</map>
+		</property>
+	</bean>
+	
+	<bean id="kickoutSessionFilter" class="com.sss.shiro.filter.KickoutSessionFilter">  
+	    <property name="kickoutUrl" value="/login.html"/>  
+	</bean>  
+	
+	<!-- 保证实现了Shiro内部lifecycle函数的bean执行 -->
+	<bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor" />
+
+	<!-- 开启Shiro的注解(如@RequiresRoles,@RequiresPermissions),需借助SpringAOP扫描使用Shiro注解的类,并在必要时进行安全逻辑验证 -->
+	<!-- 配置以下两个bean即可实现此功能 -->
+	<!-- Enable Shiro Annotations for Spring-configured beans. Only run after 
+		the lifecycleBeanProcessor has run -->
+	<!-- 由于本例中并未使用Shiro注解,故注释掉这两个bean(个人觉得将权限通过注解的方式硬编码在程序中,查看起来不是很方便,没必要使用) -->
+	<!-- <bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator" 
+		depends-on="lifecycleBeanPostProcessor"/> <bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor"> 
+		<property name="securityManager" ref="securityManager"/> </bean> -->
+
+
+	<!-- Shiro默认会使用Servlet容器的Session,可通过sessionMode属性来指定使用Shiro原生Session -->
+	<!-- 即<property name="sessionMode" value="native"/>,详细说明见官方文档 -->
+	<!-- 这里主要是设置自定义的单Realm应用,若有多个Realm,可使用'realms'属性代替 -->
+	<bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+		<!-- shiro非集群下的配置，DefaultWebSecurityManager类不需要注入sessionManager属性，它会使用默认的sessionManager类 -->
+		<property name="realm" ref="myRealm" />
+		<!-- 设置shiro默认的session管理和cache管理 -->
+		<!-- servlet容器实现的sessionManager，sessionManager会管理session的创建、删除等等。如果我们需要让session在集群中共享，就需要替换这个默认的sessionManager。 
+			我们可以看到如果要用集群，就需要用本地会话，这里shiro给我准备了一个默认的native session manager，DefaultWebSessionManager，所以我们要修改spring配置文件，注入DefaultWebSessionManager 
+			看DefaultWebSessionManager的源码，发现其父类DefaultSessionManager中有sessionDAO属性，这个属性是真正实现了session储存的类，这个就是我们自己实现的redis 
+			session的储存类. 如果不自己注入sessionDAO，defaultWebSessionManager会使用MemorySessionDAO做为默认实现类，这不是我们想要的，所以需要自己实现sessionDAO. -->
+		<property name="sessionManager" ref="sessionManager" /> 
+		<!-- <property name="cacheManager" ref="memoryConstrainedCacheManager" /> -->
+	</bean>
+
+	<!-- session部分 -->
+	<!-- 会话Session ID生成器 -->
+	<bean id="sessionIdGenerator"
+		class="org.apache.shiro.session.mgt.eis.JavaUuidSessionIdGenerator" />
+		
+	<!-- session 创建、删除、查询 -->
+	<bean id="jedisShiroSessionRepository" class="com.sss.shiro.session.JedisShiroSessionRepository">
+		<property name="jedisSessionManager" ref="jedisSessionManager" />
+		<!-- 设定shiro相关redis缓存超时时间, 单位:秒 -->
+		<property name="expireTime" value="1800" />
+	</bean>
+	
+	<!-- Session 的监听生命周期，包含sessionid的生成以及session的创建、删除、查询 -->
+	<bean id="customShiroSessionDAO" class="com.sss.shiro.session.CustomShiroSessionDAO">
+		<property name="shiroSessionRepository" ref="jedisShiroSessionRepository" />
+		<property name="sessionIdGenerator" ref="sessionIdGenerator" />
+	</bean>
+
+	<!-- Session 定时管理器（有效期），会话验证调度器 -->
+	<bean id="sessionValidationScheduler"
+		class="org.apache.shiro.session.mgt.ExecutorServiceSessionValidationScheduler">
+		<!-- <property name="interval" value="3600000" /> --> <!-- 检测时间间距，默认是60分钟 -->
+		<property name="sessionManager" ref="sessionManager" />
+	</bean>
+
+	<!-- 会话Cookie模板，配置单点登陆时（同一域名下的项目，或者不同子域下的项目）可以使用。 -->
+	<bean id="sessionIdCookie" class="org.apache.shiro.web.servlet.SimpleCookie">
+		<!--cookie的name -->
+		<constructor-arg value="JSESSIONID" />
+		<property name="httpOnly" value="true" />
+		<!--cookie的有效时间 -->
+		<!-- <property name="maxAge" value="-1" /> -->
+		<property name="path" value="/"></property>
+		<!-- 配置存储Session Cookie的domain为 一级域名 -->
+		<!-- <property name="domain" value="localhost" /> -->
+	</bean>
+
+	<!-- 自定义session监听器 -->
+	<bean id="customSessionListener" class="com.sss.shiro.session.CustomSessionListener"></bean>
+	
+	<!-- Session Manager配置 -->
+	<bean id="sessionManager"
+		class="org.apache.shiro.web.session.mgt.DefaultWebSessionManager">
+		<!-- 相隔多久检查一次session的有效性 -->
+		<property name="sessionValidationInterval" value="1800000" />
+		<!-- session 有效时间为半小时 （毫秒单位） -->
+		<property name="globalSessionTimeout" value="1800000" />
+		<!-- 注入自定义sessionDAO -->
+		<property name="sessionDAO" ref="customShiroSessionDAO" />
+		<!-- session 监听，可以多个。 -->
+		<property name="sessionListeners">
+			<list>
+				<ref bean="customSessionListener" />
+			</list>
+		</property>
+		<!-- 间隔多少时间检查，不配置是60分钟 -->
+		<property name="sessionValidationScheduler" ref="sessionValidationScheduler" />
+		<!-- 是否开启 检测，默认开启 -->
+		<property name="sessionValidationSchedulerEnabled" value="true" />
+		<!-- 是否删除无效的，默认也是开启 -->
+		<property name="deleteInvalidSessions" value="true" />
+		<!-- 会话Cookie模板 -->
+		<!-- <property name="sessionIdCookie" ref="sessionIdCookie" /> -->
+	</bean>
+</beans>

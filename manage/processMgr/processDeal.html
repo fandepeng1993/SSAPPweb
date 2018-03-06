@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>待处理流程</title>
+</head>
+<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+<script type="text/javascript" src="../../js/checkUser.js"></script>
+<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+<script type="text/javascript" src="../../js/UserUtil.js"></script>
+<script type="text/javascript" src="../../js/UserCommon.js"></script>
+<script type="text/javascript" src="../../js/oaProcessJson.js"></script>
+<script type="text/javascript">
+	var menuCode;
+	$(document).ready(function() {
+		menuCode = Request["menuCode"];
+		initTable();
+	});
+
+	var allData = null;
+	var tasks = null;
+	function initTable() {
+		$.ajax({
+			url : "../../OAProcessMgrAdmin/getPendingTask/" + currentUserNo,
+			datatype : "json",
+			type : "get",
+			data : {},
+			success : function(data, status, xhr) {
+				$("#processTable").empty();
+				tasks = data;
+				totalRecords = data.length;
+				//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+				if (totalRecords % pageSize != 0) {
+					totalPages = Math.floor(totalRecords / pageSize) + 1;
+				} else {
+					totalPages = totalRecords / pageSize;
+				}
+				//根据totalPages初始化页码插件
+				$("#sumPage").html( "共<strong class=\"allPage\">" + totalPages + "</strong>页");
+				$("#Pagination").pagination(totalPages);
+			}
+		});
+	}
+
+	var pageSize = 10;
+	var pageNo = 1;//当前的页码
+	var totalRecords = 0;
+	var totalPages = 0;
+	function circleInfos() {
+		$("#processTable").empty();
+		$.each(tasks, function(index, item) {
+			if (index >= ((pageNo - 1) * pageSize)&& index < (pageNo * pageSize)) {
+				new UserCommon().fillTable("processTable", item, index);
+			} else if (index > (pageNo * pageSize)) {
+				return;
+			}
+		});
+		//为checkbox添加监听事件
+		/* new UserCommon().checkboxListener();
+		new UserCommon().radioListener(); */
+		inittAble()
+	}
+
+	function admin_role_add(title, url, w) {
+		new UserCommon().layer_show(title, url, w);
+	}
+
+	//点击按钮打开流程查看表单
+	function fillDetail(id) {
+		console.log(id);
+		var src = "../../OAProcessMgrAdmin/getProcessImg/" + id;
+		getProcessJson(function() {
+			$.each(tasks, function(index, item) {
+				if (item.processInstanceId == id) {
+					if(item.processDefinitionKey=="orderCloseProcess"){
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selOrderProcess.html?processDefinitionKey=" + item.processDefinitionKey + "&processInstanceId=" + item.processInstanceId + "&taskId="+item.taskId+ "&src=" + src, iframeJson.width * 0.95);
+					}else if(item.processDefinitionKey=="sampleProcess"){
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selSampleProcess.html?processDefinitionKey=" + item.processDefinitionKey + "&processInstanceId=" + item.processInstanceId + "&taskId="+item.taskId+ "&src=" + src, iframeJson.width * 0.95);
+					}else if(item.processDefinitionKey=="outSendProcess"){
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selOutSendProcess.html?processDefinitionKey=" + item.processDefinitionKey + "&processInstanceId=" + item.processInstanceId + "&taskId="+item.taskId+ "&src=" + src, iframeJson.width * 0.95);
+					}else if(item.processDefinitionKey=="inventoryProcess"){
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selInventoryProcess.html?processDefinitionKey=" + item.processDefinitionKey + "&processInstanceId=" + item.processInstanceId + "&taskId="+item.taskId+ "&src=" + src, iframeJson.width * 0.95);
+					}else if(item.processDefinitionKey=="paymentProcess"){
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selPaymentProcess.html?processDefinitionKey=" + item.processDefinitionKey + "&processInstanceId=" + item.processInstanceId + "&taskId="+item.taskId+ "&src=" + src, iframeJson.width * 0.95);
+					}else if(item.processDefinitionKey=="purchaseProcess"){
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selPurchaseProcess.html?processDefinitionKey=" + item.processDefinitionKey + "&processInstanceId=" + item.processInstanceId + "&taskId="+item.taskId+ "&src=" + src, iframeJson.width * 0.95);
+					}else if(item.processDefinitionKey=="returnsProcess"){
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selReturnsProcess.html?processDefinitionKey=" + item.processDefinitionKey + "&processInstanceId=" + item.processInstanceId + "&taskId="+item.taskId+ "&src=" + src, iframeJson.width * 0.95);
+					}else if(item.processDefinitionKey=="supplementaryProcess"){
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selSupplementaryProcess.html?processDefinitionKey=" + item.processDefinitionKey + "&processInstanceId=" + item.processInstanceId +"&taskId="+item.taskId+  "&src=" + src, iframeJson.width * 0.95);
+					}else{
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selprocess.html?processDefinitionKey=" + item.processDefinitionKey + "&processInstanceId=" + item.processInstanceId +"&taskId="+item.taskId+ "&src=" + src, iframeJson.width * 0.95);
+					}
+					
+				}
+			});
+		});
+	}
+</script>
+<script type="text/javascript"></script>
+<body>
+	<div class="bt-div-two-table">
+		<div class="table-responsive centerTable">
+			<table class="table table-data-bottom text-center tableHidden">
+				<thead>
+					<tr class="table-first-tr" fieldType="radioTable" fieldName="id">
+						<!-- <th fieldType="checkbox" fieldName="id"><input type="checkbox" name="ifAll" class="all"></th> -->
+						<th fieldType="num" fieldName="">序号</th>
+						<th fieldType="text" fieldName="processName">流程名称</th>
+						<th fieldType="text" fieldName="globelStartUserName">发起人</th>
+						<th fieldType="text" fieldName="processStartTime">开始时间</th>
+						<th fieldType="detailInfo" fieldName="processInstanceId">详细信息</th>
+					</tr>
+				</thead>
+				<tbody id="processTable">
+				</tbody>
+			</table>
+		</div>
+		<!-- 分页 -->
+		<div class="pages">
+			<div id="Pagination"></div>
+			<div class="searchPage">
+				<span class="page-sum" id="sumPage"></span>
+				<span class="page-go">跳转<input type="text">页</span> 
+				<a class="page-btn" href="javascript:;">GO</a>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

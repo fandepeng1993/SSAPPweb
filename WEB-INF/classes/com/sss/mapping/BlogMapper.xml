@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IBlogDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.Blog" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="rootId" property="rootId" jdbcType="INTEGER" />
+    <result column="title" property="title" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    <result column="isLeaf" property="isLeaf" jdbcType="INTEGER" />
+    <result column="readingTimes" property="readingTimes" jdbcType="INTEGER" />
+    <result column="content" property="content" jdbcType="LONGVARCHAR" />
+    <result column="photoUrls" property="photoUrls" jdbcType="VARCHAR" />
+    
+    <association property="user" javaType="com.sss.pojo.User">
+		<id column="bu_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="bu_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="bu_position_name" property="position.positionName" jdbcType="VARCHAR" />
+	    <result column="bu_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="bu_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="bu_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="bu_user_status" property="status" jdbcType="VARCHAR" />
+	    <result column="bu_user_email" property="email" jdbcType="VARCHAR" />
+	    <result column="bu_user_birthDate" property="birthdate" jdbcType="VARCHAR" />
+	    <result column="bu_user_entryDate" property="entrydate" jdbcType="VARCHAR" />
+	    <result column="bu_user_lastlogindate" property="lastlogindate" jdbcType="VARCHAR" />
+	    <result column="bu_user_telephone" property="telephone" jdbcType="VARCHAR" />
+	    <result column="bu_user_address" property="address" jdbcType="VARCHAR" />
+	    <result column="bu_user_eduBackground" property="edubackground" jdbcType="VARCHAR" />
+	    <result column="bu_user_major" property="major" jdbcType="VARCHAR" />
+	    <result column="bu_user_school" property="school" jdbcType="VARCHAR" />
+	    <result column="bu_user_photoUrl" property="photoUrl" jdbcType="VARCHAR" />
+	</association>
+	<association property="parentBlog" javaType="com.sss.pojo.Blog">
+		<id column="bb_blog_id" property="id" jdbcType="INTEGER" />
+	    <result column="bb_blog_rootId" property="rootId" jdbcType="INTEGER" />
+	    <result column="bb_blog_title" property="title" jdbcType="VARCHAR" />
+	    <result column="bb_blog_createdate" property="createdate" jdbcType="VARCHAR" />
+	    <result column="bb_blog_isLeaf" property="isLeaf" jdbcType="INTEGER" />
+	    <result column="bb_blog_content" property="content" jdbcType="LONGVARCHAR" />
+	    <association property="user" javaType="com.sss.pojo.User">
+			<id column="bbu_user_id" property="userId" jdbcType="INTEGER" />
+		    <result column="bbu_user_name" property="userName" jdbcType="VARCHAR" />
+		</association>
+	</association>
+  </resultMap>
+  <resultMap id="ResultMapWithVoteNums" type="com.sss.pojo.dto.BlogDTO" extends="BaseResultMap" >
+    <result column="voteNum" property="voteNum" jdbcType="INTEGER" />
+    <result column="replyNum" property="replyNum" jdbcType="INTEGER" />
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		b.*,
+  		u.user_id as bu_user_id,
+  		u.user_name as bu_user_name,
+  		u.user_no as bu_user_no,
+  		u.position_id as bu_position_id,
+  		pos.position_Name as bu_position_name,
+  		u.sex as bu_user_sex,
+  		u.status as bu_user_status,
+  		u.email as bu_user_email,
+  		u.birthdate as bu_user_birthDate,
+  		u.entrydate as bu_user_entryDate,
+  		u.lastlogindate as bu_user_lastlogindate,
+  		u.telephone as bu_user_telephone,
+  		u.address as bu_user_address,
+  		u.edubackground as bu_user_eduBackground,
+  		u.major as bu_user_major,
+  		u.school as bu_user_school,
+  		u.photoUrl as bu_user_photoUrl,
+  		bb.id as bb_blog_id,
+  		bb.rootId as bb_blog_rootId,
+  		bb.title as bb_blog_title,
+  		bb.createdate as bb_blog_createdate,
+  		bb.isLeaf as bb_blog_isLeaf,
+  		bb.content as bb_blog_content,
+  		uu.user_id as bbu_user_id,
+  		uu.user_name as bbu_user_name
+    from 
+    	ss_blog b
+   	left join
+   		ss_user u
+   	on
+   		b.userId = u.user_id
+   	left join
+   		ss_blog bb
+   	on
+   		bb.id = b.pid
+   	left join 
+   		ss_user uu
+   	on
+   		bb.userId = uu.user_id
+   	left join 
+   		ss_position pos
+   	on 
+   		u.position_id = pos.position_id
+  </sql>
+  <sql id="associateQueryWithVoteNum">
+  	select 
+  		b.*,
+		t.num as voteNum,
+		t1.num as replyNum,
+  		u.user_id as bu_user_id,
+  		u.user_name as bu_user_name,
+  		u.user_no as bu_user_no,
+  		u.position_id as bu_position_id,
+  		pos.position_Name as bu_position_name,
+  		u.sex as bu_user_sex,
+  		u.status as bu_user_status,
+  		u.email as bu_user_email,
+  		u.birthdate as bu_user_birthDate,
+  		u.entrydate as bu_user_entryDate,
+  		u.lastlogindate as bu_user_lastlogindate,
+  		u.telephone as bu_user_telephone,
+  		u.address as bu_user_address,
+  		u.edubackground as bu_user_eduBackground,
+  		u.major as bu_user_major,
+  		u.school as bu_user_school,
+  		u.photoUrl as bu_user_photoUrl,
+  		bb.id as bb_blog_id,
+  		bb.rootId as bb_blog_rootId,
+  		bb.title as bb_blog_title,
+  		bb.createdate as bb_blog_createdate,
+  		bb.isLeaf as bb_blog_isLeaf,
+  		bb.content as bb_blog_content,
+  		uu.user_id as bbu_user_id,
+  		uu.user_name as bbu_user_name
+    from 
+    	ss_blog b
+   	left join
+   		ss_user u
+   	on
+   		b.userId = u.user_id
+   	left join
+   		ss_blog bb
+   	on
+   		bb.id = b.pid
+	left join 
+		(select count(*) num, blog_id as tb_id from ss_blogVote where state=1 group by blog_id) t
+	on
+		t.tb_id = b.id
+	left join
+		(select count(*) num, rootId as tb_rootId from ss_blog group by rootId) t1
+	on
+		t1.tb_rootId = b.id
+	left join 
+   		ss_user uu
+   	on
+   		bb.userId = uu.user_id
+   	left join 
+   		ss_position pos
+   	on 
+   		u.position_id = pos.position_id
+  </sql>
+  
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by b.createdate desc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="ResultMapWithVoteNums" parameterType="java.lang.Integer" >
+    <include refid="associateQueryWithVoteNum" />
+    where b.id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selByRootId" resultMap="ResultMapWithVoteNums" parameterType="java.lang.Integer" >
+    <include refid="associateQueryWithVoteNum" />
+    where b.rootId = #{rootId,jdbcType=INTEGER} order by b.createdate desc
+  </select>
+  <select id="selByRootIdLazy" resultMap="ResultMapWithVoteNums" >
+    <include refid="associateQueryWithVoteNum" />
+    where b.rootId = #{rootId,jdbcType=INTEGER} order by b.createdate desc
+    limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="getBlogsByPidLazy" resultMap="ResultMapWithVoteNums" >
+    <include refid="associateQueryWithVoteNum" />
+    where b.pid = #{pid,jdbcType=INTEGER} order by b.createdate desc
+    limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="getBlogsByPid" resultMap="ResultMapWithVoteNums" >
+    <include refid="associateQueryWithVoteNum" />
+    where b.pid = #{pid,jdbcType=INTEGER} order by b.createdate desc
+  </select>
+  <select id="getCountByRootId" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+    select count(*) from ss_blog
+    where rootId = #{rootId,jdbcType=INTEGER}
+  </select>
+  <select id="selectListByPid" resultMap="ResultMapWithVoteNums" parameterType="java.lang.Integer" >
+    <include refid="associateQueryWithVoteNum" />
+    where b.pid = #{pid,jdbcType=INTEGER} order by b.createdate desc
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_blog
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.Blog" useGeneratedKeys="true" keyProperty="id" >
+    insert into ss_blog (id, pid, rootId, 
+      userId, title, createdate, 
+      isLeaf, content, photoUrls)
+    values (#{id,jdbcType=INTEGER}, #{parentBlog.id,jdbcType=INTEGER}, #{rootId,jdbcType=INTEGER}, 
+      #{user.userId,jdbcType=INTEGER}, #{title,jdbcType=VARCHAR}, #{createdate,jdbcType=VARCHAR}, 
+      #{isLeaf,jdbcType=INTEGER}, #{content,jdbcType=LONGVARCHAR}, #{photoUrls,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.Blog" >
+    <selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+    </selectKey>
+    insert into ss_blog
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="parentBlog != null and parentBlog.id != null" >
+        pid,
+      </if>
+      <if test="rootId != null" >
+        rootId,
+      </if>
+      <if test="user.userId != null" >
+        userId,
+      </if>
+      <if test="title != null" >
+        title,
+      </if>
+      <if test="content != null" >
+        content,
+      </if>
+      <if test="photoUrls != null" >
+        photoUrls,
+      </if>
+      	createdate, isLeaf
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="parentBlog != null and parentBlog.id != null" >
+        #{parentBlog.id,jdbcType=INTEGER},
+      </if>
+      <if test="rootId != null" >
+        #{rootId,jdbcType=INTEGER},
+      </if>
+      <if test="user.userId != null" >
+        #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="title != null" >
+        #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null" >
+        #{content,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="photoUrls != null" >
+        #{photoUrls,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+      <if test="isLeaf == null" >
+        1,
+      </if>
+      <if test="isLeaf != null" >
+        #{isLeaf,jdbcType=INTEGER},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.Blog" >
+    update ss_blog
+    <set >
+      <if test="parentBlog != null and parentBlog.id != null" >
+        pid = #{parentBlog.id,jdbcType=INTEGER},
+      </if>
+      <if test="rootId != null" >
+        rootId = #{rootId,jdbcType=INTEGER},
+      </if>
+      <if test="user != null and user.userId != null" >
+        userId = #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="title != null" >
+        title = #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null" >
+        content = #{content,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="photoUrls != null" >
+        photoUrls = #{photoUrls,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+      <if test="isLeaf != null" >
+        isLeaf = #{isLeaf,jdbcType=INTEGER},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.Blog" >
+    update ss_blog
+    set pid = #{parentBlog.id,jdbcType=INTEGER},
+      rootId = #{rootId,jdbcType=INTEGER},
+      userId = #{user.userId,jdbcType=INTEGER},
+      title = #{title,jdbcType=VARCHAR},
+      photoUrls = #{photoUrls,jdbcType=VARCHAR},
+      createdate = #{createdate,jdbcType=VARCHAR},
+      isLeaf = #{isLeaf,jdbcType=INTEGER}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="readBlog" parameterType="java.lang.Integer" >
+    update ss_blog
+    set readingTimes = readingTimes + 1
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

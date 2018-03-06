@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>选择客户</title>
+<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+<script src="../../js/json/LAreaData2.js" type="text/javascript"></script>
+<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+<script type="text/javascript" src="../../js/bootstrap.autocomplete.js"></script>
+<script type="text/javascript" src="../../js/checkUser.js"></script>
+<script type="text/javascript" src="../../js/UserUtil.js"></script>
+<script type="text/javascript" src="../../js/UserCommon.js"></script>
+<script type="text/javascript" src="../../js/oaProcessJson.js"></script>
+<script src="../../js/jquery-form.js"></script>
+<script type="text/javascript">
+
+	var containerId;
+	//初始化页面
+	$(document).ready(function() {
+		containerId = Request["containerId"];
+		initSelect();
+		//初始化层的大小
+		initLayerSize();
+	});
+
+	/**
+	 *	添加弹出框填写完成之后保存调用的函数
+	 */
+	function save() {
+		var trialCusId = $("#trialCus").val();
+		var url = "../../dockerAdmin/create_docker/" + trialCusId + "," + containerId;
+		if(new UserCommon().show("edit-promit", $("#startForm"), "不能为空！")) {
+			$("#save").attr("disabled","disabled");
+			$.ajax({
+				url: url,
+				datatype: "json",
+				type: "get",
+				success: function (data, status, xhr) {
+					console.log(data);
+					if(data.status == 1) {
+						new UserCommon().check("success",data.msg,null,"success");
+						setTimeout(function (){
+							window.parent.initTable(window.parent.ajaxUrl);
+							$("#save").removeAttr("disabled");
+							new UserCommon().layer_close();
+							//window.parent.location.href = "containerMgr.html?menuCode=" + menuCode;
+						}, 1000);
+					} else {
+						new UserCommon().check("success",data.msg,null,"fail");
+					}
+					
+					//new UserCommon().layer_close();
+				} 
+			});
+		}
+	}
+	
+	function initSelect() {
+		$("#trialCus").empty();
+		var str = "<option value=\"-1\">请选择</option>";
+		$.ajax({
+		      url: "../../trialCusAdmin/trialCusesWithOutBind",
+		      datatype: "text",
+		      type: "get",
+		      data: {},
+		      success: function (data, status, xhr) {
+					$.each(eval("(" + data + ")"), function(index, item) {
+						str = str + "<option value=\"" + item.id + "\">" + item.companyName + "</option>"
+					});
+					$("#trialCus").html(str);
+		      }
+		});
+	}
+</script>
+</head>
+<body>
+	<div class="edit">
+		<div class="edit-content">
+			<div class="edit-in">
+				<form id="startForm">
+					<div class="zsy">
+						<div class="zsy-common">
+							<div class="zsy-common-left">
+								<label><span style="color: red; font-size: 18px">*</span>对应客户名称：</label>
+							</div>
+							<div class="zsy-common-right">
+								<select type="text" iseditable="true" name="trialCus" id="trialCus"
+									value="" isreadonly="false" isdisable="false" isvisible="true"
+									label="客户名称" errormsg="不能为空！" isempty="false"
+									class="input-text" style="">
+								</select>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+			<div class="edit-bottom">
+				<button type="button" id="close" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();"><i class="glyphicon glyphicon-remove"></i>&nbsp;关闭</button>
+				<button type="button" id="save" class="btn btn-xs edit-save btn-primary" onclick="save()"><i class="glyphicon glyphicon-ok"></i>&nbsp;启动</button>
+			</div>
+		</div>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert"
+				aria-hidden="true">&times;</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span> <span></span>
+			<div>
+				<img src="../../images/sanjiao.png" width="10">
+			</div>
+		</div>
+	</div>
+</body>
+</html>

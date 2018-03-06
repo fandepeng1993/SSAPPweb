@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.mes.dao.IViewPeopleReportDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.mes.pojo.ViewPeopleReport" >
+    <result column="ProduceM_Id" property="producemId" jdbcType="INTEGER" />
+    <result column="ProduceM_MergerValue" property="producemMergervalue" jdbcType="VARCHAR" />
+    <result column="ProduceM_Model" property="producemModel" jdbcType="VARCHAR" />
+    <result column="D_UserName" property="dUsername" jdbcType="VARCHAR" />
+    <result column="avgnumber" property="avgnumber" jdbcType="DECIMAL" />
+    <result column="avgweight" property="avgweight" jdbcType="DECIMAL" />
+    <result column="D_END" property="dEnd" jdbcType="VARCHAR" />
+    <result column="D_Steps" property="dSteps" jdbcType="INTEGER" />
+    <result column="ProduceM_Price" property="producemPrice" jdbcType="DECIMAL" />
+    <result column="ProduceM_TotalPrice" property="producemTotalprice" jdbcType="DECIMAL" />
+    <result column="ProduceM_BillNo" property="producemBillno" jdbcType="VARCHAR" />
+    <result column="ProduceM_Spec" property="producemSpec" jdbcType="VARCHAR" />
+    <result column="ProduceM_Name" property="producemName" jdbcType="VARCHAR" />
+    <result column="ProduceM_EquipmentId" property="producemEquipmentid" jdbcType="INTEGER" />
+    <result column="P_Type" property="pType" jdbcType="BIGINT" />
+    <result column="ProduceM_EquipmentName" property="producemEquipmentname" jdbcType="VARCHAR" />
+  </resultMap>
+  <resultMap id="BaseResultMap1" type="com.sss.pojo.dto.GoodUser" >
+    <result column="id" property="id" jdbcType="INTEGER" />
+    <result column="produceM_Name" property="produceM_Name" jdbcType="VARCHAR" />
+    <result column="userName" property="userName" jdbcType="VARCHAR" />
+    <result column="totalWeight" property="totalWeight" jdbcType="DECIMAL" />
+    <result column="uid" property="uid" jdbcType="VARCHAR" />
+  </resultMap>
+  <resultMap id="ChartResultMap" type="com.sss.pojo.dto.PeopleReportDataDTO" >
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="total" property="total" jdbcType="INTEGER" />
+    <result column="day" property="day" jdbcType="VARCHAR" />
+  </resultMap>
+  <cache 
+  	eviction="FIFO" 
+  	flushInterval="900000" 
+	size="512" 
+	readOnly="true"/> 
+  <select id="getViewEntitys" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select D_UserName,ProduceM_BillNo,ProduceM_Name,avgnumber,avgweight,Producem_price,ProduceM_Totalprice,D_END,Producem_Spec from view_people_report 
+	where D_END>=#{startTime,jdbcType=VARCHAR} 
+	order by D_END desc
+  </select>
+  <select id="getVprsByPageNoAndSize" resultMap="BaseResultMap" >
+    select D_UserName,ProduceM_BillNo,ProduceM_Name,avgnumber,avgweight,Producem_price,ProduceM_Totalprice,D_END,Producem_Spec from view_people_report 
+	where D_END>=#{startTime,jdbcType=VARCHAR} 
+	order by D_END desc 
+	limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="getEntitysCount" resultType="java.lang.Integer" parameterType="java.lang.String" >
+    select count(*) from view_people_report 
+    where D_End>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <!--  根据用户姓名查看 -->
+  <select id="getViewEntitysByUserName" resultMap="BaseResultMap" >
+    select D_UserName,ProduceM_BillNo,ProduceM_Name,avgnumber,avgweight,Producem_price,ProduceM_Totalprice,D_END,Producem_Spec from view_people_report 
+    where D_UserName=#{userName,jdbcType=VARCHAR} and D_END>=#{startTime,jdbcType=VARCHAR}
+    order by D_END desc 
+  </select>
+  <select id="userVprsByPageNoAndSize" resultMap="BaseResultMap" >
+    select D_UserName,ProduceM_BillNo,ProduceM_Name,avgnumber,avgweight,Producem_price,ProduceM_Totalprice,D_END,Producem_Spec from view_people_report 
+	where D_UserName=#{userName,jdbcType=VARCHAR} and D_END>=#{startTime,jdbcType=VARCHAR} 
+	order by D_END desc 
+	limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  
+  <select id="getViewEntitysByproduceM_Name" resultMap="BaseResultMap" >
+    select D_UserName,ProduceM_BillNo,ProduceM_Name,avgnumber,avgweight from view_people_report 
+    where produceM_Name=#{produceM_Name,jdbcType=VARCHAR} and D_END>=#{startTime,jdbcType=VARCHAR}
+    order by D_END desc 
+  </select>
+  <select id="getGoodUsers" resultMap="BaseResultMap1" >
+    select * from exc_emp_count
+  </select>
+  <select id="getTotalWeight" resultType="java.math.BigDecimal" parameterType="java.lang.String" >
+    select sum(avgweight) from view_people_report 
+    where D_END>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <select id="getTotalQuantity" resultType="java.math.BigDecimal" parameterType="java.lang.String" >
+    select sum(avgnumber) from view_people_report 
+    where D_END>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <select id="getTotalWeightByProduceM_Name" resultType="java.math.BigDecimal" >
+    select sum(avgweight) from view_people_report 
+    where produceM_Name=#{produceM_Name,jdbcType=VARCHAR} and D_END>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <select id="getTotalQuantityByProduceM_Name" resultType="java.math.BigDecimal" >
+    select sum(avgnumber) from view_people_report 
+    where produceM_Name=#{produceM_Name,jdbcType=VARCHAR} and D_END>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <select id="getTotalWeightByUserName" resultType="java.math.BigDecimal" >
+    select sum(avgweight) from view_people_report 
+    where D_UserName=#{userName,jdbcType=VARCHAR} and D_END>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <select id="getTotalQuantityByUserName" resultType="java.math.BigDecimal" >
+    select sum(avgnumber) from view_people_report 
+    where D_UserName=#{userName,jdbcType=VARCHAR} and D_END>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <select id="getReportDataByUName" resultMap="ChartResultMap" >
+  	SELECT
+		D_UserName AS name,
+		SUM(avgweight) AS total,
+		DATE_FORMAT(D_END, '%Y-%m-%d') AS day
+	FROM
+		view_people_report
+	WHERE
+		D_UserName = #{userName,jdbcType=VARCHAR}
+	AND MONTH (D_END) = #{month,jdbcType=INTEGER}
+	AND YEAR (D_END) = #{year,jdbcType=INTEGER}
+	GROUP BY
+		DAY (D_END)
+  </select>
+  <select id="getReportDataByProName" resultMap="ChartResultMap" >
+  	SELECT
+		Producem_Name AS name,
+		SUM(avgweight) AS total,
+		DATE_FORMAT(D_END, '%Y-%m-%d') AS day
+	FROM
+		view_people_report
+	WHERE
+		Producem_Name = #{proName,jdbcType=VARCHAR}
+	AND MONTH (D_END) = #{month,jdbcType=INTEGER}
+	AND YEAR (D_END) = #{year,jdbcType=INTEGER}
+	GROUP BY
+		DAY (D_END);
+  </select>
+</mapper>

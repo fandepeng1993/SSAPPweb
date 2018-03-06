@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>客户分配管理</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+	
+		var aH3;
+		var aDiv;
+		function initTab() {
+			aH3=$("#cen_right_top").children("h3");
+			aDiv=$("#cen_right_top").children("div");
+			for(var i=0;i<aH3.length;i++)
+			{
+				aH3[i].index=i;
+				aH3[i].onclick=function() {
+					for(var i=0;i<aH3.length;i++) {
+						aH3[i].className="";
+						aDiv[i].style.display="none";
+					}
+					this.className="white";
+					aDiv[this.index].style.display="block";
+				}
+			}
+		}
+		
+		//设定查看的权限。1：查看所有；2：查看直属下级；3：查看所有下级；4：查看自己；
+		var selPri = -1;
+		//当前页面所属菜单的menuCode
+	    var menuCode;
+		//根据权限渲染页面
+		$(document).ready(function(){ 
+			menuCode = Request["menuCode"];
+			$.ajax({
+				url: "../../sessionAdmin/getPri",
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					var pathname = window.location.pathname;
+					var url = pathname.substring(pathname.indexOf("/", 1) + 1, pathname.length);
+					$.each(eval("(" + data + ")"), function(index, item) {
+						if(item.menuUrl == url) {
+							setSelPriByMenuName(item.menuName);
+							if(item.menuName == "分配") {
+		      					$("#update-g").show();
+		      				}
+						}
+					});
+					
+					switch(selPri) {
+		    	  	case 1:
+		    	  		initTable("../../cusAdmin/customers");
+      					lookShow();
+		    	  		break;
+		    	  	case 2:
+		    	  		initTable("../../cusAdmin/cusesByUserPri/" + currentUserId + "," + selPri);
+      					lookShow();
+      					break;
+		    	  	case 3:
+		    	  		initTable("../../cusAdmin/cusesByUserPri/" + currentUserId + "," + selPri);
+      					lookShow();
+      					break;
+		    	  	case 4:
+		    	  		initTable("../../cusAdmin/cusesByUserPri/" + currentUserId + "," + selPri);
+      					lookShow();
+      					break;
+		    	  	}
+				} 
+			});
+			initTab();
+		});
+		
+		//未分配客户部分
+		var cusesWithSaleM = new Array();
+		
+		var pageSize_v = 10;
+		var pageNo_v = 1;//当前的页码
+		var totalRecords_v = 0;
+		var totalPages_v = 0;
+
+		function circleInfos_v() {
+			 $("#cusWithSaleMTable").empty();
+			 $.each(cusesWithSaleM, function(index, item) {
+				 if(index >= ((pageNo_v-1)*pageSize_v) && index < (pageNo_v*pageSize_v)) {
+					 new UserCommon().fillTable("cusWithSaleMTable",item,index);
+					 
+				 } else if(index > (pageNo_v*pageSize_v)) {
+					 return;
+				 }
+				 //为checkbox添加监听事件
+				 new UserCommon().checkboxListener();
+		      });
+		}
+		//初始化两个表单
+		function initTwoTable() {
+			$.each(allData, function (index, item) {
+				if(item.salesman == null) {
+					cusesWithSaleM.push(item);
+				} else {
+					cusesWithOutSaleM.push(item);
+				}
+			});
+			
+			initTwoTablePage();
+		}
+		//初始化两个表单的分页插件
+		function initTwoTablePage() {
+			//未分配客户部分
+			totalRecords_v = cusesWithSaleM.length;
+			//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+			if(totalRecords_v % pageSize_v != 0) {
+				totalPages_v = Math.floor(totalRecords_v / pageSize_v) + 1;
+			} else {
+				totalPages_v = totalRecords_v / pageSize_v;
+			}
+			//根据totalPages初始化页码插件
+			$("#sumPage").html("共<strong class=\"allPage\">" + totalPages_v + "</strong>页");
+			$("#Pagination").pagination(totalPages_v, {"index":1});
+			
+			//已分配客户部分
+			totalRecords = cusesWithOutSaleM.length;
+			//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+			if(totalRecords % pageSize != 0) {
+				totalPages = Math.floor(totalRecords / pageSize) + 1;
+			} else {
+				totalPages = totalRecords / pageSize;
+			}
+			//根据totalPages初始化页码插件
+			$("#sumPage1").html("共<strong class=\"allPage1\">" + totalPages + "</strong>页");
+			$("#Pagination1").pagination(totalPages);
+		}
+		
+		//已分配客户部分
+		function lookShow() {
+			$("#search-g").show();
+			$("#keySpan").show();
+			$("#keyWords").show();
+		}
+		
+		var allData = null;
+		var cusesWithOutSaleM = new Array();
+		function initTable(url) {
+			$.ajax({
+				url: url,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					$("#cusWithOutSaleMTable").empty();
+					allData = eval("(" + data + ")");
+					initTwoTable();
+				} 
+			});
+		}
+		var pageSize = 10;
+		var pageNo = 1;//当前的页码
+		var totalRecords = 0;
+		var totalPages = 0;
+
+		function circleInfos() {
+			 $("#cusWithOutSaleMTable").empty();
+			 $.each(cusesWithOutSaleM, function(index, item) {
+				 if(index >= ((pageNo-1)*pageSize) && index < (pageNo*pageSize)) {
+					 new UserCommon().fillTable("cusWithOutSaleMTable",item,index);
+					 
+				 } else if(index > (pageNo*pageSize)) {
+					 return;
+				 }
+				 //为checkbox添加监听事件
+				 new UserCommon().checkboxListener();
+		     });
+		}
+		
+		/**
+		 * 选择修改后填充相关信息
+		 */
+		function fillUpdateForm() {
+			var but = $("input[name='selectFlag']");
+			var selCusIds;
+			var num = 0;
+			for(var i=0; i<but.length; i++) {
+				if(but[i].checked) { 
+					if(num == 0) {
+						selCusIds = but[i].value;
+					}
+					num += 1;
+					//alert(but[i].value);
+				}
+			} 
+			if(num == 1) {
+				$.each(cusesWithSaleM, function(index, item) {
+					if(item.id == selCusIds) {
+						admin_role_add('<strong>客户修改</strong>',"editCusAssign.html?menuCode=" + menuCode + "&cusId=" + item.id + "&selPri=" + selPri, iframeJson.width*0.5);
+					}
+			    });
+				$.each(cusesWithOutSaleM, function(index, item) {
+					if(item.id == selCusIds) {
+						admin_role_add('<strong>客户修改</strong>',"editCusAssign.html?menuCode=" + menuCode + "&cusId=" + item.id + "&selPri=" + selPri, iframeJson.width*0.5);
+					}
+			    });
+			} else {
+				new UserCommon().check("success","请选择一个客户！",null,"warning");
+			}
+		}
+
+		function getCusesByKey () {
+			var keyWords = $("#keyWords").val();
+			
+			cusesWithSaleM = new Array();
+			cusesWithOutSaleM = new Array();
+			$.each(allData, function (index, item) {
+				if(item.salesman == null && item.customerName.indexOf(keyWords) != -1) {
+					cusesWithSaleM.push(item);
+				} else if (item.customerName.indexOf(keyWords) != -1) {
+					cusesWithOutSaleM.push(item);
+				}
+			});
+			
+			initTwoTablePage();
+		}	
+		
+		/*管理员-角色-添加*/
+		function admin_role_add(title,url,w,h){
+			new UserCommon().layer_show(title,url,w,h);
+		}
+	</script>
+</head>
+<body>
+	<div class="bt-div">
+		<div class="bt-div-in">
+			<button id="update-g" class="btn btn-default btn-xs bt-two" onclick="fillUpdateForm()">
+				<span class="glyphicon glyphicon-edit color-edit"></span> 分配
+			</button>
+			<span class="bt-div-title" id="keySpan">客户姓名:</span>
+			<input class="bt-div-input" type="text" id="keyWords">
+			<button class="btn btn-default bt-div-bt" id="search-g" onclick="getCusesByKey()">
+				<span class="glyphicon glyphicon-search color-zn"></span> 搜索
+			</button>
+		</div>
+	</div>
+	<div class="edit">
+		<div class="edit-content">
+			<div class="edit-in">
+				<div id="cen_right_top">
+					<h3 class="white">未分配客户</h3>
+					<h3>已分配客户</h3>
+					<div class="div" style="display:block">
+						<div class="bt-div-two-table">
+							<div class="table-responsive centerTable">
+								<table class="table table-data-bottom text-center tableHidden">
+									<thead>
+										<tr class="table-first-tr" fieldType="controlCB" fieldName="id">
+											<th fieldType="checkbox" fieldName="id"><input type="checkbox" name="ifAll" class="all"></th>
+											<th fieldType="num" fieldName="">序号</th>
+											<th fieldType="text" fieldName="customerName">客户姓名</th>
+											<th fieldType="text" fieldName="source">客户来源</th>
+											<th fieldType="text" fieldName="type">客户类型</th>
+											<th fieldType="text" fieldName="salesman.userName">业务员</th>
+											<th fieldType="datetime" fieldName="createdate">发布时间</th>
+											<th fieldType="text" fieldName="creator.userName">发布员</th>
+										</tr>
+									</thead>
+									<tbody id="cusWithSaleMTable">
+									</tbody>
+								</table> 
+							</div>
+							<!-- 分页 -->
+							<div class="pages">
+						        <div id="Pagination"></div>
+						        <div class="searchPage">
+						          <span class="page-sum" id="sumPage"></span>
+						          <span class="page-go">跳转<input type="text">页</span>
+						          <a class="page-btn" href="javascript:;">GO</a>
+						        </div>
+						    </div>
+						</div>
+					</div>
+					<div class="div">
+						<div class="bt-div-two-table">
+							<div class="table-responsive centerTable">
+								<table class="table table-data-bottom text-center tableHidden">
+									<thead>
+										<tr class="table-first-tr" fieldType="controlCB" fieldName="id">
+											<th fieldType="checkbox" fieldName="id"><input type="checkbox" name="ifAll" class="all"></th>
+											<th fieldType="num" fieldName="">序号</th>
+											<th fieldType="text" fieldName="customerName">客户姓名</th>
+											<th fieldType="text" fieldName="source">客户来源</th>
+											<th fieldType="text" fieldName="type">客户类型</th>
+											<th fieldType="text" fieldName="salesman.userName">业务员</th>
+											<th fieldType="datetime" fieldName="createdate">发布时间</th>
+											<th fieldType="text" fieldName="creator.userName">发布员</th>
+										</tr>
+									</thead>
+									<tbody id="cusWithOutSaleMTable">
+									</tbody>
+								</table> 
+							</div>
+							<!-- 分页 -->
+							<div class="pages">
+						        <div id="Pagination1"></div>
+						        <div class="searchPage">
+						          <span class="page-sum" id="sumPage1"></span>
+						          <span class="page-go1">跳转<input type="text">页</span>
+						          <a class="page-btn1" href="javascript:;">GO</a>
+						        </div>
+						    </div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- <div class="edit-bottom">
+				<input type="button" class="btn btn-xs close-login edit-close" onclick="new UserCommon().layer_close();" value="关闭">
+				<input type="button" class="btn btn-xs edit-save" onclick="save()" value="保存">
+			</div> -->
+		</div>	
+	</div>
+	
+	
+	
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+</body>
+</html>

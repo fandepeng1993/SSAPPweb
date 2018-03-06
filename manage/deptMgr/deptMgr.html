@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>组织架构</title>    
+    <link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css?v=3.3.5" rel="stylesheet">
+    <link href="../../css/font-awesome.min.css" rel="stylesheet">
+    <link href="../../css/plugins/jsTree/style.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" type="text/css" href="../../css/plugins/iCheck/custom.css">
+  	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/plugins/jsTree/jstree.min.js"></script>
+	
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		//当前页面所属菜单的menuCode
+	    var menuCode;
+		var depts;
+		//根据权限渲染页面
+		$(document).ready(function(){ 
+			menuCode = Request["menuCode"];
+			$.ajax({
+			      url: "../../sessionAdmin/getPri",
+			      datatype: "json",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+			    	  var pathname = window.location.pathname;
+			    	  var url = pathname.substring(pathname.indexOf("/", 1) + 1, pathname.length);
+			    	  $.each(eval("(" + data + ")"), function(index, item) {
+			      			if(item.menuUrl == url) {
+			      				if(item.menuName == "查看") {
+			      					/* initTable(); */
+			      					init(1);
+			      					fillTable(1);
+			      					$("#deptTable").show();
+			      					$("#deptInfoTable").show();
+			      					/* display('1',1); */
+			      				} else if(item.menuName == "增加") {
+			      					$("#add-g").show();
+			      				} else if(item.menuName == "修改") {
+			      					$("#update-g").show();
+			      				} else if(item.menuName == "删除") {
+			      					$("#delete-g").show();
+			      				}
+			      			}
+			    	  });
+			      } 
+			});
+		});
+			
+
+			
+			 /**
+		     *	统一根据父级菜单Id填充其children
+		     */
+		     function fillChildrenByMenuPid(menuPid, childrenArr) {
+		     	for(var index in allMenuData){
+		     		var RpDeptName;
+		     		if(allMenuData[index].deptName){
+		     			RpDeptName=(allMenuData[index].deptName).replace(/├/g, "");
+		     		}
+		     		
+		 			var childData= {
+		   		            "text":RpDeptName,
+		   		            "children": [],
+		   		            "state": {
+		   		                "opened": false
+		   		            },
+		   		            "menuID":allMenuData[index].deptId
+		 			};
+		   		  	if(childData.text && allMenuData[index].parentDept && allMenuData[index].parentDept.deptId==menuPid){
+		   		  		
+		   		  		if(allMenuData[index].isLeaf == 0 ) {
+		 	  		  		fillChildrenByMenuPid(childData.menuID,childData.children);
+		   		  		}
+		 				childrenArr.push(childData);
+		 			}
+		   		    
+		 		}
+		    
+		     }
+		     
+		    var allMenuData;
+		    var stateValue=2;
+		     
+		 	function init(id) {
+		 		$.ajax({
+		 		      url: "../../deptAdmin/depts",
+		 		      datatype: "json",
+		 		      type: "get",
+		 		      data: {},
+		 		      success: function (data, status, xhr) {
+		 		    	  depts=data;
+		 		    	  allMenuData=JSON.parse(data);
+		 		    	 
+		 		    	  var mydata= {
+		 		    			    "data": [{
+		 		    			        "text": "上上德盛集团",
+		 		    			        "state": {"opened": true},
+		 		    			        "children":[],
+		 		    			        "menuID":1
+		 		    			    }]
+		 		    			}
+		 		    	  
+		 		    	     fillChildrenByMenuPid(1, mydata.data[0].children);
+		 		    	
+		 		    		 $("#using_json").jstree({
+		 			    		  'core': mydata,
+		 			    		  "plugins": ["types", "dnd"],
+		 			    		 "types": {
+					                  "default": {"icon": "fa fa-folder"},
+					                  "html": {"icon": "fa fa-file-code-o"},
+					                  "svg": {"icon": "fa fa-file-picture-o"},
+					                  "css": {"icon": "fa fa-file-code-o"},
+					                  "img": {"icon": "fa fa-file-image-o"},
+					                  "js": {"icon": "fa fa-file-text-o"}
+					              }
+		 			    		  
+		 		   	     	 }).on('changed.jstree', function (e, data) {
+		 						
+		 						if(typeof(data.node) != "undefined") {
+			 						var tempValue=data.node.original.menuID;
+			 						fillTable(data.node.original.menuID);
+			 						/* if(tempValue!=1 && tempValue!=stateValue){
+			 							stateValue=data.node.original.menuID;
+			 							fillTable(data.node.original.menuID);
+			 						}else{
+			 							
+			 						} */
+		 						}
+		 		   	    	
+		 		   	      }).on('loaded.jstree', function(e, data){  
+		 		   	    		var inst = data.instance;
+				 		   	    var obj = inst.get_node(e.target.lastChild.lastChild.lastChild.firstChild);  
+				 		   	      
+				 		   	    inst.select_node(obj);  
+				 		  })
+							//$('.jstree-node').eq(1).attr("aria-selected","true").find('.jstree-anchor').addClass('jstree-clicked');
+		 		      }
+		 		});
+		 	}
+		    
+
+			
+			
+			/*查询根部门*/
+			/* $.ajax({
+				url: "../../deptAdmin/dept/1",
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					var rootDeptName = eval("(" + data + ")").deptName;
+					$("#rootDept").html(rootDeptName + "<span id=\"hand1\" class=\"glyphicon glyphicon-hand-right zzjg-hand\"></span>");
+				} 
+			}); */
+		
+		</script>
+	    <script type="text/javascript">
+	   	var flag = true;
+	    function chkRadio(id) {
+		    id.checked = flag;
+		    flag = !flag;
+	    }
+	    
+		/* var depts;
+		function initTable() {
+		 	$.ajax({
+				url: "../../deptAdmin/depts",
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					depts = data;
+				} 
+			});
+		}
+		    
+		function display(id, grade) {
+			eval("var div=div"+id);
+			eval("var img=img"+id);
+			eval("var im=im"+id);
+			//判断是否为加号，若为加号，则取其孩子，列在div中。
+			//alert(div.style.display);
+			if(div.style.display=="none") {
+				ajax(id, grade);
+			}
+			div.style.display=div.style.display=="block"?"none":"block";
+			img.src=div.style.display=="block"?"../../images/jian.png":"../../images/add.png";
+			im.src=div.style.display=="block"?"../../images/home.png":"../../images/home.png";
+			img.alt=div.style.display=="block"?"关闭":"展开";
+		}
+ */
+		/* function ajax(id, grade) {
+			$.ajax({
+			      url: "../../deptAdmin/getDeptByPid/" + id,
+			      datatype: "json",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+			      	  $("#div" + id).empty();
+			    	  $.each(eval("(" + data + ")"), function(index, item) {
+			    	  	  var str = "";
+			    	  	  if(item.isLeaf == 0) {
+				    	  	  str = str + "<div>";
+				    	  	  for(var i=0;i<grade;i++) {
+				    	  		  str = str + "<img src=\"../../images/white.gif\">";
+				    	  	  }
+							  str = str + "<img alt=\"展开\" style=\"cursor:hand;\" onClick=\"display('" + item.deptId + "'," + (grade+1) + ");\" id=\"img" + item.deptId + "\" src=\"../../images/2_clos.gif\">" + 
+										"<img id=\"im" + item.deptId + "\" src=\"../../images/home.png\">" + 
+										"<button onclick=\"fillTable(" + item.deptId + ")\" class=\"btn btn-link\" target=\"clientDispAreaFrame\" style=\"font-size:13px;padding-left:0px;padding-bottom:0px;outline:none;\">" + item.deptName + 
+										"<span id=\"hand" + item.deptId + "\" class=\"glyphicon glyphicon-hand-right hand\" style=\"display:none;padding-left:3px;\"></span></button>" + 
+										"<div style=\"display:none;margin-top:3px;\" id=\"div" + item.deptId + "\">" +
+										"</div>";
+			    	  	  } else if (item.isLeaf == 1) {
+							  str = str + "<div class=\"zzjg-height\">";
+							  for(var i=0;i<grade;i++) {
+				    	  		  str = str + "<img src=\"../../images/white.gif\">";
+				    	  	  }
+							  str = str + "<img alt=\"展开\" style=\"cursor:hand;\" onClick=\"display('" + item.deptId + "'," + (grade+1) + ");\" id=\"img" + item.deptId + "\" src=\"../../images/3_none.gif\">" + 
+										"<img id=\"im" + item.deptId + "\" src=\"../../images/yellow.png\">" + 
+										"<button onclick=\"fillTable(" + item.deptId + ")\" class=\"btn btn-link\" target=\"clientDispAreaFrame\" style=\"font-size:13px;padding-left:0px;padding-bottom:0px;outline:none;\">" + item.deptName + 
+										"<span id=\"hand" + item.deptId + "\" class=\"glyphicon glyphicon-hand-right hand\" style=\"display:none;padding-left:3px;\"></span></button>" + 
+										"</div>";
+			    	  	  }
+			      		  $("#div" + id).append(str);
+			      	  });
+			    	  //初始选中默认部门
+			    	  fillTable(1);
+			      } 
+			});
+		} */
+		//定义选中的部门Id
+		var selDeptId;
+		/**
+		 * 点击部门后，填充右边的部门详细信息表单
+		 */
+		function fillTable(id) {
+			$.ajax({
+				url: "../../deptAdmin/dept/" + id,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					var deptJson = eval("(" + data + ")");
+					//$("#tr").html("" + deptJson.deptId);
+					selDeptId = deptJson.deptId;
+					$("#deptName").html("<td style=\"width:30%;background:#ededed\">名称：</td><td style=\"width:70%\">" + deptJson.deptName + "</td>");
+					if(deptJson.respPeople == null) {
+						$("#respPeople").html("<td style=\"background:#ededed\">负责人：</td><td></td>");
+						$("#telephone").html("<td style=\"background:#ededed\">电话：</td><td></td>");
+						$("#email").html("<td style=\"background:#ededed\">邮箱：</td><td></td>");
+					} else {
+						$("#respPeople").html("<td style=\"background:#ededed\">负责人：</td><td>" + deptJson.respPeople.userName + "</td>");
+						$("#telephone").html("<td style=\"background:#ededed\">电话：</td><td>" + deptJson.respPeople.telephone + "</td>");
+						$("#email").html("<td style=\"background:#ededed\">邮箱：</td><td>" + deptJson.respPeople.email + "</td>");
+					}
+					$("#createdate").html("<td style=\"background:#ededed\">创建时间：</td><td>" + deptJson.createdate.substring(0, deptJson.createdate.length-2) + "</td>");
+					
+					//添加手型选中
+					$("#deptTable").find("span").hide();
+					$("#hand" + id).show(); 
+				} 
+			});
+		}
+		/**
+		 * 点击添加按钮后，填充相关下拉菜单
+		 */
+		function fillAddSelect() {
+			//初始化所属部门下拉菜单
+		 	$("#parentDept").empty();
+			var str = "<option value=\"-1\">请选择</option>";
+			$.ajax({
+			      url: "../../deptAdmin/depts",
+			      datatype: "text",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+						$.each(eval("(" + data + ")"), function(index, item) {
+							str = str + "<option value=\"" + item.deptId + "\">" + item.deptName + "</option>"
+						});
+						$("#parentDept").html(str);
+			      }
+			});
+		}
+		
+		/**
+		 * 选择修改后填充相关信息
+		 */
+		function fillUpdateSelect() {
+			if(selDeptId != null) {
+				$.each(eval("(" + depts + ")"), function(index, item) {
+					if(item.deptId == selDeptId) {
+						admin_role_add('<strong>修改组织架构</strong>',"editDept.html?menuCode=" + menuCode + "&deptId=" + item.deptId,'540');
+					}
+			    });
+			} else {
+				new UserCommon().check("success","请选中要修改的部门！",null,"warning");
+			}
+		}
+		
+		function deleteDept() {
+			if(selDeptId != null) {
+				layer.confirm('要删除么？',function(index){
+					$.ajax({
+					      url: "../../deptAdmin/dept/" + selDeptId,
+					      datatype: "text",
+					      type: "delete",
+					      data: {},
+					      success: function (data) {
+					    	  var json = eval("(" + data + ")");
+					    	  if(json.status == 1) {
+					    		  new UserCommon().check("success",json.msg,"deptMgr.html?menuCode=" + menuCode,"success");
+					    		 
+						    			 /* new UserCommon().layer_close();*/
+				    		  			/*  console.log($('#using_json')) */
+				    		  			window.location.reload()		    		
+					    	  } else {
+					    		  new UserCommon().check("success",json.msg,null,"fail");
+					    	  }
+					      }
+					});
+				});
+			} else {
+				new UserCommon().check("success","请选中要删除的部门！",null,"warning");
+			}
+		}
+		/*管理员-角色-添加*/
+		function admin_role_add(title,url,w){
+			new UserCommon().layer_show(title,url,w);
+		}
+		function AddDeptMgr() {
+			admin_role_add('<strong>组织架构添加</strong>',"addDept.html?menuCode=" + menuCode,'540');
+		}
+    </script>
+</head>
+<body>
+	<div class="bt-div">
+	   	<div class="bt-div-in">
+			<button type="button" class="btn btn-default btn-xs bt-one" id="add-g" onclick="AddDeptMgr()">
+				<span class="glyphicon glyphicon-plus color-add"></span> 添加
+			</button>
+			<button type="button" class="btn btn-default btn-xs bt-two" id="update-g" onclick="fillUpdateSelect()">
+				<span class="glyphicon glyphicon-edit color-edit"></span> 修改
+			</button>
+			<button type="button" class="btn btn-default btn-xs bt-three" id="delete-g" onclick="deleteDept()">
+				<span class="glyphicon glyphicon glyphicon-trash color-del"></span> 删除
+			</button>
+		</div>
+	</div>
+	<div class="content-left" style="border: 1px solid #d6e7f7;border-bottom: 0px;">
+		<div class="content-left-top">
+			<span class="content-padding">组织架构</span>
+		</div>
+		<div id="using_json"></div>
+		<!-- <table class="content-left-table hid" id="deptTable">
+			<tr>
+				<td valign="top" nowrap="nowrap">
+					<img alt="展开" style="cursor:hand;" onClick="display('1',1);" id="img1" src="../../images/add.png">
+					<img id="im1" src="../../images/home.png">
+					<button id="rootDept" onclick="fillTable(1)" class="btn btn-link zzjg-button" target="clientDispAreaFrame">
+						集团公司<span id="hand1" class="glyphicon glyphicon-hand-right zzjg-hand"></span>
+					</button> 
+					<div style="display:none" class="zzjg-div" id="div1"></div>
+				</td>
+			</tr>
+		</table> -->
+	</div>
+	<div class="content-right adapterRight">
+		 <div class="table-responsive">
+            <table class="table table-bordered table-center-hid" id="deptInfoTable">
+	            <tbody>
+	                <tr id="deptName">
+	                	<td class="zzjg-less">名称：</td>
+                    	<td class="zzjg-more"></td>
+	                </tr>
+	                <tr id="respPeople">
+	                	<td class="zzjg-less">负责人：</td>
+                    	<td></td>
+	                </tr>
+	                <tr id="telephone">
+	                	<td class="zzjg-less">电话：</td>
+                    	<td></td>
+	                </tr>
+	                <tr id="email">
+	                	<td class="zzjg-less">邮箱：</td>
+                    	<td></td>
+	                </tr>
+	                <tr id="createdate">
+	                	<td class="zzjg-less">创建时间：</td>
+                    	<td></td>
+	                </tr>
+	            </tbody>
+            </table> 
+        </div>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+</body>
+</html>

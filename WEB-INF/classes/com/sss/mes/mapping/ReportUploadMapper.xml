@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.mes.dao.IReportUploadDAO" >
+  <select id="selectContractsByCustomerNo" resultType="java.util.Map">
+    SELECT
+		DISTINCT D_ContractNo AS contractNo
+	FROM
+		delivery_schedules
+	WHERE
+		D_CustomerNo = #{customerNo,jdbcType=VARCHAR}
+  </select>
+  
+  <select id="selectCustomersByFuzzyName" resultType="java.util.Map">
+    SELECT
+		D_ID AS id,
+		D_ClientNo AS clientNo,
+		D_ClientName AS clientName,
+		D_abbreviation AS abbreviation
+	FROM
+		producem_customer
+	WHERE
+		D_ClientName LIKE "%"#{fuzzyName,jdbcType=VARCHAR}"%"
+  </select>
+  
+  <select id="selectIssuanceDatesByContractNo" resultType="java.util.Map">
+	SELECT DISTINCT
+		DATE_FORMAT(D_CreateDate, '%Y-%m-%d') AS date
+	FROM
+		l_sender_bill_log
+	WHERE
+		ContractNo LIKE #{contractNo,jdbcType=VARCHAR}"%"
+  </select>
+  
+</mapper>

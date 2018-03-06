@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.INoticeDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.Notice" >
+    <id column="notice_id" property="noticeId" jdbcType="INTEGER" />
+    <result column="title" property="title" jdbcType="VARCHAR" />
+    <result column="content" property="content" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    
+    <association property="creator" javaType="com.sss.pojo.User">
+		<id column="nu_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="nu_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="nu_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="nu_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="nu_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="nu_user_status" property="status" jdbcType="VARCHAR" />
+	    <result column="nu_user_email" property="email" jdbcType="VARCHAR" />
+	    <result column="nu_user_birthDate" property="birthdate" jdbcType="VARCHAR" />
+	    <result column="nu_user_entryDate" property="entrydate" jdbcType="VARCHAR" />
+	    <result column="nu_user_lastlogindate" property="lastlogindate" jdbcType="VARCHAR" />
+	    <result column="nu_user_telephone" property="telephone" jdbcType="VARCHAR" />
+	    <result column="nu_user_address" property="address" jdbcType="VARCHAR" />
+	    <result column="nu_user_eduBackground" property="edubackground" jdbcType="VARCHAR" />
+	    <result column="nu_user_major" property="major" jdbcType="VARCHAR" />
+	    <result column="nu_user_school" property="school" jdbcType="VARCHAR" />
+	    <result column="nu_user_photoUrl" property="photoUrl" jdbcType="VARCHAR" />
+	</association>
+	<association property="dept" javaType="com.sss.pojo.Department">
+		<id column="nd_dept_id" property="deptId" jdbcType="INTEGER" />
+	    <result column="nd_dept_pid" property="parentDept.deptId" jdbcType="INTEGER" />
+	    <result column="nd_dept_name" property="deptName" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		n.*,
+  		u.user_id as nu_user_id,
+  		u.user_name as nu_user_name,
+  		u.user_no as nu_user_no,
+  		u.position_id as nu_position_id,
+  		u.sex as nu_user_sex,
+  		u.status as nu_user_status,
+  		u.email as nu_user_email,
+  		u.birthdate as nu_user_birthDate,
+  		u.entrydate as nu_user_entryDate,
+  		u.lastlogindate as nu_user_lastlogindate,
+  		u.telephone as nu_user_telephone,
+  		u.address as nu_user_address,
+  		u.edubackground as nu_user_eduBackground,
+  		u.major as nu_user_major,
+  		u.school as nu_user_school,
+  		u.photoUrl as nu_user_photoUrl,
+  		d.dept_id as nd_dept_id,
+  		d.dept_pid as nd_dept_pid,
+  		d.dept_name as nd_dept_name
+    from 
+    	ss_notice n
+   	left join
+   		ss_user u
+   	on
+   		n.creatorId = u.user_id
+   	left join 
+   		ss_department d
+   	on 
+   		n.dept_id = d.dept_id
+  </sql>
+  <!-- 返回一个list的写法 -->
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by n.createdate desc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where n.notice_id = #{noticeId,jdbcType=INTEGER} order by n.createdate desc
+  </select>
+  <select id="selNoticesByDeptIds" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where n.dept_id in 
+		<foreach item="item" index="index" collection="list" 
+                  open="(" separator="," close=")">
+                 #{item}
+         </foreach>
+    order by n.createdate desc
+  </select>
+  <select id="selByDeptName" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    <include refid="associateQuery" />
+    where d.dept_name like "%"#{keyWords,jdbcType=VARCHAR}"%" order by n.createdate desc
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_notice
+    where notice_id = #{noticeId,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.Notice" >
+    insert into ss_notice (notice_id, creatorId, dept_id, 
+      title, content, createdate
+      )
+    values (#{noticeId,jdbcType=INTEGER}, #{creator.userId,jdbcType=INTEGER}, #{dept.deptId,jdbcType=INTEGER}, 
+      #{title,jdbcType=VARCHAR}, #{content,jdbcType=VARCHAR}, #{createdate,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.Notice" >
+    insert into ss_notice
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="noticeId != null" >
+        notice_id,
+      </if>
+      <if test="creator.userId != null" >
+        creatorId,
+      </if>
+      <if test="dept.deptId != null" >
+        dept_id,
+      </if>
+      <if test="title != null" >
+        title,
+      </if>
+      <if test="content != null" >
+        content,
+      </if>
+        createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="noticeId != null" >
+        #{noticeId,jdbcType=INTEGER},
+      </if>
+      <if test="creator.userId != null" >
+        #{creator.userId,jdbcType=INTEGER},
+      </if>
+      <if test="dept.deptId != null" >
+        #{dept.deptId,jdbcType=INTEGER},
+      </if>
+      <if test="title != null" >
+        #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null" >
+        #{content,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.Notice" >
+    update ss_notice
+    <set >
+      <if test="creator.userId != null" >
+        creatorId = #{creator.userId,jdbcType=INTEGER},
+      </if>
+      <if test="dept.deptId != null" >
+        dept_id = #{dept.deptId,jdbcType=INTEGER},
+      </if>
+      <if test="title != null" >
+        title = #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null" >
+        content = #{content,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where notice_id = #{noticeId,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.Notice" >
+    update ss_notice
+    set creatorId = #{creator.userId,jdbcType=INTEGER},
+      dept_id = #{dept.deptId,jdbcType=INTEGER},
+      title = #{title,jdbcType=VARCHAR},
+      content = #{content,jdbcType=VARCHAR},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where notice_id = #{noticeId,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by n.createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by n.createdate desc
+  </select>
+</mapper>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>流程详细</title>
+<link rel="stylesheet" type="text/css" href="../../../css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="../../../css/user.common.css">
+<link rel="stylesheet" href="../../../css/plugins/iCheck/custom.css">
+<script type="text/javascript" src="../../../js/jquery-1.11.1.min.js"></script>
+<script src="../../../js/json/LAreaData2.js" type="text/javascript"></script>
+<script type="text/javascript" src="../../../js/plugins/iCheck/icheck.min.js"></script>
+<script type="text/javascript" src="../../../js/laydate/laydate.js"></script>
+<script type="text/javascript" src="../../../js/bootstrap.autocomplete.js"></script>
+<script type="text/javascript" src="../../../js/plugins/layer/layer.min.js"></script>
+<script type="text/javascript" src="../../../js/checkUser.js"></script>
+<script type="text/javascript" src="../../../js/UserUtil.js"></script>
+<script type="text/javascript" src="../../../js/UserCommon.js"></script>
+<script type="text/javascript" src="../../../js/oaProcessJson.js"></script>
+<script type="text/javascript">
+	var src;
+	var menuCode;
+	var processInstanceId;
+	var processDefinitionKey;
+	var name;
+	//初始化页面
+	$(document).ready(function() {
+		initTab();
+		//初始化层的大小
+		initLayerSize();
+		processInstanceId=Request["processInstanceId"];
+		processDefinitionKey=Request["processDefinitionKey"];
+		var runProcess=Request["runProcess"];
+		if(runProcess=="runProcess"){
+			$("#startOrEnd").show();
+		}else{
+			$("#startOrEnd").hide();
+		}
+		getHITaskInstance(processInstanceId);
+		src = Request["src"];
+	 	$("#imgObj").attr("src", src);
+		getProcessJson(function() {
+			menuCode = eval("processJson." + processDefinitionKey + ".menuCode");
+			name = eval("processJson." + processDefinitionKey + ".name");
+		});
+	});
+
+	var aH3;
+	var aDiv;
+	function initTab() {
+		aH3=$("#cen_right_top").children("h3");
+		aDiv=$("#cen_right_top").children("div");
+		for(var i=0;i<aH3.length;i++) {
+			aH3[i].index=i;
+			aH3[i].onclick=function() {
+				for(var i=0;i<aH3.length;i++) {
+					aH3[i].className="";
+					aDiv[i].style.display="none";
+				}
+				this.className="white";
+				aDiv[this.index].style.display="block";
+			}
+		}
+	}
+	var hiTaskId;
+	var hiTaskInstance;
+	//查询历史任务实例表
+	function getHITaskInstance(processInstanceId){
+		$.ajax({
+			url : "../../../OAProcessMgrAdmin/getHITaskInstance/" + processInstanceId,
+			datatype : "json",
+			type : "get",
+			data : {},
+			success : function(data, status, xhr) {
+				hiTaskInstance = data;
+				$("#processTable1").empty();
+				$.each(hiTaskInstance, function(index, item) {
+					hiTaskId = item.hiTaskId;
+					new UserCommon().fillTable("processTable1", item, index);
+					new UserCommon().checkboxListener();
+				});
+			}
+		});
+	}
+	
+	function admin_role_add(title, url, w) {
+		new UserCommon().layer_show(title, url, w);
+	}
+	
+	function closeLayer() {
+		new UserCommon().layer_close();
+	}
+
+	//后台派送
+	function approve() {
+		var aminProcess="admin"
+		admin_role_add('<strong>' + name + '审批</strong>', "../approve.html?processDefinitionKey=" + processDefinitionKey + "&taskId=" + hiTaskId +"&menuCode=" + menuCode +"&aminProcess=" + aminProcess, iframeJson.width * 0.8); 
+	} 
+</script>
+</head>
+<body>
+<div id="cen_right_top"  style="height:600px">
+		<h3 class="white">流程图和任务节点</h3>
+		<h3>流程变量</h3>
+		<div class="div" style="display: block">
+			<!--任务 -->
+			<div class="bt-div-two-table" id="pro2" >
+				<div class="bt-div-two-table" id="pro1" style="background:#F2F1D7; ">
+					<img  id="imgObj" src=""/> 
+				</div>
+				<div class="bt-div-two-table" id="desc" style="background:#F2F1D7;height:50px">
+					<span>活动状态：</span>	
+					<img src="../../../images/processPhotos/green.png" style="height: 39px;width: 63px;" /> <span>已完成</span>&nbsp;&nbsp;
+					<img src="../../../images/processPhotos/red.png" style="height: 39px;width: 63px;"/> <span>处理中</span>
+				</div>
+				<div class="table-responsive" style= "display: block;float: left;width: 100%;">
+					<table class="table table-data-bottom">
+						<thead>
+							<tr class="table-first-tr" fieldType="controlCB" fieldName="id">
+								<th fieldType="num" fieldName="">序号</th>
+								<th fieldType="text" fieldName="hiTaskInName">名称</th>
+								<th fieldType="text" fieldName="hiTaskInPriority">优先级</th>
+								<th fieldType="text" fieldName="hiTaskInAssignee">节点处理人</th>
+								<th fieldType="text" fieldName="commentUser">实际处理人</th>
+								<th fieldType="text" fieldName="commentMessage">审批意见</th>
+								<th fieldType="text" fieldName="hiTaskInCreateTime">到达时间</th>
+								<th fieldType="text" fieldName="hiTaskInEndTime">处理时间</th>
+							</tr>
+						</thead>
+						<tbody id="processTable1">
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<div class="edit-bottom" id="startOrEnd">
+				<button type="button" class="btn btn-xs edit-save btn-primary" style="width:75px" onclick="approve()">
+					<i class="glyphicon glyphicon-ok"></i>&nbsp;后台派送
+				</button>
+			</div>
+		</div>
+		<div class="div" style="height:500px">
+			<div class="edit-content">
+				<div class="edit-in">
+					<form id="taskVariableForm"></form>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert"
+				aria-hidden="true">&times;</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span> <span></span>
+			<div>
+				<img src="../../../images/sanjiao.png" width="10">
+			</div>
+		</div>
+	</div>
+</body>
+</html>

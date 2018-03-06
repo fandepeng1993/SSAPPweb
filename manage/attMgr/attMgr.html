@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>考勤管理</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<!-- <link rel="stylesheet" type="text/css" href="../../css/style.min.css"> -->
+	<link rel="stylesheet" type="text/css" href="../../css/plugins/jqgrid/ui.jqgrid.css" >
+    <link rel="stylesheet" type="text/css" href="../../css/animate.min.css">
+    <link rel="stylesheet" type="text/css" href="../../css/common.css">
+	<link rel="stylesheet" type="text/css" href="../../css/plugins/iCheck/custom.css">
+	<script type="text/javascript" src="../../js/jquery.min.js"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/underscore.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+	<!-- 自定义表格 -->
+	<script type="text/javascript" src="../../js/plugins/jqgrid/i18n/grid.locale-cn.js"></script>
+    <script type="text/javascript" src="../../js/plugins/jqgrid/jquery.jqGrid.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		var aH3;
+		var aDiv;
+		/* var trLength = 0; */
+		function initTab() {
+			/* 表格加载 */
+			/* $.jgrid.defaults.styleUI = "Bootstrap"; */
+			aH3=$("#cen_right_top").children("h3");
+			aDiv=$("#cen_right_top").children("div");
+			for(var i=0;i<aH3.length;i++)
+			{
+				aH3[i].index=i;
+				aH3[i].onclick=function() {
+					for(var i=0;i<aH3.length;i++) {
+						aH3[i].className="";
+						aDiv[i].style.display="none";
+					}
+					this.className="white";
+					aDiv[this.index].style.display="block";
+				}
+			}
+		}
+		
+		function initCalendar() {
+			laydate({
+			    elem: '#fromdate', //目标元素。由于laydate.js封装了一个轻量级的选择器引擎，因此elem还允许你传入class、tag但必须按照这种方式 '#id .class'
+			    event: 'focus' //响应事件。如果没有传入event，则按照默认的click
+			});
+			laydate({
+			    elem: '#enddate', //目标元素。由于laydate.js封装了一个轻量级的选择器引擎，因此elem还允许你传入class、tag但必须按照这种方式 '#id .class'
+			    event: 'focus' //响应事件。如果没有传入event，则按照默认的click
+			});
+		}
+	
+		//设定查看的权限。1：查看所有；2：查看直属下级；3：查看所有下级；4：查看自己；
+		var selPri = -1;
+		//当前页面所属菜单的menuCode
+	    var menuCode;
+		//fieldset元素
+		var fieldsetObj;
+		//考勤表单元素
+	    var attForm;
+		//出差报告表单元素
+		var btReportform;
+		//拜访计划表单元素
+		var visitPlanform;
+		//出差报告表单元素的ss_form数据
+		//var btReportFormElement;
+		//根据权限渲染页面
+		$(document).ready(function(){ 
+			initTab();
+			initCalendar();
+			//initForm();
+			menuCode = Request["menuCode"];
+			$("#userName").after("<a name=\"selLeader\" id=\"selLeader\" class=\"btn btn-xs\" style=\"margin-left:5px;width:30px;height:20px;border:1px solid #999;font-weight:bold;\"" + 
+			"onClick=\"selectUser()\">...</a>");
+			attForm = $("form[name='attform']").eq(0).clone();
+			btReportform = $("form[name='btReportform']").eq(0).clone();
+			visitPlanform = $("form[name='visitPlanform']").eq(0).clone();//拜访计划表单
+			
+			fieldsetObj = $("fieldset[name='parentFieldset']").eq(0).clone();
+			$("form[name='attform']").eq(0).hide();
+			$("form[name='btReportform']").eq(0).hide();
+			$("form[name='visitPlanform']").eq(0).hide();
+			$("fieldset[name='parentFieldset']").eq(0).hide();
+			$.ajax({
+			      url: "../../sessionAdmin/getPri",
+			      datatype: "json",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+			    	  	var pathname = window.location.pathname;
+			    	  	var url = pathname.substring(pathname.indexOf("/", 1) + 1, pathname.length);
+			    	  	$.each(eval("(" + data + ")"), function(index, item) {
+			      			if(item.menuUrl == url) {
+			      				setSelPriByMenuName(item.menuName);
+			      			}
+		    	  		});
+			    	  	switch(selPri) {
+			    	  	case 1:
+			    	  		initTable("../../attAdmin/attendances");
+	      					lookShow();
+			    	  		break;
+			    	  	case 2:
+			    	  		initTable("../../attAdmin/attsByUserPri/" + currentUserId + "," + selPri);
+	      					lookShow();
+	      					break;
+			    	  	case 3:
+			    	  		initTable("../../attAdmin/attsByUserPri/" + currentUserId + "," + selPri);
+	      					lookShow();
+	      					break;
+			    	  	case 4:
+			    	  		initTable("../../attAdmin/attsByUserPri/" + currentUserId + "," + selPri);
+	      					lookShow();
+	      					break;
+			    	  	}
+			      	} 
+				});
+			});
+			
+			function selectUser() {
+				admin_role_add('<strong>选择用户</strong>',"../userMgr/select_user.html?target=parent&userId=" + currentUserId + "&selPri=" + selPri, '800');
+			}
+		
+			function lookShow() {
+				$("#search-g").show();
+				$("#search-g1").show();
+				$("#keySpan").show();
+				$("#keyWords").show();
+			}
+			
+			var tableDate = null;
+			var atts = null;
+			function initTable(url) {
+				$.ajax({
+					url: url,
+					datatype: "json",
+					type: "get",
+					data: {},
+					success: function (data, status, xhr) {
+						$("#attTable").empty();
+						atts = eval("(" + data + ")");
+						
+						tableDate = eval("(" + data + ")");
+						totalRecords = atts.length;
+						//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+						if(totalRecords % pageSize != 0) {
+							totalPages = Math.floor(totalRecords / pageSize) + 1;
+						} else {
+							totalPages = totalRecords / pageSize;
+						}
+						//根据totalPages初始化页码插件
+						$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+						$("#Pagination").pagination(totalPages);
+					} 
+				});
+			}
+			
+			//对一个表单进行出差报告部分的创建。
+			/* function initForm () {
+				//根据ss_form表取出数据构建form表单
+				$.ajax({
+					url: "../../formAdmin/formsByMenuCode/E00_10",
+					datatype: "json",
+					type: "get",
+					data: {},
+					success: function (data, status, xhr) {
+						btReportFormElement = eval("(" + data + ")");
+						//new UserCommon().createForm("billform", btReportFormElement, 4);
+					} 
+				});
+			} */
+			
+			var pageSize = 10;
+			var pageNo = 1;//当前的页码
+			var totalRecords = 0;
+			var totalPages = 0;
+	
+			function circleInfos() {
+				 $("#attTable").empty();
+				 $.each(atts, function(index, item) {
+					 if(index >= ((pageNo-1)*pageSize) && index < (pageNo*pageSize)) {
+						 //addDReportInfo(index, item);
+						 new UserCommon().fillTable("attTable",item,index);
+						 
+					 } else if(index > (pageNo*pageSize)) {
+						 return;
+					 }
+					
+					 //为checkbox添加监听事件
+					 new UserCommon().checkboxListener();
+					 inittAble();
+					 
+			      });
+			}
+			
+			/**
+			 * 根据attendanceId填充单个用户详细信息查看表单
+			 */
+			function fillDetail(id) {
+				$.each(atts, function(index, item) {
+					if(item.attendanceId == id) {
+						admin_role_add('<strong>考勤查看</strong>',"viewAtt.html?menuCode=" + menuCode + "&attId=" + item.attendanceId, iframeJson.width*0.5);
+					}
+			    });
+			}
+			
+			function getAttByKey() {
+				var keyWords = $("#keyWords").val();
+				$.ajax({
+					url: "../../attAdmin/getAttsByKey?keyWords=" + encodeURI(keyWords) + "&selPri=" + selPri,
+					datatype: "json",
+					type: "get",
+					data: {},
+					success: function (data, status, xhr) {
+						$("#attTable").empty();
+						atts = eval("(" + data + ")");
+						totalRecords = atts.length;
+						
+						//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+						if(totalRecords % pageSize != 0) {
+							totalPages = Math.floor(totalRecords / pageSize) + 1;
+						} else {
+							totalPages = totalRecords / pageSize;
+						}
+						
+						$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+						$("#Pagination").pagination(totalPages);
+					} 
+				});
+			}
+			
+			function advancedSearch(dto) {
+				$.ajax({
+					url: "../../attAdmin/selectByAdvancedSearch" ,
+					datatype: "json",
+					type: "post",
+					data: JSON.stringify(dto),
+					success: function (data, status, xhr) {
+						$("#attTable").empty();
+						atts = data;
+						totalRecords = atts.length;
+						console.log(totalRecords);
+						//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+						if(totalRecords % pageSize != 0) {
+							totalPages = Math.floor(totalRecords / pageSize) + 1;
+						} else {
+							totalPages = totalRecords / pageSize;
+						}
+						
+						$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+						$("#Pagination").pagination(totalPages);
+					} 
+				});
+			}
+			/**
+			*	根据考勤list数据创建考勤表单元素
+			*/
+			function createAttForm(index, attDataList) {
+				$.each(attDataList, function (dataIndex, dataItem) {
+					var divObj = $("fieldset[name='parentFieldset']").eq(index).children("div[name='formDiv']").eq(0);
+					divObj.append("<hr /><span class=\"spanGreen\">考勤记录：</span>");
+					divObj.append(attForm.prop("outerHTML"));
+					var formObj = divObj.children("form[name='attform']").eq(dataIndex);
+					//签到签退的拍图展示
+					formObj.find("img[name='signInPhoto']").eq(0).attr("src", dataItem.signInPhoto);
+					formObj.find("img[name='signOutPhoto']").eq(0).attr("src", dataItem.signOutPhoto);
+					new UserCommon().fillSpanWithObj(formObj, dataItem);
+				});
+			}
+			
+			/**
+			*	根据出差报告list数据创建考勤表单元素
+			*/
+			function createBtReportForm(index, btReportDataList) {
+				$.each(btReportDataList, function (dataIndex, dataItem) {
+					var divObj = $("fieldset[name='parentFieldset']").eq(index).children("div[name='formDiv']").eq(0);
+					divObj.append("<hr /><span class=\"spanGreen\">出差报告：</span>");
+					divObj.append(btReportform.prop("outerHTML"));
+					//new UserCommon().createFormWithObj(divObj.children("form[name='btReportform']").eq(dataIndex), btReportFormElement, 4);
+					new UserCommon().fillSpanWithObj(divObj.children("form[name='btReportform']").eq(dataIndex), dataItem);
+				});
+			}
+			
+			/**
+			*	根据拜访计划list数据创建考勤表单元素
+			*/
+			function createVisitPlanForm(index, visitPlanDataList) {
+				$.each(visitPlanDataList, function (dataIndex, dataItem) {
+					var divObj = $("fieldset[name='parentFieldset']").eq(index).children("div[name='formDiv']").eq(0);
+					divObj.append("<hr /><span class=\"spanGreen\">拜访计划：</span>");
+					divObj.append(visitPlanform.prop("outerHTML"));
+					new UserCommon().fillSpanWithObj(divObj.children("form[name='visitPlanform']").eq(dataIndex), dataItem);
+				});
+			}
+			
+			/**
+			*	根据list数据创建fieldset框
+			*/
+			function createFieldset(data) {
+				for(var i=0; i<data.length; i++) {
+					$("#fieldsetDiv").append(fieldsetObj.prop("outerHTML"));
+					eval("var attendances = attGroups[" + data[i] + "]");
+					eval("var busTripReports = btReportGroups[" + data[i] + "]");
+					eval("var visitPlans = visitPlanGroups[" + data[i] + "]");
+					
+					//填充拜访客户姓名
+					var customerName = "";
+					if(typeof(attendances) != "undefined") {
+						//填充拜访客户姓名
+						customerName = "";
+						if(attendances[0].customer != null) customerName = attendances[0].customer.customerName;
+						$("fieldset[name='parentFieldset']").eq(i).find("span[name='customerName']").text(customerName);
+						createAttForm(i, attendances);
+					}
+					if(typeof(busTripReports) != "undefined") {
+						//填充拜访客户姓名
+						customerName = "";
+						if(busTripReports[0].customer != null) customerName = busTripReports[0].customer.customerName;
+						$("fieldset[name='parentFieldset']").eq(i).find("span[name='customerName']").text(customerName);
+						createBtReportForm(i, busTripReports);
+					}
+					if(typeof(visitPlans) != "undefined") {
+						//填充拜访客户姓名
+						customerName = "";
+						if(visitPlans[0].customer != null) customerName = visitPlans[0].customer.customerName;
+						$("fieldset[name='parentFieldset']").eq(i).find("span[name='customerName']").text(customerName);
+						createVisitPlanForm(i, visitPlans);
+					}
+					var str = "外出拜访签到";
+					if(customerName == "") {
+						str = "正常签到";
+						$("fieldset[name='parentFieldset']").eq(i).children("div[name='customerDiv']").remove();
+						$("fieldset[name='parentFieldset']").eq(i).children("div[name='formDiv']").children("hr").eq(0).remove();
+					}
+					$("fieldset[name='parentFieldset']").eq(i).children("legend").html(str);
+				}
+			}
+			
+			var attGroups, btReportGroups, visitPlanGroups;
+			function searchUserAtt() {
+				/* var formObj = $("#searchDiv");	
+			 	var msg = "不能为空！";
+				if(!new UserCommon().show("edit-promit", formObj, msg)) {
+					return;
+				} */
+				$("#fieldsetDiv").html("");
+				var userId = $("#userId").val();
+				var fromdate = $("#fromdate").val();
+				var enddate = $("#enddate").val();
+				/* var userId = 75;
+				var fromdate = "2017-05-09";
+				var enddate = "2017-05-10"; */
+				$.ajax({
+					url: "../../attAdmin/getBillsByDateAndUser/" + userId + "," + fromdate + "," + enddate,
+					datatype: "json",
+					type: "get",
+					data: {},
+					success: function (data, status, xhr) {
+						attGroups = _.groupBy(data.attendances, function(item) {
+							if(item.customer != null)
+								return item.customer.id;
+							else 
+								return "null";
+						});
+						btReportGroups = _.groupBy(data.busTripReports, function(item) {
+							if(item.customer != null)
+								return item.customer.id;
+							else 
+								return "null";
+						});
+						//先统一计算visitPlans中的totalExpense
+						$.each(data.visitPlans, function(index, item) {
+							item.totalExpense = parseFloat(item.trafficExpense) + 
+												parseFloat(item.hotelExpense) + 
+												parseFloat(item.receptionExpense) + 
+												parseFloat(item.otherExpense ? item.otherExpense:0);
+						});
+						
+						visitPlanGroups = _.groupBy(data.visitPlans, function(item) {
+							if(item.customer != null)
+								return item.customer.id;
+							else 
+								return "null";
+						});
+						
+						var groups = [];
+						//填充groups为customerId的数组。保证数据中有的每一个客户都会存到groups中
+						for(var key in attGroups) {
+							groups.push(key);
+						}
+						for(var key in btReportGroups) {
+							if(groups.indexOf(key) == -1) {
+								groups.push(key);
+							}
+						}
+						for(var key in visitPlanGroups) {
+							if(groups.indexOf(key) == -1) {
+								groups.push(key);
+							}
+						}
+						createFieldset(groups);
+					} 
+				});
+			}
+			
+			/*管理员-角色-添加*/
+			function admin_role_add(title,url,w,h){
+				new UserCommon().layer_show(title,url,w,h);
+			}
+	</script>
+</head>
+<body>
+	<div class="edit">
+		<div class="edit-content">
+			<div class="edit-in" >
+				<div id="cen_right_top">
+					<h3 class="white">所有考勤记录</h3>
+					<h3>相关单据</h3>
+					<div class="div" style="display:block">
+						<div class="bt-div">
+							<div class="bt-div-in">
+								<!-- <button id="add-g" class="btn btn-default btn-xs bt-one" onclick="addDReport()">
+									<span class="glyphicon glyphicon-plus color-add"></span> 添加
+								</button>
+								<button id="update-g" class="btn btn-default btn-xs bt-two" onclick="fillUpdateForm()">
+									<span class="glyphicon glyphicon-edit color-edit"></span> 修改
+								</button>
+								<button id="delete-g" class="btn btn-default btn-xs bt-three" onclick="deleteDReports()">
+									<span class="glyphicon glyphicon-trash color-del"></span> 删除
+								</button> -->
+								<span class="bt-div-title" id="keySpan">员工姓名:</span>
+								<input class="bt-div-input" type="text" id="keyWords">
+								<button class="btn btn-default bt-div-bt" id="search-g" onclick="getAttByKey()">
+									<span class="glyphicon glyphicon-search color-zn"></span> 搜索
+								</button>
+								<button type="button" class="btn btn-default bt-div-bt" style="display: inline-block;" onclick="slideRight()">
+									<span class="glyphicon glyphicon-filter color-zn"></span> 高级筛选
+								</button>
+							</div>
+						</div>
+						<!-- <div class="bg-container">
+							<div class="ibox">
+								<div class="jqGrid_wrapper">
+					                  <table id="table_list_1"></table>
+					                  <div id="pager_list_1"></div>
+					            </div>
+							</div>
+						</div> -->
+						<div class="bt-div-two-table">
+							<div class="table-responsive centerTable">
+								<table class="table table-data-bottom text-center tableHidden">
+									<thead>
+										<tr class="table-first-tr">
+											<th fieldType="num" fieldName="">序号</th>
+											<th fieldType="text" fieldName="user.userName">员工姓名</th>
+											<th fieldType="datetime" fieldName="attDate">考勤日期</th>
+											<th fieldType="datetime" fieldName="signInTime">签到时间</th>
+											<th fieldType="datetime" fieldName="signOutTime">签退时间</th>
+											<th fieldType="detailInfo" fieldName="attendanceId">详细信息</th>
+										</tr>
+									</thead>
+									<tbody id="attTable">
+									</tbody>
+								</table> 
+							</div>
+							<!-- 分页 -->
+							<div class="pages">
+						        <div id="Pagination"></div>
+						        <div class="searchPage">
+						          <span class="page-sum" id="sumPage"></span>
+						          <span class="page-go">跳转<input type="text">页</span>
+						          <a class="page-btn" href="javascript:;">GO</a>
+						        </div>
+						    </div>
+						</div>
+					</div>
+					<div class="div">
+						<div class="bt-div">
+							<div class="bt-div-in">
+								<div id="searchDiv">
+									<span style="color:red;font-size:18px">*</span><span>员工姓名：</span>
+									<input type="hidden" id="userId">
+									<input type="text" id="userName" label="员工姓名" isEmpty="false" errorMsg="不能为空！">
+									<span style="color:red;font-size:18px">*</span><span>考勤日期：</span>
+									<input label="开始日期" isEmpty="false" errorMsg="不能为空！" id="fromdate" name="fromdate" class="laydate-icon bt-input-time">
+									至
+									<input label="结束日期" isEmpty="false" errorMsg="不能为空！" id="enddate" name="enddate" class="laydate-icon bt-input-time">
+									<button class="btn btn-default bt-div-bt" id="search-g1" onclick="searchUserAtt()">
+										<span class="glyphicon glyphicon-search color-zn"></span> 搜索
+									</button>
+									<!-- <button class="btn btn-default bt-div-bt" style="display:block;" onclick="javascript:window.print();">
+										<img src="../../images/dayin.png" width="18" style="padding-right:3px;margin-top:-2px;">打印
+									</button> -->
+									<div class="btn btn-success btn-xs" onclick="javascript:window.print();" style="vertical-align: top;margin-left:5px;width:60px;height:26px;line-height:26px;border:0px;">
+										<img src="../../images/dayin.png" width="18" style="padding-right:3px;margin-top:-2px;">打印
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="bt-div-two-table">
+							<div class="addtext" style="display:inline-block;">
+							    <div style="position:relative" id="fieldsetDiv">	
+									<fieldset name="parentFieldset"
+										style="margin-top:20px;display: block; -webkit-margin-start: 25px; -webkit-margin-end: 25px; -webkit-padding-before: 0.35em; -webkit-padding-start: 0.75em; -webkit-padding-end: 0.75em; -webkit-padding-after: 0.625em; border-image-source: initial; border-image-slice: initial; border-image-width: initial; border-image-outset: initial; border-image-repeat: initial; min-width: -webkit-min-content; border-width: 2px; border-style: groove; border-color: threedface;">
+										<legend name="numLegend" style="border: none; width: auto; margin-bottom:0px">单据1</legend>
+										<div class="zsy" name="customerDiv">
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>拜访客户：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span name="customerName" class="input-text widthSpan"></span>
+												</div>
+											</div>
+										</div>
+										<!-- 表单部分 -->
+										<div class="hrChange" name="formDiv"></div>
+									</fieldset>
+									<!-- 考勤span表单 -->
+									<form name="attform" >
+										<div class="zsy">
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>签到时间：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span class="input-text widthSpan" type="datetime" name="signInTime" ></span>
+												</div>
+											</div>
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>签到地址：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span class="input-text widthSpan" name="signInAddress" ></span>
+												</div>
+											</div>
+										</div>
+										<div class="zsy">
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>签退时间：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span class="input-text widthSpan" type="datetime" name="signOutTime" ></span>
+												</div>
+											</div>
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>签退地址：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span class="input-text widthSpan" name="signOutAddress" ></span>
+												</div>
+											</div>
+										</div>
+										<div class="zsy">
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>签到拍图：</label>
+												</div>
+												<div class="zsy-common-right">
+													<img name="signInPhoto" style="width:100px;height:100px;" alt="" src="">
+												</div>
+											</div>
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>签退拍图：</label>
+												</div>
+												<div class="zsy-common-right">
+													<img name="signOutPhoto" style="width:100px;height:100px;" alt="" src="">
+												</div>
+											</div>
+										</div>
+									</form>
+									
+									<!-- 拜访计划span表单 -->
+									<form name="visitPlanform" >
+										<div class="zsy">
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>联系人：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span class="input-text widthSpan" name="contact.name" ></span>
+												</div>
+											</div>
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>出差事由：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span class="input-text widthSpan" name="reason" ></span>
+												</div>
+											</div>
+										</div>
+										<div class="zsy">
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>联系人职务：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span class="input-text widthSpan" name="contactPosition" ></span>
+												</div>
+											</div>
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>联系电话：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span class="input-text widthSpan" name="contactTel" ></span>
+												</div>
+											</div>
+										</div>
+										<div class="zsy">
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>拜访地址：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span class="input-text widthSpan" name="address" ></span>
+												</div>
+											</div>
+										</div>
+										<div class="zsy">
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>出差目的：</label>
+												</div>
+												<div class="zsy-common-right">
+													<div class="widthSpan kqgl-textarea" type="html" name="target" ></div>
+												</div>
+											</div>
+										</div>
+										<div class="zsy">
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>交通工具：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span class="input-text widthSpan" name="traffic" ></span>
+												</div>
+											</div>
+										</div>
+										<div class="zsy">
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>行程规划：</label>
+												</div>
+												<div class="zsy-common-right">
+													<div class="widthSpan kqgl-textarea" type="html" name="tripPlan" ></div>
+												</div>
+											</div>
+										</div>
+										<div class="zsy">
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>开始时间：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span class="input-text widthSpan" type="date" name="fromdate" ></span>
+												</div>
+											</div>
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>结束时间：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span class="input-text widthSpan" type="date" name="enddate" ></span>
+												</div>
+											</div>
+										</div>
+										<div class="zsy">
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>交通费：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span class="input-text widthSpan" type="money-c" name="trafficExpense" ></span>
+												</div>
+											</div>
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>住宿费：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span class="input-text widthSpan" type="money-c" name="hotelExpense" ></span>
+												</div>
+											</div>
+										</div>
+										<div class="zsy">
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>接待费：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span class="input-text widthSpan" type="money-c" name="receptionExpense" ></span>
+												</div>
+											</div>
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>其他费用：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span class="input-text widthSpan" type="money-c" name="otherExpense" ></span>
+												</div>
+											</div>
+										</div>
+										<div class="zsy">
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>总费用：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span class="input-text widthSpan" type="money-c" name="totalExpense" ></span>
+												</div>
+											</div>
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>创建时间：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span class="input-text widthSpan" type="datetime" name="createdate" ></span>
+												</div>
+											</div>
+										</div>
+										<div class="zsy">
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>备注：</label>
+												</div>
+												<div class="zsy-common-right">
+													<div class="widthSpan kqgl-textarea" name="note" ></div>
+												</div>
+											</div>
+										</div>
+									</form>
+									
+									
+									<!-- 出差报告span表单 -->
+									<form name="btReportform" >
+										<div class="zsy">
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>联系人：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span class="input-text widthSpan" name="contact.name" ></span>
+												</div>
+											</div>
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>联系电话：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span class="input-text widthSpan" name="contactTel" ></span>
+												</div>
+											</div>
+										</div>
+										<div class="zsy">
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>开始时间：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span class="input-text widthSpan" type="datetime" name="fromdate" ></span>
+												</div>
+											</div>
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>结束时间：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span class="input-text widthSpan" type="datetime" name="enddate" ></span>
+												</div>
+											</div>
+										</div>
+										<div class="zsy">
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>地址：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span class="input-text widthSpan" name="address" ></span>
+												</div>
+											</div>
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>创建时间：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span class="input-text widthSpan" type="datetime" name="createdate" ></span>
+												</div>
+											</div>
+										</div>
+										<div class="zsy">
+											<div class="zsy-common">
+												<div class="zsy-common-left">
+													<label>内容：</label>
+												</div>
+												<div class="zsy-common-right">
+													<span class="input-text widthSpan" name="content" ></span>
+												</div>
+											</div>
+										</div>
+									</form>
+								</div>
+							</div>
+						</div>
+					</div>
+					
+				</div>
+			</div>
+		</div>	
+	</div>
+	
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span>
+			<span></span>
+			<div><img src="../../images/sanjiao.png" width="10"></div>
+		</div>
+	</div>
+	<div class="search-background" id="background" onclick="hidebg()"></div>
+</body>
+</html>

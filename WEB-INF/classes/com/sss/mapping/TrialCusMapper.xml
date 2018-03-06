@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.ITrialCusDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.TrialCus" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="companyName" property="companyName" jdbcType="VARCHAR" />
+    <result column="nickName" property="nickName" jdbcType="VARCHAR" />
+    <result column="userName" property="userName" jdbcType="VARCHAR" />
+    <result column="password" property="password" jdbcType="VARCHAR" />
+    <result column="sex" property="sex" jdbcType="VARCHAR" />
+    <result column="telephone" property="telephone" jdbcType="VARCHAR" />
+    <result column="email" property="email" jdbcType="VARCHAR" />
+    <result column="status" property="status" jdbcType="INTEGER" />
+    <result column="authDuration" property="authDuration" jdbcType="VARCHAR" />
+    <result column="authBeginDate" property="authBeginDate" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    
+    <association property="container" javaType="com.sss.pojo.Container">
+		<id column="tc_container_id" property="id" jdbcType="INTEGER" />
+	    <result column="tc_container_containerName" property="containerName" jdbcType="VARCHAR" />
+	    <result column="tc_container_ipAddr" property="ipAddr" jdbcType="VARCHAR" />
+	    <result column="tc_container_gateway" property="gateway" jdbcType="VARCHAR" />
+	    <result column="tc_container_port" property="port" jdbcType="VARCHAR" />
+	    <result column="tc_container_createdate" property="createdate" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		master.*,
+  		c.id as tc_container_id,
+  		c.containerName as tc_container_containerName,
+  		c.ipAddr as tc_container_ipAddr,
+  		c.gateway as tc_container_gateway,
+  		c.port as tc_container_port,
+  		c.createdate as tc_container_createdate
+    from 
+    	ss_trialcus master
+    left join 
+    	ss_container c
+    on
+    	master.containerId = c.id
+  </sql>
+  
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" />
+    order by master.createdate desc
+  </select>
+  <select id="selectListWithOutBind"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" />
+    where c.id is null
+    order by master.createdate desc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where master.id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectByUserName" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    <include refid="associateQuery" />
+    where master.userName = #{userName,jdbcType=VARCHAR}
+    order by master.createdate desc
+  </select>
+  <select id="selectByCompanyName" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    <include refid="associateQuery" />
+    where master.companyName = #{companyName,jdbcType=VARCHAR}
+    order by master.createdate desc
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_trialcus
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.TrialCus" >
+    insert into ss_trialcus (id, companyName, nickName, userName, 
+      password, sex, telephone, email, status, authDuration, 
+      authBeginDate, createdate)
+    values (#{id,jdbcType=INTEGER}, #{companyName,jdbcType=VARCHAR}, #{nickName,jdbcType=VARCHAR}, #{userName,jdbcType=VARCHAR}, 
+      #{password,jdbcType=VARCHAR}, #{sex,jdbcType=VARCHAR}, #{telephone,jdbcType=VARCHAR}, #{email,jdbcType=VARCHAR}, 
+      #{status,jdbcType=INTEGER}, #{authDuration,jdbcType=VARCHAR}, 
+      #{authBeginDate,jdbcType=VARCHAR}, #{createdate,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.TrialCus" >
+  	<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+    </selectKey>
+    insert into ss_trialcus
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="companyName != null" >
+        companyName,
+      </if>
+      <if test="nickName != null" >
+        nickName,
+      </if>
+      <if test="userName != null" >
+        userName,
+      </if>
+      <if test="password != null" >
+        password,
+      </if>
+      <if test="sex != null" >
+        sex,
+      </if>
+      <if test="telephone != null" >
+        telephone,
+      </if>
+      <if test="email != null" >
+        email,
+      </if>
+      <if test="status != null" >
+        status,
+      </if>
+      <if test="authDuration != null" >
+        authDuration,
+      </if>
+      <if test="authBeginDate != null and authBeginDate != ''" >
+        authBeginDate,
+      </if>
+      	createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="companyName != null" >
+        #{companyName,jdbcType=VARCHAR},
+      </if>
+      <if test="nickName != null" >
+        #{nickName,jdbcType=VARCHAR},
+      </if>
+      <if test="userName != null" >
+        #{userName,jdbcType=VARCHAR},
+      </if>
+      <if test="password != null" >
+        #{password,jdbcType=VARCHAR},
+      </if>
+      <if test="sex != null" >
+        #{sex,jdbcType=VARCHAR},
+      </if>
+      <if test="telephone != null" >
+        #{telephone,jdbcType=VARCHAR},
+      </if>
+      <if test="email != null" >
+        #{email,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null" >
+        #{status,jdbcType=INTEGER},
+      </if>
+      <if test="authDuration != null" >
+        #{authDuration,jdbcType=VARCHAR},
+      </if>
+      <if test="authBeginDate != null and authBeginDate != ''" >
+        #{authBeginDate,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.TrialCus" >
+    update ss_trialcus
+    <set >
+      <if test="companyName != null" >
+        companyName = #{companyName,jdbcType=VARCHAR},
+      </if>
+      <if test="nickName != null" >
+        nickName = #{nickName,jdbcType=VARCHAR},
+      </if>
+      <if test="userName != null" >
+        userName = #{userName,jdbcType=VARCHAR},
+      </if>
+      <if test="password != null" >
+        password = #{password,jdbcType=VARCHAR},
+      </if>
+      <if test="sex != null" >
+        sex = #{sex,jdbcType=VARCHAR},
+      </if>
+      <if test="telephone != null" >
+        telephone = #{telephone,jdbcType=VARCHAR},
+      </if>
+      <if test="email != null" >
+        email = #{email,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null" >
+        status = #{status,jdbcType=INTEGER},
+      </if>
+      <if test="authDuration != null" >
+        authDuration = #{authDuration,jdbcType=VARCHAR},
+      </if>
+      <if test="authBeginDate != null and authBeginDate != ''" >
+        authBeginDate = #{authBeginDate,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.TrialCus" >
+    update ss_trialcus
+    set companyName = #{companyName,jdbcType=VARCHAR},
+      nickName = #{nickName,jdbcType=VARCHAR},
+      userName = #{userName,jdbcType=VARCHAR},
+      password = #{password,jdbcType=VARCHAR},
+      sex = #{sex,jdbcType=VARCHAR},
+      telephone = #{telephone,jdbcType=VARCHAR},
+      email = #{email,jdbcType=VARCHAR},
+      status = #{status,jdbcType=INTEGER},
+      authDuration = #{authDuration,jdbcType=VARCHAR},
+      authBeginDate = #{authBeginDate,jdbcType=VARCHAR},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateContainerIdById">
+  	update ss_trialcus
+    set containerId = #{containerId,jdbcType=INTEGER}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	select * from ss_trialcus
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by master.createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by master.createdate desc
+  </select>
+</mapper>

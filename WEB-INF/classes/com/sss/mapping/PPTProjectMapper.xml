@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IPPTProjectDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.PPTProject">
+  
+	<id column="project_id" property="projectId" jdbcType="INTEGER" />
+	<result column="project_name" property="projectName" jdbcType="VARCHAR" />
+	<result column="project_topic_id" property="projectTopicId" jdbcType="VARCHAR" />
+	<result column="project_createTime" property="projectCreateTime" jdbcType="VARCHAR" />
+	
+	<association property="pptTopic" javaType="com.sss.pojo.PPTTopic">
+		<id column="topic_id" property="topicId" jdbcType="INTEGER"/>
+		<result column="topic_content" property="topicContent" jdbcType="VARCHAR"/>
+		<result column="topic_createMan" property="topicCreateMan" jdbcType="VARCHAR"/>
+		<result column="topic_createTime" property="topicCreateTime" jdbcType="VARCHAR"/>
+	</association>
+	
+  </resultMap>
+  
+  <!-- 查询 -->
+  <select id="selectList" resultMap="BaseResultMap">
+  	select 
+  		project_id,project_name,project_topic_id,project_createTime,
+  		topic_id,topic_content,topic_createMan,topic_createTime
+  	from 
+  		ss_ppt_project
+  	left join
+  		ss_ppt_topic
+  	on
+  		project_topic_id = topic_id
+  </select>
+  
+  <!-- 根据topicId查询 -->
+  <select id="getPPTProjectsByTopicId" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+  	select 
+  		project_id,project_name,project_topic_id,project_createTime,
+  		topic_id,topic_content,topic_createMan,topic_createTime
+  	from 
+  		ss_ppt_project
+  	left join
+  		ss_ppt_topic
+  	on
+  		project_topic_id = topic_id
+  	where
+  		project_topic_id = #{topicId, jdbcType=INTEGER}
+  </select>
+  
+  <!-- 单条添加 -->
+  <insert id="insert" parameterType="com.sss.pojo.PPTProject">
+  	insert into ss_ppt_project where 1=1
+  	<trim prefix="(" suffix=")" suffixOverrides=",">
+  		<if test="projectId!=null">
+  			project_id,
+  		</if>
+  		<if test="projectName!=null">
+  			project_name,
+  		</if>
+  		<if test="pptTopic!=null">
+  			project_topic_id,
+  		</if>
+  		<if test="projectCreateTime!=null">
+  			project_createTime,
+  		</if>
+  	</trim>
+  	<trim prefix="values (" suffix=")" suffixOverrides=",">
+  		<if test="projectId!=null">
+  			#{projectId,jdbcType=INTEGER},
+  		</if>
+  		<if test="projectName!=null">
+  			#{projectName,jdbcType=VARCHAR},
+  		</if>
+  		<if test="pptTopic!=null">
+  			#{pptTopic.topicId,jdbcType=INTEGER},
+  		</if>
+  		<if test="projectCreateTime!=null">
+  			#{projectCreateTime,jdbcType=VARCHAR},
+  		</if>
+  	</trim>
+  </insert>
+  
+  <!-- 根据主键修改 -->
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.PPTProject">
+  	update ss_ppt_project 
+  	<set>
+  		<if test="projectName!=null">
+  			project_name = #{projectName,jdbcType=VARCHAR},
+  		</if>
+  		<if test="pptTopic!=null">
+  			#{pptTopic.topicId,jdbcType=INTEGER},
+  		</if>
+  		<if test="projectCreateTime!=null">
+  			project_createTime = #{projectCreateTime,jdbcType=VARCHAR},
+  		</if>
+  	</set>
+  	where project_id = #{projectId,jdbcType=INTEGER}
+  </update>
+  
+  <!--根据主键删除  -->
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_ppt_project
+    where project_id = #{projectId,jdbcType=INTEGER}
+  </delete>
+  
+  <!-- 将封装的pptProject对象插入数据库，并返回主键 -->
+  <insert id="insertPPTProject" parameterType="com.sss.pojo.PPTProject">
+  	<selectKey keyProperty="projectId" order="AFTER" resultType="java.lang.Integer">
+            select LAST_INSERT_ID() AS projectId
+    </selectKey>
+  	insert into ss_ppt_project (project_name,project_topic_id,project_createTime) values(#{projectName, jdbcType=VARCHAR},#{projectTopicId, jdbcType=INTEGER},now())
+  </insert>
+  
+  <!-- 根据pptProject,更新数据库 -->
+   <update id="updatePPTProject" parameterType="com.sss.pojo.PPTProject">
+  	update ss_ppt_project 
+  	<set>
+  		<if test="projectName!=null">
+  			project_name = #{projectName,jdbcType=VARCHAR},
+  		</if>
+  			project_createTime = now(),
+  	</set>
+  	where project_id = #{projectId,jdbcType=INTEGER}
+  </update>
+</mapper>

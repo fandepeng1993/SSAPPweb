@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IAttendanceDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.Attendance" >
+    <id column="attendance_id" property="attendanceId" jdbcType="INTEGER" />
+    <result column="signInTime" property="signInTime" jdbcType="VARCHAR" />
+    <result column="signOutTime" property="signOutTime" jdbcType="VARCHAR" />
+    <result column="attDate" property="attDate" jdbcType="VARCHAR" />
+    <result column="signInAddress" property="signInAddress" jdbcType="VARCHAR" />
+    <result column="signOutAddress" property="signOutAddress" jdbcType="VARCHAR" />
+    <result column="signInPhoto" property="signInPhoto" jdbcType="VARCHAR" />
+    <result column="signOutPhoto" property="signOutPhoto" jdbcType="VARCHAR" />
+    
+    <association property="user" javaType="com.sss.pojo.User">
+		<id column="au_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="au_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="au_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="au_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="au_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="au_user_status" property="status" jdbcType="VARCHAR" />
+	    <result column="au_user_email" property="email" jdbcType="VARCHAR" />
+	    <result column="au_user_birthDate" property="birthdate" jdbcType="VARCHAR" />
+	    <result column="au_user_entryDate" property="entrydate" jdbcType="VARCHAR" />
+	    <result column="au_user_lastlogindate" property="lastlogindate" jdbcType="VARCHAR" />
+	    <result column="au_user_telephone" property="telephone" jdbcType="VARCHAR" />
+	    <result column="au_user_address" property="address" jdbcType="VARCHAR" />
+	    <result column="au_user_eduBackground" property="edubackground" jdbcType="VARCHAR" />
+	    <result column="au_user_major" property="major" jdbcType="VARCHAR" />
+	    <result column="au_user_school" property="school" jdbcType="VARCHAR" />
+	    <result column="au_user_photoUrl" property="photoUrl" jdbcType="VARCHAR" />
+	</association>
+	<association property="customer" javaType="com.sss.pojo.Customer">
+		<id column="ac_customer_id" property="id" jdbcType="INTEGER" />
+	    <result column="ac_customer_name" property="customerName" jdbcType="VARCHAR" />
+	    <result column="ac_customer_area" property="area" jdbcType="VARCHAR" />
+	    <result column="ac_customer_industry" property="industry" jdbcType="VARCHAR" />
+	    <result column="ac_customer_website" property="website" jdbcType="VARCHAR" />
+	    <result column="ac_customer_source" property="source" jdbcType="VARCHAR" />
+	    <result column="ac_customer_type" property="type" jdbcType="VARCHAR" />
+	    <result column="ac_customer_note" property="note" jdbcType="VARCHAR" />
+	    <result column="ac_customer_createdate" property="createdate" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		a.*,
+  		u.user_id as au_user_id,
+  		u.user_name as au_user_name,
+  		u.user_no as au_user_no,
+  		u.position_id as au_position_id,
+  		u.sex as au_user_sex,
+  		u.status as au_user_status,
+  		u.email as au_user_email,
+  		u.birthdate as au_user_birthDate,
+  		u.entrydate as au_user_entryDate,
+  		u.lastlogindate as au_user_lastlogindate,
+  		u.telephone as au_user_telephone,
+  		u.address as au_user_address,
+  		u.edubackground as au_user_eduBackground,
+  		u.major as au_user_major,
+  		u.school as au_user_school,
+  		u.photoUrl as au_user_photoUrl,
+  		c.id as ac_customer_id,
+  		c.customer_name as ac_customer_name,
+  		c.area as ac_customer_area,
+  		c.industry as ac_customer_industry,
+  		c.website as ac_customer_website,
+  		c.source as ac_customer_source,
+  		c.type as ac_customer_type,
+  		c.note as ac_customer_note,
+  		c.createdate as ac_customer_createdate
+    from 
+    	ss_attendance a
+   	left join
+   		ss_user u
+   	on
+   		a.user_id = u.user_id
+   	left join
+   		ss_customer c
+   	on
+   		a.cusId = c.id
+  </sql>
+  <!-- 返回一个list的写法 -->
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by a.attDate desc
+  </select>
+  <select id="selectListByDate"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> 
+    where a.attDate &gt;= #{fromdate,jdbcType=VARCHAR} and a.attDate &lt;= #{enddate,jdbcType=VARCHAR}
+    order by a.attDate desc
+  </select>
+  <select id="selectListByDateAndUser"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> 
+    where a.attDate &gt;= #{fromdate,jdbcType=VARCHAR} 
+    	and a.attDate &lt;= #{enddate,jdbcType=VARCHAR}
+    	and a.user_id = #{userId,jdbcType=VARCHAR}
+    order by a.attDate desc
+  </select>
+  <select id="selectSignInList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> 
+    where a.signInTime is not null
+    order by a.signInTime desc
+    limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="selectSignOutList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> 
+    where a.signOutTime is not null
+    order by a.signOutTime desc
+    limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where a.attendance_id = #{attendanceId,jdbcType=INTEGER}
+  </select>
+  <select id="selByUidAndDate" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where a.user_id = #{userId,jdbcType=INTEGER} and a.attDate = #{attDate,jdbcType=VARCHAR}
+    order by a.signInTime desc
+  </select>
+  <select id="selByUserId" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where a.user_id = #{userId,jdbcType=INTEGER} order by a.attDate desc
+  </select>
+  <select id="selByUserIds" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where a.user_id in
+	<foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach> 
+  </select>
+  <select id="selCountByUserIds" resultType="java.lang.Integer">
+	select count(*) from ss_attendance
+	where user_id in
+	<foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach> 
+  </select>
+  <select id="selByUserIdsLazy" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where a.user_id in
+	<foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach> 
+	limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="selByUserIdAndKey" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where a.user_id = #{userId,jdbcType=INTEGER} and u.user_name like "%"#{keyWords,jdbcType=VARCHAR}"%"
+  	order by a.attDate desc
+  </select>
+  <select id="getCountByUIdAndDate" resultType="java.lang.Integer">
+    select count(*) from ss_attendance
+    where attDate &gt;= #{fromdate,jdbcType=VARCHAR} and 
+    		user_id = #{userId,jdbcType=INTEGER}
+  </select>
+  <select id="getCountByUIdsAndDate" resultType="java.lang.Integer">
+    select count(*) from ss_attendance
+    where user_id in 
+	    <foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+		  #{item}  
+		</foreach>  
+		and attDate &gt;= #{fromdate,jdbcType=VARCHAR} 
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_attendance
+    where attendance_id = #{attendanceId,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.Attendance" >
+    insert into ss_attendance (attendance_id, user_id, cusId, signInTime, 
+      signOutTime, attDate, signInAddress, signOutAddress, signInPhoto, signOutPhoto)
+    values (#{attendanceId,jdbcType=INTEGER}, #{user.userId,jdbcType=INTEGER}, #{customer.id,jdbcType=INTEGER}, #{signInTime,jdbcType=VARCHAR}, 
+      #{signOutTime,jdbcType=VARCHAR}, #{attDate,jdbcType=VARCHAR}, #{signInAddress,jdbcType=VARCHAR}, #{signOutAddress,jdbcType=VARCHAR},
+      #{signInPhoto,jdbcType=VARCHAR}, #{signOutPhoto,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.Attendance" >
+    insert into ss_attendance
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="attendanceId != null" >
+        attendance_id,
+      </if>
+      <if test="user.userId != null" >
+        user_id,
+      </if>
+      <if test="customer != null and customer.id != null" >
+        cusId,
+      </if>
+      <if test="signInTime != null" >
+        signInTime,
+      </if>
+      <if test="signOutTime != null" >
+        signOutTime,
+      </if>
+      <if test="attDate != null" >
+        attDate,
+      </if>
+      <if test="signInAddress != null" >
+        signInAddress,
+      </if>
+      <if test="signOutAddress != null" >
+        signOutAddress,
+      </if>
+      <if test="signInPhoto != null" >
+        signInPhoto,
+      </if>
+      <if test="signOutPhoto != null" >
+        signOutPhoto,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="attendanceId != null" >
+        #{attendanceId,jdbcType=INTEGER},
+      </if>
+      <if test="user.userId != null" >
+        #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="customer != null and customer.id != null" >
+        #{customer.id,jdbcType=INTEGER},
+      </if>
+      <if test="signInTime != null" >
+        #{signInTime,jdbcType=VARCHAR},
+      </if>
+      <if test="signOutTime != null" >
+        #{signOutTime,jdbcType=VARCHAR},
+      </if>
+      <if test="attDate != null" >
+        #{attDate,jdbcType=VARCHAR},
+      </if>
+      <if test="signInAddress != null" >
+        #{signInAddress,jdbcType=VARCHAR},
+      </if>
+      <if test="signOutAddress != null" >
+        #{signOutAddress,jdbcType=VARCHAR},
+      </if>
+      <if test="signInPhoto != null" >
+        #{signInPhoto,jdbcType=VARCHAR},
+      </if>
+      <if test="signOutPhoto != null" >
+        #{signOutPhoto,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.Attendance" >
+    update ss_attendance
+    <set >
+      <if test="user.userId != null" >
+        user_id = #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="customer != null and customer.id != null" >
+        cusId = #{customer.id,jdbcType=INTEGER},
+      </if>
+      <if test="signInTime != null" >
+        signInTime = #{signInTime,jdbcType=VARCHAR},
+      </if>
+      <if test="signOutTime != null" >
+        signOutTime = #{signOutTime,jdbcType=VARCHAR},
+      </if>
+      <if test="attDate != null" >
+        attDate = #{attDate,jdbcType=VARCHAR},
+      </if>
+      <if test="signInAddress != null" >
+        signInAddress = #{signInAddress,jdbcType=VARCHAR},
+      </if>
+      <if test="signOutAddress != null" >
+        signOutAddress = #{signOutAddress,jdbcType=VARCHAR},
+      </if>
+      <if test="signInPhoto != null" >
+        signInPhoto = #{signInPhoto,jdbcType=VARCHAR},
+      </if>
+      <if test="signOutPhoto != null" >
+        signOutPhoto = #{signOutPhoto,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where attendance_id = #{attendanceId,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.Attendance" >
+    update ss_attendance
+    set user_id = #{user.userId,jdbcType=INTEGER},
+      cusId = #{customer.id,jdbcType=INTEGER},
+      signInTime = #{signInTime,jdbcType=VARCHAR},
+      signOutTime = #{signOutTime,jdbcType=VARCHAR},
+      attDate = #{attDate,jdbcType=VARCHAR},
+      signInAddress = #{signInAddress,jdbcType=VARCHAR},
+      signOutAddress = #{signOutAddress,jdbcType=VARCHAR},
+      signInPhoto = #{signInPhoto,jdbcType=VARCHAR},
+      signOutPhoto = #{signOutPhoto,jdbcType=VARCHAR}
+    where attendance_id = #{attendanceId,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by a.attDate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by a.attDate desc
+  </select>
+</mapper>

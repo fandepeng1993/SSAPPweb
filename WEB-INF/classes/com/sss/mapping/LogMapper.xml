@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.ILogDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.Log" >
+    <id column="log_id" property="logId" jdbcType="INTEGER" />
+    <result column="log_menu" property="logMenu" jdbcType="VARCHAR" />
+    <result column="log_operate" property="logOperate" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    
+    <association property="user" javaType="com.sss.pojo.User">
+		<id column="lu_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="lu_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="lu_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="lu_status" property="status" jdbcType="VARCHAR" />
+	    <result column="lu_email" property="email" jdbcType="VARCHAR" />
+	    <result column="lu_entrydate" property="entrydate" jdbcType="VARCHAR" />
+	    <result column="lu_telephone" property="telephone" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		l.*,
+  		u.user_id as lu_user_id,
+  		u.user_name as lu_user_name,
+  		u.sex as lu_sex,
+  		u.status as lu_status,
+  		u.email as lu_email,
+  		u.entrydate as lu_entrydate,
+  		u.telephone as lu_telephone
+    from 
+    	ss_log l
+   	left join
+   		ss_user u
+   	on
+   		l.user_id = u.user_id
+  </sql>
+  <!-- 返回一个list的写法 -->
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" />
+  </select>
+  
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<foreach item="item" index="index" collection="list" separator=" " >  
+		  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+		</foreach>  
+  </select>
+  <select id="searchLogByDTO"  resultMap="BaseResultMap" parameterType="com.sss.pojo.dto.SearchLogDTO" >
+	<include refid="associateQuery" />
+	where u.user_name like "%"#{keyWords,jdbcType=VARCHAR}"%"
+	  <if test="logMenu != null and logMenu != '-1'" >
+	      AND l.log_menu = #{logMenu,jdbcType=VARCHAR}
+	  </if>
+	  <if test="logOperate != null and logOperate != '-1'" >
+	      AND l.log_operate = #{logOperate,jdbcType=VARCHAR}
+	  </if>
+	  <if test="fromDate != null and fromDate != ''" >
+	      AND l.createdate &gt; #{fromDate,jdbcType=VARCHAR}
+	  </if>
+	  <if test="endDate != null and endDate != ''" >
+	      AND l.createdate &lt; #{endDate,jdbcType=VARCHAR}
+	  </if>
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where l.log_id = #{logId,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_log
+    where log_id = #{logId,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.Log" >
+    insert into ss_log (log_id, user_id, log_menu, 
+      log_operate, createdate)
+    values (#{logId,jdbcType=INTEGER}, #{user.userId,jdbcType=INTEGER}, #{logMenu,jdbcType=VARCHAR}, 
+      #{logOperate,jdbcType=VARCHAR}, #{createdate,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.Log" >
+    insert into ss_log
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="logId != null" >
+        log_id,
+      </if>
+      <if test="user.userId != null" >
+        user_id,
+      </if>
+      <if test="logMenu != null" >
+        log_menu,
+      </if>
+      <if test="logOperate != null" >
+        log_operate,
+      </if>
+        createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="logId != null" >
+        #{logId,jdbcType=INTEGER},
+      </if>
+      <if test="user.userId != null" >
+        #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="logMenu != null" >
+        #{logMenu,jdbcType=VARCHAR},
+      </if>
+      <if test="logOperate != null" >
+        #{logOperate,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.Log" >
+    update ss_log
+    <set >
+      <if test="user.userId != null" >
+        user_id = #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="logMenu != null" >
+        log_menu = #{logMenu,jdbcType=VARCHAR},
+      </if>
+      <if test="logOperate != null" >
+        log_operate = #{logOperate,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where log_id = #{logId,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.Log" >
+    update ss_log
+    set user_id = #{user.userId,jdbcType=INTEGER},
+      log_menu = #{logMenu,jdbcType=VARCHAR},
+      log_operate = #{logOperate,jdbcType=VARCHAR},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where log_id = #{logId,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+<!--   <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+  </select> -->
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+  </select>
+</mapper>

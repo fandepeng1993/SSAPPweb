@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.ISaleChanceDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.SaleChance" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="chance_name" property="chanceName" jdbcType="VARCHAR" />
+    <result column="exceptedmoney" property="exceptedMoney" jdbcType="DECIMAL" />
+    <result column="exceptedtime" property="exceptedtime" jdbcType="VARCHAR" />
+    <result column="salesprogress" property="salesProgress" jdbcType="VARCHAR" />
+    <result column="chancegrade" property="chanceGrade" jdbcType="VARCHAR" />
+    <result column="remark" property="remark" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    <association property="customer" javaType="com.sss.pojo.Customer">
+		<id column="cc_customer_id" property="id" jdbcType="INTEGER" />
+		<result column="cc_salesman_userId" property="salesman.userId" jdbcType="INTEGER" />
+	    <result column="cc_customer_name" property="customerName" jdbcType="VARCHAR" />
+	    <result column="cc_customer_area" property="area" jdbcType="VARCHAR" />
+	    <result column="cc_customer_createdate" property="createdate" jdbcType="VARCHAR" />
+	</association>
+	<association property="user" javaType="com.sss.pojo.User">
+		<id column="cu_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="cu_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="cu_position_name" property="position.positionName" jdbcType="VARCHAR" />
+	    <result column="cu_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="cu_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="cu_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="cu_user_status" property="status" jdbcType="VARCHAR" />
+	    <result column="cu_user_photoUrl" property="photoUrl" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  
+  <sql id="associateQuery">
+  	select 
+		salc.*,
+		cus.id as cc_customer_id,
+  		cus.customer_name as cc_customer_name, 
+		u.user_id as cu_user_id,
+  		u.user_name as cu_user_name,
+  		u.photoUrl as cu_user_photoUrl,
+  		pos.position_Name as cu_position_name
+	FROM
+		ss_salechance salc
+	LEFT JOIN
+		ss_customer cus	
+	ON
+		salc.customer_id = cus.id
+	LEFT JOIN
+		ss_user u
+	ON
+		salc.salesman = u.user_id
+	left join 
+   		ss_position pos
+   	on 
+   		u.position_id = pos.position_id
+  </sql>
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by salc.createdate desc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+  	<include refid="associateQuery" /> 
+    where salc.id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="getSalchansByUIds" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where salc.salesman in 
+    <foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>  
+    order by salc.createdate desc
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_salechance
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.SaleChance" >
+    insert into ss_salechance (id, chance_name, customer_id, 
+      exceptedmoney, exceptedtime, salesprogress, 
+      chancegrade, remark, salesman, 
+      createdate)
+    values (#{id,jdbcType=INTEGER}, #{chanceName,jdbcType=VARCHAR}, #{customer.id,jdbcType=INTEGER}, 
+      #{exceptedMoney,jdbcType=DECIMAL}, #{exceptedtime,jdbcType=VARCHAR}, #{salesProgress,jdbcType=VARCHAR}, 
+      #{chanceGrade,jdbcType=VARCHAR}, #{remark,jdbcType=VARCHAR}, #{user.userId,jdbcType=INTEGER}, 
+      #{createdate,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.SaleChance" >
+  	<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+    </selectKey>
+    insert into ss_salechance
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="chanceName != null" >
+        chance_name,
+      </if>
+      <if test="customer != null and customer.id != null" >
+        customer_id,
+      </if>
+      <if test="exceptedMoney != null" >
+        exceptedmoney,
+      </if>
+      <if test="exceptedtime != null" >
+        exceptedtime,
+      </if>
+      <if test="salesProgress != null" >
+        salesprogress,
+      </if>
+      <if test="chanceGrade != null" >
+        chancegrade,
+      </if>
+      <if test="remark != null" >
+        remark,
+      </if>
+      <if test="user != null and user.userId != null" >
+        salesman,
+      </if>
+        createdate
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="chanceName != null" >
+        #{chanceName,jdbcType=VARCHAR},
+      </if>
+      <if test="customer != null and customer.id != null" >
+        #{customer.id,jdbcType=INTEGER},
+      </if>
+      <if test="exceptedMoney != null" >
+        #{exceptedMoney,jdbcType=DECIMAL},
+      </if>
+      <if test="exceptedtime != null" >
+        #{exceptedtime,jdbcType=VARCHAR},
+      </if>
+      <if test="salesProgress != null" >
+        #{salesProgress,jdbcType=VARCHAR},
+      </if>
+      <if test="chanceGrade != null" >
+        #{chanceGrade,jdbcType=VARCHAR},
+      </if>
+      <if test="remark != null" >
+        #{remark,jdbcType=VARCHAR},
+      </if>
+      <if test="user != null and user.userId != null"  >
+        #{user.userId,jdbcType=INTEGER},
+      </if>
+        <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.SaleChance" >
+    update ss_salechance
+    <set >
+      <if test="chanceName != null" >
+        chance_name = #{chanceName,jdbcType=VARCHAR},
+      </if>
+      <if test="customer != null and customer.id != null" >
+        customer_id = #{customer.id,jdbcType=INTEGER},
+      </if>
+      <if test="exceptedMoney != null" >
+        exceptedmoney = #{exceptedMoney,jdbcType=DECIMAL},
+      </if>
+      <if test="exceptedtime != null" >
+        exceptedtime = #{exceptedtime,jdbcType=VARCHAR},
+      </if>
+      <if test="salesProgress != null" >
+        salesprogress = #{salesProgress,jdbcType=VARCHAR},
+      </if>
+      <if test="chanceGrade != null" >
+        chancegrade = #{chanceGrade,jdbcType=VARCHAR},
+      </if>
+      <if test="remark != null" >
+        remark = #{remark,jdbcType=VARCHAR},
+      </if>
+      <if test="user != null and user.userId != null"  >
+        salesman = #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="createdate != null" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.SaleChance" >
+    update ss_salechance
+    set chance_name = #{chanceName,jdbcType=VARCHAR},
+      customer_id = #{customer.id,jdbcType=INTEGER},
+      exceptedmoney = #{exceptedMoney,jdbcType=DECIMAL},
+      exceptedtime = #{exceptedtime,jdbcType=VARCHAR},
+      salesprogress = #{salesProgress,jdbcType=VARCHAR},
+      chancegrade = #{chanceGrade,jdbcType=VARCHAR},
+      remark = #{remark,jdbcType=VARCHAR},
+      salesman = #{user.userId,jdbcType=INTEGER},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by salc.createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by salc.createdate desc
+  </select>
+</mapper>

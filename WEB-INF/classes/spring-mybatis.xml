@@ -1,0 +1,426 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans  
+                        http://www.springframework.org/schema/beans/spring-beans-3.1.xsd  
+                        http://www.springframework.org/schema/context  
+                        http://www.springframework.org/schema/context/spring-context-3.1.xsd  
+                        http://www.springframework.org/schema/mvc  
+                        http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+						http://www.springframework.org/schema/tx
+         				http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+         				http://www.springframework.org/schema/aop 
+         				http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+         				http://www.springframework.org/schema/task 
+         				http://www.springframework.org/schema/task/spring-task-3.0.xsd">
+						
+	<!-- 自动扫描 -->
+	<context:component-scan base-package="com.sss" >
+		<context:exclude-filter type="annotation"
+        expression="org.springframework.stereotype.Controller" />
+	</context:component-scan>
+	
+	<bean id="app" class="com.sss.util.ApplicationUtil">
+	</bean>
+	
+	<!-- 引入配置文件 -->
+	<bean id="propertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="location" value="classpath:jdbc.properties" />
+	</bean>
+
+	<!-- <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="${driver}" />
+		<property name="url" value="${url}" />
+		<property name="username" value="${username}" />
+		<property name="password" value="${password}" />
+		初始化连接大小
+		<property name="initialSize" value="${initialSize}"></property>
+		连接池最大数量
+		<property name="maxActive" value="${maxActive}"></property>
+		连接池最大空闲
+		<property name="maxIdle" value="${maxIdle}"></property>
+		连接池最小空闲
+		<property name="minIdle" value="${minIdle}"></property>
+		获取连接最大等待时间
+		<property name="maxWait" value="${maxWait}"></property>
+	</bean> -->
+	
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">  
+	    <property name="driverClass" value="${driver}" />  
+	    <property name="jdbcUrl" value="${url}" />  
+	    <property name="user" value="${username}" />  
+	    <property name="password" value="${password}" />  
+	    <property name="autoCommitOnClose" value="true" />  
+	    <!-- Spring中配置c3p0的时候，有一个配置属性是checkoutTimeout，把这个配置属性去掉就正常了 -->  
+	    <!--  
+	    <property name="checkoutTimeout" value="${cpool.checkoutTimeout}" /> 
+	     -->  
+	    <property name="initialPoolSize" value="${initialSize}" />  
+	    <property name="minPoolSize" value="${minActive}" />  
+	    <property name="maxPoolSize" value="${maxActive}" />  
+	    <property name="maxIdleTime" value="${maxIdle}" />  
+	</bean>  
+	
+	<!-- spring和MyBatis完美整合，不需要mybatis的配置映射文件 -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<!-- 自动扫描mapping.xml文件 -->
+		<property name="mapperLocations" value="classpath:com/sss/mapping/*.xml"></property>
+	</bean>
+
+	<!-- DAO接口所在包名，Spring会自动查找其下的类 -->
+	<bean name="mapperScannerConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.sss.dao" />
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+	</bean>
+
+	<!-- (第一个数据库)(事务管理)transaction manager, use JtaTransactionManager for global tx -->
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	<!-- (事务管理)transaction manager, use JtaTransactionManager for global tx -->
+	<!-- <bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	<tx:advice id="userTxAdvice" transaction-manager="transactionManager">
+	    <tx:attributes>
+	      <tx:method name="delete*" propagation="REQUIRED" read-only="false" rollback-for="java.lang.Exception" no-rollback-for="java.lang.RuntimeException" />
+	      <tx:method name="insert*" propagation="REQUIRED" read-only="false" rollback-for="java.lang.RuntimeException" />
+	      <tx:method name="update*" propagation="REQUIRED" read-only="false" rollback-for="java.lang.Exception" />
+	      <tx:method name="find*" propagation="SUPPORTS" />
+	      <tx:method name="get*" propagation="SUPPORTS" />
+	      <tx:method name="select*" propagation="SUPPORTS" />
+	    </tx:attributes>
+  	</tx:advice>
+  	<aop:config>
+    	<aop:pointcut id="pc" expression="execution(public * com.sss.service..*.*(..))" /> 把事务控制在Service层
+    	<aop:advisor pointcut-ref="pc" advice-ref="userTxAdvice" />
+  	</aop:config> -->
+  	<!-- 事务注解驱动，标注@Transactional的类和方法将具有事务性 -->  
+	<tx:annotation-driven transaction-manager="transactionManager" />
+  	<!-- 事务配置结束 -->
+  	
+  	<!-- 配置定时任务 -->
+  	<!-- <task:scheduled-tasks>  
+  		秒  分  小时  日期  月份  星期  年
+        <task:scheduled ref="scheduledScoreOper" method="initScore" cron="0 0 8 1 * ?"/>  每月1日上午8点 
+        <task:scheduled ref="scheduledScoreOper" method="reduceScoreByDReport" cron="0 0 8 ? * TUE-SAT,SUN"/>   周二至周日每天上午8点 
+        <task:scheduled ref="scheduledScoreOper" method="noticeForDReport" cron="0 0 20 ? * MON-SAT"/>   周一至周六每天下午8点 
+        <task:scheduled ref="scheduledScoreOper" method="reduceScoreByWReport" cron="0 0 8 ? * MON"/>   每周一上午8点 
+        <task:scheduled ref="scheduledScoreOper" method="noticeForWReport" cron="0 0 8 ? * SUN"/>  每周日上午8点 
+        <task:scheduled ref="scheduledScoreOper" method="reduceScoreByMReport" cron="59 59 23 L * ?"/>   每月最后一天下午23:59:59 
+        <task:scheduled ref="scheduledScoreOper" method="noticeForMReport" cron="0 0 8 L * ?"/>  每月最后一天上午8点 
+	</task:scheduled-tasks>   -->
+	<bean id="initScore" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">  
+		<property name="targetObject">  
+			<bean class="com.sss.util.scheduledTask.ScheduledScoreOper" />  
+		</property>  
+		<property name="targetMethod" value="initScore" />  
+		<property name="concurrent" value="false" /><!-- 作业不并发调度 -->  
+	</bean>
+	<bean id="reduceScoreByDReport" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">  
+		<property name="targetObject">  
+			<bean class="com.sss.util.scheduledTask.ScheduledScoreOper" />  
+		</property>  
+		<property name="targetMethod" value="reduceScoreByDReport" />  
+		<property name="concurrent" value="false" /><!-- 作业不并发调度 -->  
+	</bean>
+	<bean id="noticeForDReport" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">  
+		<property name="targetObject">  
+			<bean class="com.sss.util.scheduledTask.ScheduledScoreOper" />  
+		</property>  
+		<property name="targetMethod" value="noticeForDReport" />  
+		<property name="concurrent" value="false" /><!-- 作业不并发调度 -->  
+	</bean>
+	<bean id="noticeForLastDReport" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">  
+		<property name="targetObject">  
+			<bean class="com.sss.util.scheduledTask.ScheduledScoreOper" />  
+		</property>  
+		<property name="targetMethod" value="noticeForLastDReport" />  
+		<property name="concurrent" value="false" /><!-- 作业不并发调度 -->  
+	</bean>
+	<bean id="reduceScoreByWReport" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">  
+		<property name="targetObject">  
+			<bean class="com.sss.util.scheduledTask.ScheduledScoreOper" />  
+		</property>  
+		<property name="targetMethod" value="reduceScoreByWReport" />  
+		<property name="concurrent" value="false" /><!-- 作业不并发调度 -->  
+	</bean>
+	<bean id="noticeForWReport" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">  
+		<property name="targetObject">  
+			<bean class="com.sss.util.scheduledTask.ScheduledScoreOper" />  
+		</property>  
+		<property name="targetMethod" value="noticeForWReport" />  
+		<property name="concurrent" value="false" /><!-- 作业不并发调度 -->  
+	</bean>
+	<bean id="reduceScoreByMReport" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">  
+		<property name="targetObject">  
+			<bean class="com.sss.util.scheduledTask.ScheduledScoreOper" />  
+		</property>  
+		<property name="targetMethod" value="reduceScoreByMReport" />  
+		<property name="concurrent" value="false" /><!-- 作业不并发调度 -->  
+	</bean>
+	<bean id="noticeForMReport" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">  
+		<property name="targetObject">  
+			<bean class="com.sss.util.scheduledTask.ScheduledScoreOper" />  
+		</property>  
+		<property name="targetMethod" value="noticeForMReport" />  
+		<property name="concurrent" value="false" /><!-- 作业不并发调度 -->  
+	</bean>
+	<bean id="reduceScoreByDWReport" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">  
+		<property name="targetObject">  
+			<bean class="com.sss.util.scheduledTask.ScheduledScoreOper" />  
+		</property>  
+		<property name="targetMethod" value="reduceScoreByDWReport" />  
+		<property name="concurrent" value="false" /><!-- 作业不并发调度 -->  
+	</bean>
+	<bean id="noticeForDWReport" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">  
+		<property name="targetObject">  
+			<bean class="com.sss.util.scheduledTask.ScheduledScoreOper" />  
+		</property>  
+		<property name="targetMethod" value="noticeForDWReport" />  
+		<property name="concurrent" value="false" /><!-- 作业不并发调度 -->  
+	</bean>
+	<bean id="reduceScoreByWPlan" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">  
+		<property name="targetObject">  
+			<bean class="com.sss.util.scheduledTask.ScheduledScoreOper" />  
+		</property>  
+		<property name="targetMethod" value="reduceScoreByWPlan" />  
+		<property name="concurrent" value="false" /><!-- 作业不并发调度 -->  
+	</bean>
+	<bean id="noticeForWPlan" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">  
+		<property name="targetObject">  
+			<bean class="com.sss.util.scheduledTask.ScheduledScoreOper" />  
+		</property>  
+		<property name="targetMethod" value="noticeForWPlan" />  
+		<property name="concurrent" value="false" /><!-- 作业不并发调度 -->  
+	</bean>
+	<bean id="changeAppId" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">  
+		<property name="targetObject">  
+			<bean class="com.sss.util.scheduledTask.ScheduledScoreOper" />  
+		</property>  
+		<property name="targetMethod" value="changeAppId" />  
+		<property name="concurrent" value="false" /><!-- 作业不并发调度 -->  
+	</bean>
+	<bean id="gatherNickelData" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">  
+		<property name="targetObject">  
+			<bean class="com.sss.util.scheduledTask.ScheduledGatherWebData" />  
+		</property>  
+		<property name="targetMethod" value="gatherNickelPrice" />  
+		<property name="concurrent" value="false" /><!-- 作业不并发调度 -->  
+	</bean>
+	<!-- 配置定时任务,配置触发器 -->
+	<bean id="initScoreTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">  
+		<property name="jobDetail" ref="initScore" />  
+		<!-- 每月1日上午8点  --> 
+		<property name="cronExpression" value="0 0 8 1 * ?" />  
+	</bean>  
+	<bean id="reduceScoreByDReportTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">  
+		<property name="jobDetail" ref="reduceScoreByDReport" />  
+		<!-- 周二至周六每天下午17点30分  --> 
+		<property name="cronExpression" value="0 30 17 ? * TUE-SAT" />  
+	</bean>  
+	<bean id="noticeForDReportTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">  
+		<property name="jobDetail" ref="noticeForDReport" />  
+		<!-- 周一至周五每天下午8点  --> 
+		<property name="cronExpression" value="0 0 20 ? * MON-FRI" />  
+	</bean>  
+	<bean id="noticeForLastDReportTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">  
+		<property name="jobDetail" ref="noticeForLastDReport" />  
+		<!-- 周二至周六每天上午8点  --> 
+		<property name="cronExpression" value="0 0 8 ? * TUE-SAT" />  
+	</bean>  
+	<bean id="reduceScoreByWReportTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">  
+		<property name="jobDetail" ref="reduceScoreByWReport" />  
+		<!-- 每周一上午8点  --> 
+		<property name="cronExpression" value="0 0 8 ? * MON" />  
+	</bean>  
+	<bean id="noticeForWReportTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">  
+		<property name="jobDetail" ref="noticeForWReport" />  
+		<!-- 每周日上午8点  --> 
+		<property name="cronExpression" value="0 0 8 ? * SUN" />  
+	</bean>  
+	<bean id="reduceScoreByMReportTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">  
+		<property name="jobDetail" ref="reduceScoreByMReport" />  
+		<!-- 每月2日上午8点 --> 
+		<property name="cronExpression" value="0 0 8 2 * ?" />  
+	</bean>  
+	<bean id="noticeForMReportTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">  
+		<property name="jobDetail" ref="noticeForMReport" />  
+		<!-- 每月最后一天上午8点  --> 
+		<property name="cronExpression" value="0 0 8 L * ?" />  
+	</bean>  
+	<bean id="reduceScoreByDWReportTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">  
+		<property name="jobDetail" ref="reduceScoreByDWReport" />  
+		<!-- 每周一上午8点  --> 
+		<property name="cronExpression" value="0 0 8 ? * MON" />  
+	</bean>  
+	<bean id="noticeForDWReportTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">  
+		<property name="jobDetail" ref="noticeForDWReport" />  
+		<!-- 每周日上午8点  --> 
+		<property name="cronExpression" value="0 0 8 ? * SUN" />  
+	</bean>  
+	<bean id="reduceScoreByWPlanTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">  
+		<property name="jobDetail" ref="reduceScoreByWPlan" />  
+		<!-- 每周二上午8点  --> 
+		<property name="cronExpression" value="0 0 8 ? * TUE" /> 
+	</bean>  
+	<bean id="noticeForWPlanTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">  
+		<property name="jobDetail" ref="noticeForWPlan" />  
+		<!-- 每周日上午8点  --> 
+		<property name="cronExpression" value="0 0 8 ? * SUN" />  
+	</bean>  
+	<bean id="changeAppIdTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">  
+		<property name="jobDetail" ref="changeAppId" />  
+		<!-- 每天23:59:59点  --> 
+		<property name="cronExpression" value="59 59 23 ? * MON,THU" />  
+	</bean>  
+	<bean id="gatherNickelTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">  
+		<property name="jobDetail" ref="gatherNickelData" />  
+		<!-- 每天12:00:00点  -->
+		<property name="cronExpression" value="00 00 12 ? * *" />  
+	</bean>  
+	
+	
+	<!-- 配置定时任务,配置调度工厂 -->
+	<bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">  
+		<property name="triggers">  
+			<list>  
+				<ref bean="initScoreTrigger" />  
+				<ref bean="reduceScoreByDReportTrigger" />  
+				<ref bean="noticeForDReportTrigger" />  
+				<ref bean="noticeForLastDReportTrigger" />  
+				<ref bean="reduceScoreByWReportTrigger" />  
+				<ref bean="noticeForWReportTrigger" />  
+				<ref bean="reduceScoreByMReportTrigger" />  
+				<ref bean="noticeForMReportTrigger" />  
+				<ref bean="reduceScoreByDWReportTrigger" />  
+				<ref bean="noticeForDWReportTrigger" />  
+				<ref bean="reduceScoreByWPlanTrigger" />  
+				<ref bean="noticeForWPlanTrigger" />  
+				<ref bean="changeAppIdTrigger" />  
+				<ref bean="gatherNickelTrigger" />
+			</list>  
+		</property>  
+	</bean> 
+
+	<!-- 配置新的数据源(第二个数据库) -->
+	<bean id="dataSource1" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">  
+	    <property name="driverClass" value="${driver1}" />  
+	    <property name="jdbcUrl" value="${url1}" />  
+	    <property name="user" value="${username1}" />  
+	    <property name="password" value="${password1}" />  
+	    <property name="autoCommitOnClose" value="true" />  
+	    <!-- Spring中配置c3p0的时候，有一个配置属性是checkoutTimeout，把这个配置属性去掉就正常了 -->  
+	    <!--  
+	    <property name="checkoutTimeout" value="${cpool.checkoutTimeout}" /> 
+	     -->  
+	    <property name="initialPoolSize" value="${initialSize1}" />  
+	    <property name="minPoolSize" value="${minActive1}" />  
+	    <property name="maxPoolSize" value="${maxActive1}" />  
+	    <property name="maxIdleTime" value="${maxIdle1}" />  
+	</bean>  
+	
+	<bean id="sqlSessionFactory1" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource1" />
+		<!-- (第二个数据库)自动扫描mapping.xml文件 -->
+		<property name="mapperLocations" value="classpath:com/sss/mes/mapping/*.xml"></property>
+	</bean>
+	
+	<!-- (第二个数据库)DAO接口所在包名，Spring会自动查找其下的类 -->
+	<bean name="mapperScannerConfigurer1" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.sss.mes.dao" />
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory1"></property>
+	</bean>
+
+	<!-- (第二个数据库)(事务管理)transaction manager, use JtaTransactionManager for global tx -->
+	<bean id="transactionManager1"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource1" />
+	</bean>
+	
+	
+	<!-- 配置新的数据源(第三个数据库，试用数据库) -->
+	<bean id="dataSource_trial" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">  
+	    <property name="driverClass" value="${driver_trial}" />  
+	    <property name="jdbcUrl" value="${url_trial}" />  
+	    <property name="user" value="${username_trial}" />  
+	    <property name="password" value="${password_trial}" />  
+	    <property name="autoCommitOnClose" value="true" />  
+	    <!-- Spring中配置c3p0的时候，有一个配置属性是checkoutTimeout，把这个配置属性去掉就正常了  -->
+	    <!-- <property name="checkoutTimeout" value="${cpool.checkoutTimeout}" />  -->
+	    <property name="initialPoolSize" value="${initialSize_trial}" />  
+	    <property name="minPoolSize" value="${minActive_trial}" />  
+	    <property name="maxPoolSize" value="${maxActive_trial}" />  
+	    <property name="maxIdleTime" value="${maxIdle_trial}" />  
+	</bean>  
+	
+	<bean id="sqlSessionFactory_trial" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource_trial" />
+		<!-- (第三个数据库)自动扫描mapping.xml文件 -->
+		<property name="mapperLocations" value="classpath:com/sss/trial/mapping/*.xml"></property>
+	</bean>
+	
+	<!-- (第三个数据库)DAO接口所在包名，Spring会自动查找其下的类 -->
+	<bean name="mapperScannerConfigurer_trial" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.sss.trial.dao" />
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory_trial"></property>
+	</bean>
+
+	<!-- (第三个数据库)(事务管理)transaction manager, use JtaTransactionManager for global tx -->
+	<bean id="transactionManager_trial"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource_trial" />
+	</bean>
+	
+	<!-- Activity配置 -->
+	<bean id="processEngineConfiguration" class="org.activiti.spring.SpringProcessEngineConfiguration">
+         <property name="dataSource" ref="dataSource" />
+         <property name="transactionManager" ref="transactionManager" />
+         <property name="databaseSchemaUpdate" value="true" />
+         <property name="jobExecutorActivate" value="false" />
+         
+        <!-- 邮件 -->
+        <property name="mailServerHost" value="smtp.qq.com"/>
+        <property name="mailServerUsername" value="913762686@qq.com"/>
+        <property name="mailServerPassword" value="connaoofivfybbjc"/>
+        <property name="mailServerPort" value="465"/>
+        <!--加密方式 一定要有-->  
+        <property name="mailServerUseSSL" value="true" /> 
+    </bean>
+ 
+    <bean id="processEngine" class="org.activiti.spring.ProcessEngineFactoryBean">
+         <property name="processEngineConfiguration" ref="processEngineConfiguration" />
+    </bean>
+ 
+    <bean id="repositoryService" factory-bean="processEngine"
+         factory-method="getRepositoryService" />
+    <bean id="runtimeService" factory-bean="processEngine"
+    
+         factory-method="getRuntimeService" />
+    <bean id="sstaskService" factory-bean="processEngine"
+         factory-method="getTaskService" />
+    <bean id="historyService" factory-bean="processEngine"
+         factory-method="getHistoryService" />
+    <bean id="managementService" factory-bean="processEngine"
+         factory-method="getManagementService" />
+    <bean id="ssformService" factory-bean="processEngine"
+         factory-method="getFormService" />
+	<bean id="ssProcessEngineConfiguration" factory-bean="processEngine"
+         factory-method="getProcessEngineConfiguration" />
+         
+	<!-- 引入shiro配置文件 -->
+    <import resource="classpath*:/spring-shiro.xml" />
+    <!-- 引入redis配置文件 -->
+    <import resource="classpath*:/spring-redis.xml" />
+
+</beans>

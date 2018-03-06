@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IKnowLedgeDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.KnowLedge" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="fileName" property="fileName" jdbcType="VARCHAR" />
+    <result column="filePath" property="filePath" jdbcType="VARCHAR" />
+    <result column="deptName" property="deptName" jdbcType="VARCHAR" />
+    <result column="category" property="category" jdbcType="VARCHAR" />
+    <result column="size" property="size" jdbcType="VARCHAR" />
+    <result column="suffix" property="suffix" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    
+    <association property="creator" javaType="com.sss.pojo.User">
+		<id column="cu_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="cu_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="cu_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="cu_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="cu_user_sex" property="sex" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <resultMap id="BaseResultMap1" type="com.sss.pojo.dto.KeyValueDTO" >
+    <result column="keywords" property="key" jdbcType="VARCHAR" />
+    <result column="value" property="value" jdbcType="DECIMAL" />
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		k.*,
+  		u.user_id as cu_user_id,
+  		u.user_name as cu_user_name,
+  		u.user_no as cu_user_no,
+  		u.position_id as cu_position_id,
+  		u.sex as cu_user_sex
+    from 
+    	ss_knowledge k
+   	left join
+   		ss_user u
+   	on
+   		k.creator = u.user_id
+  </sql>
+  <select id="selectList" resultMap="BaseResultMap" >
+    <include refid="associateQuery" /> order by k.createdate desc
+  </select>
+  <select id="selByUserId" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where k.creator = #{userId,jdbcType=INTEGER} order by k.createdate desc
+  </select>
+  <select id="selectByDeptName" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    <include refid="associateQuery" />
+    where k.deptName = #{deptName,jdbcType=VARCHAR} order by k.createdate desc
+  </select>
+  <select id="selectByCategory" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    <include refid="associateQuery" />
+    where k.category = #{category,jdbcType=VARCHAR} order by k.createdate desc
+  </select>
+  <select id="selDeptKnowLCount" resultMap="BaseResultMap1" parameterType="java.lang.String" >
+    select count(*) value, deptName keywords 
+    from ss_knowledge group by deptName
+  </select>
+  <select id="selCategoryKnowLCount" resultMap="BaseResultMap1" parameterType="java.lang.String" >
+    select count(*) value, category keywords 
+    from ss_knowledge group by category
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where k.id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_knowledge
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.KnowLedge" >
+    insert into ss_knowledge (id, creator, fileName, filePath, 
+      deptName, category, size, 
+      suffix, createdate)
+    values (#{id,jdbcType=INTEGER}, #{creator.userId,jdbcType=INTEGER}, #{fileName,jdbcType=VARCHAR}, #{filePath,jdbcType=VARCHAR}, 
+      #{deptName,jdbcType=VARCHAR}, #{category,jdbcType=VARCHAR}, #{size,jdbcType=VARCHAR}, 
+      #{suffix,jdbcType=VARCHAR}, #{createdate,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.KnowLedge" >
+    insert into ss_knowledge
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="creator != null and creator.userId != 0">
+        creator,
+      </if>
+      <if test="fileName != null" >
+        fileName,
+      </if>
+      <if test="filePath != null" >
+        filePath,
+      </if>
+      <if test="deptName != null" >
+        deptName,
+      </if>
+      <if test="category != null" >
+        category,
+      </if>
+      <if test="size != null" >
+        size,
+      </if>
+      <if test="suffix != null" >
+        suffix,
+      </if>
+        createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="creator != null and creator.userId != 0">
+        #{creator.userId,jdbcType=INTEGER},
+      </if>
+      <if test="fileName != null" >
+        #{fileName,jdbcType=VARCHAR},
+      </if>
+      <if test="filePath != null" >
+        #{filePath,jdbcType=VARCHAR},
+      </if>
+      <if test="deptName != null" >
+        #{deptName,jdbcType=VARCHAR},
+      </if>
+      <if test="category != null" >
+        #{category,jdbcType=VARCHAR},
+      </if>
+      <if test="size != null" >
+        #{size,jdbcType=VARCHAR},
+      </if>
+      <if test="suffix != null" >
+        #{suffix,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.KnowLedge" >
+    update ss_knowledge
+    <set >
+      <if test="fileName != null" >
+        fileName = #{fileName,jdbcType=VARCHAR},
+      </if>
+      <if test="creator != null and creator.userId != 0">
+        creator = #{creator.userId,jdbcType=INTEGER},
+      </if>
+      <if test="filePath != null" >
+        filePath = #{filePath,jdbcType=VARCHAR},
+      </if>
+      <if test="deptName != null" >
+        deptName = #{deptName,jdbcType=VARCHAR},
+      </if>
+      <if test="category != null" >
+        category = #{category,jdbcType=VARCHAR},
+      </if>
+      <if test="size != null" >
+        size = #{size,jdbcType=VARCHAR},
+      </if>
+      <if test="suffix != null" >
+        suffix = #{suffix,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.KnowLedge" >
+    update ss_knowledge
+    set creator = #{creator.userId,jdbcType=INTEGER},
+      fileName = #{fileName,jdbcType=VARCHAR},
+      filePath = #{filePath,jdbcType=VARCHAR},
+      deptName = #{deptName,jdbcType=VARCHAR},
+      category = #{category,jdbcType=VARCHAR},
+      size = #{size,jdbcType=VARCHAR},
+      suffix = #{suffix,jdbcType=VARCHAR},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by k.createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by k.createdate desc
+  </select>
+</mapper>

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>人员查看</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		function initCalendar() {
+			laydate({
+			    elem: '#hello', //目标元素。由于laydate.js封装了一个轻量级的选择器引擎，因此elem还允许你传入class、tag但必须按照这种方式 '#id .class'
+			    event: 'focus' //响应事件。如果没有传入event，则按照默认的click
+			});
+			laydate({
+			    elem: '#hello1', //目标元素。由于laydate.js封装了一个轻量级的选择器引擎，因此elem还允许你传入class、tag但必须按照这种方式 '#id .class'
+			    event: 'focus' //响应事件。如果没有传入event，则按照默认的click
+			});
+		}
+		
+		var defaultIMG = "../../images/default.png";
+		var user;
+		$(document).ready(function(){ 
+			var userId = Request["userId"];
+			getUser(userId);
+		});
+		
+		function fillForm() {
+			$("#formDetail input[name='userNo']")[0].value = user.userNo;
+			if(user.photoUrl == "") {
+				$("#formDetail img[name='userPhoto']").attr("src", defaultIMG);
+			} else {
+				//填充头像
+				$("#formDetail img[name='userPhoto']").attr("src", user.photoUrl);
+			}
+			//重设photoUrl
+			photoUrl = user.photoUrl;
+			//uploadUserNo = user.userNo;
+			$("#formDetail input[name='photoUrl']")[0].value = user.photoUrl;
+			$("#formDetail input[name='password']")[0].value = user.password;
+			$("#formDetail input[name='email']")[0].value = user.email;
+			$("#formDetail input[name='userName']")[0].value = user.userName;
+			$("#formDetail input[name='address']")[0].value = user.address;
+			$("#formDetail input[name='school']")[0].value = user.school;
+			$("#formDetail input[name='officeTel']")[0].value = user.officeTel;
+			if(user.birthdate != null) {
+	          	$("#formDetail input[name='birthdate']")[0].value = user.birthdate;
+			}
+			if(user.entrydate != null) {
+	          	$("#formDetail input[name='entrydate']")[0].value = user.entrydate;
+			}
+			if(user.lastLogindate != null) {
+	          	$("#formDetail input[name='lastLogindate']")[0].value = user.lastLogindate;
+			}
+			$("#formDetail input[name='major']")[0].value = user.major;
+			
+			$("#formDetail input[name='telephone']")[0].value = user.telephone;
+			if(user.status == "在职") {
+				$("#formDetail select[name='status']")[0].options[0].selected = true;
+			} else if(user.status == "离职") {
+				$("#formDetail select[name='status']")[0].options[1].selected = true;
+			}
+			if(user.sex == "男") {
+				$("#formDetail select[name='sex']")[0].options[0].selected = true;
+			} else if(user.sex == "女") {
+				$("#formDetail select[name='sex']")[0].options[1].selected = true;
+			}
+			
+			//初始化部门下拉菜单
+			$.ajax({
+			      url: "../../deptAdmin/depts",
+			      datatype: "text",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+			    	  	$("#dept").empty();
+			    	  	var deptStr = "<option value=\"-1\">请选择</option>";
+						$.each(eval("(" + data + ")"), function(index, deptItem) {
+							if(user.position.dept.deptId == deptItem.deptId) {
+								//对部门设定选中
+								deptStr = deptStr + "<option value=\"" + deptItem.deptId + "\" selected=\"selected\">" + deptItem.deptName + "</option>";
+								//初始化岗位下拉菜单
+								$.ajax({
+									url: "../../posAdmin/PosesFromDeptId/" + user.position.dept.deptId,
+									datatype: "json",
+									type: "get",
+									data: {},
+									success: function (data, status, xhr) {
+										$("#position").empty();
+										posStr = "<option value=\"-1\">请选择</option>";
+										$.each(eval("(" + data + ")"), function(index, posItem) {
+											//对岗位设定选中
+											if(user.position.positionId == posItem.positionId) {
+												posStr = posStr + "<option value=\"" + posItem.positionId + "\" selected=\"selected\">" + posItem.positionName + "</option>";
+											} else {
+												posStr = posStr + "<option value=\"" + posItem.positionId + "\">" + posItem.positionName + "</option>";
+											}
+										});
+										$("#position").append(posStr);
+									} 
+								});
+							} else {
+								deptStr = deptStr + "<option value=\"" + deptItem.deptId + "\">" + deptItem.deptName + "</option>";
+							}
+						});
+						$("#dept").html(deptStr);
+			      }
+			});
+		}
+		
+		/**
+		 * 修改操作，根据deptId填充岗位选择下拉框
+		 */
+		function fillposition() {
+			var id = $("#dept").val();
+			$.ajax({
+				url: "../../posAdmin/PosesFromDeptId/" + id,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					$("#position").empty();
+					str = "<option value=\"-1\">请选择</option>";
+					$.each(eval("(" + data + ")"), function(index, item) {
+						str = str + "<option value=\"" + item.positionId + "\">" + item.positionName + "</option>";
+					});
+					$("#position").append(str);
+				} 
+			});
+		}
+	
+		function getUser(userId) {
+			$.ajax({
+				url: "../../userAdmin/user/" + userId,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					user = eval("(" + data + ")");
+					
+					fillForm();
+					initCalendar();
+					//初始化层的大小
+					initLayerSize();
+				} 
+			});
+		}
+	</script>
+</head>
+<body>
+	<div class="edit">
+		<div class="edit-content">
+			<div class="edit-in">
+				<form id="formDetail">
+					<table class="yhtj">
+						<tr>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">用户工号：</div>
+								<input label="用户工号" isEmpty="false" errorMsg="不能为空！" type="text" name="userNo">
+							</td>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">姓名称：</div>
+								<input label="姓名称" isEmpty="false" errorMsg="不能为空！" type="text" name="userName">
+							</td>
+							<td rowspan="5">
+								<div class="yhtj-tx">
+									<input label="photoUrl" isEmpty="true" errorMsg="不能为空！" type="hidden" name="photoUrl">
+									<img alt="员工头像" name="userPhoto" src="" height="100" width="130" style="margin-left:10px;">
+								</div>
+							</td>
+						</tr>
+						<tr>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">密码：</div>
+								<input label="密码" isEmpty="false" errorMsg="不能为空！" type="password" name="password">
+							</td>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">状态： </div>
+								<select label="状态" isEmpty="false" errorMsg="不能为空！" name="status">
+		                    		<option>在职</option>
+		                    		<option>离职</option>
+		                		</select>
+		                	</td>
+						</tr>
+						<tr>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">部门：</div> 
+								<select label="部门" isEmpty="false" errorMsg="不能为空！" id="dept" onchange="fillposition()"></select>
+		                	</td>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">岗位：</div> 
+								<select label="岗位" isEmpty="false" errorMsg="不能为空！" name="position.positionId" id="position"></select>
+		                	</td>
+						</tr>
+						<tr>
+							<td class="yhtj-tb" colspan="2">
+								<div class="yhtj-tb-div">地址：</div>
+								<input label="地址" isEmpty="true" errorMsg="不能为空！" type="text" name="address" style="width:350px;">
+							</td>
+						</tr>
+						<tr>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">毕业院校：</div>
+								<input label="毕业院校" isEmpty="true" errorMsg="不能为空！" type="text" name="school">
+							</td>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">出生日期：</div>
+								<input label="出生日期" isEmpty="true" errorMsg="不能为空！" id="hello" name="birthdate" class="laydate-icon">
+							</td>
+						</tr>
+						<tr>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">学历：</div>
+								<input label="学历" isEmpty="true" errorMsg="不能为空！" type="text" name="eduBackgound">
+							</td>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">入职日期：</div>
+								<input label="入职日期" isEmpty="true" errorMsg="不能为空！" id="hello1" name="entrydate" class="laydate-icon">
+							</td>
+						</tr>
+						<tr>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">专业：</div>
+								<input label="专业" isEmpty="true" errorMsg="不能为空！" type="text" name="major">
+							</td>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">性别： </div>
+								<select label="性别" isEmpty="true" errorMsg="不能为空！" name="sex" id="sex">
+		                    		<option>男</option>
+		                    		<option>女</option>
+		                		</select>
+		                	</td>
+						</tr>
+						<tr>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">电话：</div>
+								<input label="电话" isEmpty="true" errorMsg="不能为空！" type="text" name="telephone">
+							</td>
+		                	<td class="yhtj-tb">
+		                		<div class="yhtj-tb-div">办公电话：</div>
+		                		<input label="Email" isEmpty="true" errorMsg="不能为空！" type="text" name="officeTel">
+		                	</td>
+						</tr>
+						<tr>
+		                	<td class="yhtj-tb">
+		                		<div class="yhtj-tb-div">Email：</div>
+		                		<input label="Email" isEmpty="true" errorMsg="不能为空！" type="text" name="email">
+		                	</td>
+						</tr>
+					</table>
+				</form>
+			</div>
+			<div class="edit-bottom">
+				<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();">
+				<i class="glyphicon glyphicon-remove"></i>&nbsp;关闭
+				</button>
+			</div>
+		</div>	
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span>
+			<span></span>
+			<div><img src="../../images/sanjiao.png" width="10"></div>
+		</div>
+	</div>
+</body>
+</html>

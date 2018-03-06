@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>查看质量异议申诉</title>
+	
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.cookie.js"></script>
+	<!-- angularjs自动化表单部分 -->
+	<script type="text/javascript" src="../../js/loadAngularResource.js"></script>
+	<script src="../../js/json/CityJson.js" type="text/javascript"></script>
+    <script src="../../js/json/ProJson.js" type="text/javascript"></script>
+    <script src="../../js/jquery-form.js"></script>
+    <script src="../../js/json/DistrictJson.js" type="text/javascript"></script>
+    <script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.autocomplete.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		//var currentUserId = Request["userId"];
+		function initCalendar() {
+			laydate({
+			    elem: '#dateTime', //目标元素。由于laydate.js封装了一个轻量级的选择器引擎，因此elem还允许你传入class、tag但必须按照这种方式 '#id .class
+			    event: 'focus' //响应事件。如果没有传入event，则按照默认的click
+			});
+		}
+		//用于展现表单的menuCode
+		var menuCode;
+		var selPri;
+		var quality;
+		var appendix = new Array();
+		var status;
+		var element;
+		$(document).ready(function(){
+			menuCode = Request["menuCode"];
+			selPri = Request["selPri"];
+			var qualityId = Request["id"];
+			var appendix = Request["appendix"];
+			getQualit(qualityId);
+		});
+		
+		//根据ss_form表取出数据构建form表单
+		function initForm() {
+			$.ajax({
+				url: "../../formAdmin/formsByMenuCode/" + menuCode,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					element = eval("(" + data + ")");
+					
+					if(!useAngularForm) {
+						$("#createSubmitForm").remove();
+						
+						new UserCommon().createForm("viewQualityForm", element, 4);
+						new UserCommon().fillForm("viewQualityForm", quality);
+						$("#proName").val(quality.proName);
+						var arr = quality.appendix.split("|");
+						if(arr[0] != "") {
+							for (var i=0;i < arr.length;i++) {
+								//$("#photoUrls").val(arr[i]);
+								$("#imgDiv").append("<div class=\"rwzs_img_pb\"><img style='width:70px;height:70px;' src='" + arr[i] + "' name='netInImg' id='netinImg" + i + "'\><div class=\"yinying\" onclick='removeImg(" + i + ")'><i class=\"glyphicon glyphicon-trash\"></i><p>点击删除</p></div></div>");
+								appendix.push(arr[i]);
+							}
+						}
+						fillCustomSelect();
+						fillRoleSelect();
+						//初始化层的大小
+						initLayerSize();
+						setTimeout(function () {
+							initCalendar();
+						}, 50);
+						
+						var current_img = $(".rwzs_img_pb");
+			    		current_img.mouseleave(function(){
+			    			$(".rwzs_img_pb .yinying").hide();
+		    			});
+						for(var i = 0; i<current_img.length; i++){
+							current_img.eq(i).mouseover(function(){
+								$(".rwzs_img_pb .yinying").hide();
+								$(this).children(".yinying").show();
+							})
+						}
+					}
+				} 
+			});
+		}
+		
+		//自动化创建表单之后需要调用的函数
+		function afterCreateCustomForm() {
+			new UserCommon().fillForm("viewQualityForm", quality);
+			$("#proName").val(quality.proName);
+			var arr = quality.appendix.split("|");
+			if(arr[0] != "") {
+				for (var i=0;i < arr.length;i++) {
+					//$("#photoUrls").val(arr[i]);
+					$("#imgDiv").append("<div class=\"rwzs_img_pb\"><img style='width:70px;height:70px;' src='" + arr[i] + "' name='netInImg' id='netinImg" + i + "'\><div class=\"yinying\" onclick='removeImg(" + i + ")'><i class=\"glyphicon glyphicon-trash\"></i><p>点击删除</p></div></div>");
+					appendix.push(arr[i]);
+				}
+			}
+			fillCustomSelect();
+			fillRoleSelect();
+			
+			var current_img = $(".rwzs_img_pb");
+    		current_img.mouseleave(function(){
+    			$(".rwzs_img_pb .yinying").hide();
+			});
+			for(var i = 0; i<current_img.length; i++){
+				current_img.eq(i).mouseover(function(){
+					$(".rwzs_img_pb .yinying").hide();
+					$(this).children(".yinying").show();
+				})
+			}  
+		}
+		
+		/**
+		 *	添加弹出框填写完成之后保存调用的函数
+		 */
+		function updateForm() {
+			strs = "";
+			for(var i = 0;i < appendix.length;i++) {
+				strs = strs + appendix[i] + "|";
+			}
+			strs = strs.substring(0,strs.length-1);
+			$("#appendix").val(strs);	
+			//alert(strs);
+			/* $("#viewQualityForm img[name='userPhoto']").attr("src", defaultIMG); */
+			var formObj = $("#viewQualityForm");
+			//var obj = $("#hello");
+			var msg = "不能为空！";
+			$("#userId").val(currentUserId);
+			if(new UserCommon().show("edit-promit", formObj, msg)) {
+			 	var formObjJson = $("#viewQualityForm").serializeNestedObject();
+			 	$.ajax({
+					url: "../../qualityObjectAdmin/qualityObjection",
+					datatype: "text",
+					type: "put",
+					data: JSON.stringify(formObjJson),
+					success: function (data) {
+						var json = eval("(" + data + ")");
+						if(json.status == 1) {
+							new UserCommon().check("success","添加成功！",null,"success");
+							setTimeout(function (){
+								//new UserCommon().layer_close();
+								window.parent.location.href = "qualityMgr.html?menuCode=" + menuCode;
+							}, 1000);
+						} else {
+							new UserCommon().check("success",json.msg,null,"fail");
+						}
+					}
+				});
+			}
+		}
+		
+		function getQualit(qualityId) {
+			$.ajax({
+				url: "../../qualityObjectAdmin/qualityObjection/" + qualityId,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					quality = eval("(" + data + ")");
+					//alert(data);
+					initForm();
+				} 
+			});
+		}
+		
+		/**
+		 * 上传头像input改变时触发
+		 */
+		function upload() {
+			//if(uploadUserNo != null) {
+				$("#uploadForm").attr("action", "../../uploadServlet?action=enterCertificate");
+				//$("#uploadForm").submit();
+				$("#uploadForm").ajaxSubmit({ 
+					success: function (data, status) { 
+						var json = eval("(" + data + ")");
+						//alert(json.msg);
+				    	if(json.status == 1) {
+				    		$("#uploadForm").prev().attr("src", json.msg);
+				    		photoUrlStr = json.msg;
+				    		//alert(photoUrlStr);
+				    		var photoUrlArr = photoUrlStr.split("|");
+				    		var length = appendix.length;
+				    		for (var i=0;i < photoUrlArr.length;i++) {
+				    			appendix.push(photoUrlArr[i]);
+				    			$("#imgDiv").append("<div class=\"rwzs_img_pb\"><img style='width:70px;height:70px;' src='" + photoUrlArr[i] + "' name='netInImg' id='netinImg" + i + "'\><div class=\"yinying\" onclick='removeImg(" + i + ")'><i class=\"glyphicon glyphicon-trash color-del\"></i></div></div>");
+				    		}
+				    		
+				    		var current_img = $(".rwzs_img_pb");
+				    		current_img.mouseleave(function(){
+				    			$(".rwzs_img_pb .yinying").hide();
+			    			});
+							for(var i = 0; i<current_img.length; i++){
+								current_img.eq(i).mouseover(function(){
+									$(".rwzs_img_pb .yinying").hide();
+									$(this).children(".yinying").show();
+								})
+							} 
+				    		/* $("#imgDiv").append("<img onclick='removeImg(" + length + ")' id='netinImg" + length + "' style='width:50px;height:50px;' src='" + photoUrls + "'\>");
+				    		photoUrlss.push(photoUrls); */
+				    	} else {
+				    		new UserCommon().check("success",json.msg,null,"fail");
+				    	}
+					} 
+				});
+		}
+			
+	/* 	function removeImg(index) {
+			$("#netinImg" + index).remove();
+			var imgIndex = $("img[name='netInImg']").index($("#img" + index));
+			appendix.splice(imgIndex, 1);
+		} */
+		
+		/**
+		 * 选择添加后填充相关选择下拉框
+		 */
+		function fillCustomSelect() {
+			$("#customerId").empty();
+			var str = "<option value=\"-1\">请选择</option>";
+			var searchDTO = {
+				    "salesmanIds": [currentUserId]
+			};
+			$.ajax({
+			      url: "../../cusAdmin/searchCustomer",
+			      datatype: "text",
+			      type: "post",
+			      data: JSON.stringify(searchDTO),
+			      success: function (data, status, xhr) {
+					      //alert(data);
+						$.each(eval("(" + data + ")"), function(index, item) {
+							str = str + "<option value=\"" + item.id + "\">" + item.customerName + "</option>"
+						});
+						$("#customerId").html(str);
+						$("#customerId").val(quality.customer.id);
+			      }
+			});
+		}
+		
+		/**
+		 * 发送请求，得到现在的角色
+		 */
+		 function fillRoleSelect() {
+			 $("#status").empty();
+			 $("#descId").attr("placeholder", "请输入异议描述");
+			 $("#reasonId").attr("placeholder", "请输入缺陷原因");
+		     $("#actionId").attr("placeholder", "请输入纠正及预防措施");
+		     $("#deptViewId").attr("placeholder", "请输入品管部意见");
+		     $("#proMgrId1").attr("placeholder", "请输入生产副总意见");
+		     $("#saleMgrId1").attr("placeholder", "请输入销售副总意见");
+			 $.ajax({
+			      url: "../../qualityObjectAdmin/getUserRoleInQua/" + currentUserId,
+			      datatype: "int",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+			    	  	element = eval("(" + data + ")");
+					    //alert(element);
+					    $("#status").val(element);
+					    status = element + 1;
+					    //alert(status);
+					    if (status == 1) {
+					    	$("#reasonId").attr("readonly", true);
+					    	$("#actionId").attr("readonly", true);
+					    	$("#deptViewId").attr("readonly", true);
+					    	$("#proMgrId1").attr("readonly", true);
+					    	$("#saleMgrId1").attr("readonly", true);
+					    }else if (status == 2) {
+					    	$("#descId").attr("readonly", true);
+					    	$("#proMgrId1").attr("readonly", true);
+					    	$("#saleMgrId1").attr("readonly", true);
+					    }else if (status == 3) {
+					    	$("#descId").attr("readonly", true);
+					    	$("#reasonId").attr("readonly", true);
+					    	$("#actionId").attr("readonly", true);
+					    	$("#deptViewId").attr("readonly", true);
+					    	$("#saleMgrId1").attr("readonly", true);
+					    }else if (status == 4){
+					    	$("#descId").attr("readonly", true);
+					    	$("#reasonId").attr("readonly", true);
+					    	$("#actionId").attr("readonly", true);
+					    	$("#deptViewId").attr("readonly", true);
+					    	$("#proMgrId1").attr("readonly", true);
+					    }else if (status == 5) {
+					    	$("#reasonId").attr("readonly", true);
+					    	$("#actionId").attr("readonly", true);
+					    	$("#deptViewId").attr("readonly", true);
+					    	$("#proMgrId1").attr("readonly", true);
+					    	$("#saleMgrId1").attr("readonly", true);
+					    }
+						/* $.each(eval("(" + data + ")"), function(index, item) {
+							str = str + "<option value=\"" + item.id + "\">" + item.customerName + "</option>"
+						}); */
+						/* //$("#customerId").html(str);
+						异议描述(业务员)：descId,缺陷原因(品管部)：reasonId, 纠正及预防措施(品管部)：actionId
+						品管部意见(品管部)：deptViewId,生产副总意见(生产部):proMgrId1,销售副总意见(销售部)：saleMgrId1
+						$("#inputId").attr("readonly", true);
+					    $("#inputId").attr("placeholder", "请输入品管部意见");
+					     */
+			      }
+			});
+		}
+	</script>
+</head>
+<body>
+	<div class="edit">
+		<div class="edit-content">
+			<div class="edit-in">
+				<form id="viewQualityForm">
+					<div id="createSubmitForm" ng-app="app" ng-controller="creatSubmitFormCtrl" class="previewText">
+						<div style="border:1px solid #d9d9d9;">
+							<div gridster='gridsterOpts' ng-style="{width:((gridsterOpts.columns)*200)+1+'px'}">
+								<ul>
+									<li gridster-item="item" ng-repeat="item in sercoundItems" ng-style="{zIndex:100-item.row}">
+										<my-directivelist>
+										</my-directivelist>
+									</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				<!-- <img alt="入网图片" name="userPhoto" src="" height="100" width="130" style="margin-left:10px;"> -->
+				</form>
+				<div id="imgDiv" class="rwzs_img_h"></div>
+				<!-- <form name="uploadForm" target="_self" id="uploadForm" action="" enctype="multipart/form-data" method="post" style="margin-top:15px;">
+				     <span style="float:left;">上传入网图片:</span> <input type="file" name="image" multiple="multiple" onchange="upload()" style="float:left">
+				</form> -->
+			</div>
+			<div class="edit-bottom rwzs_bt_sc">
+				<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();"><i class="glyphicon glyphicon-remove"></i>&nbsp;关闭</button>
+				<!-- <button type="button" class="btn btn-xs edit-updateForm btn-primary" onclick="updateForm()"><i class="glyphicon glyphicon-ok"></i>&nbsp;保存</button> -->
+			</div>
+		</div>	
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span>
+			<span></span>
+			<div><img src="../../images/sanjiao.png" width="10"></div>
+		</div>
+	</div>
+</body>
+</html>

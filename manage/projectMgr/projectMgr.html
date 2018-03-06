@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>项目管理</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+	<link href="../../css/font-awesome.min.css" rel="stylesheet">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		//设定查看的权限。1：查看所有；2：查看直属下级；3：查看所有下级；4：查看自己；
+		var selPri = -1;
+		//当前页面所属菜单的menuCode
+	    var menuCode;
+		//根据权限渲染页面
+		$(document).ready(function(){ 
+			menuCode = Request["menuCode"];
+			$.ajax({
+			      url: "../../sessionAdmin/getPri",
+			      datatype: "json",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+			    	  	var pathname = window.location.pathname;
+			    	  	var url = pathname.substring(pathname.indexOf("/", 1) + 1, pathname.length);
+			    	  	$.each(eval("(" + data + ")"), function(index, item) {
+			      			if(item.menuUrl == url) {
+			      				setSelPriByMenuName(item.menuName);
+			      				if(item.menuName == "增加") {
+			      					$("#add-g").show();
+			      				} else if(item.menuName == "修改") {
+			      					$("#update-g").show();
+			      				} else if(item.menuName == "删除") {
+			      					$("#delete-g").show();
+			      				}
+			      			}
+		    	  		});
+			    	  
+			    	  	switch(selPri) {
+			    	  	case 1:
+			    	  		initTable("../../projectAdmin/projects");
+	      					lookShow();
+			    	  		break;
+			    	  	case 2:
+			    	  		initTable("../../projectAdmin/proesByUserPri/" + currentUserId + "," + selPri);
+	      					lookShow();
+	      					break;
+			    	  	case 3:
+			    	  		initTable("../../projectAdmin/proesByUserPri/" + currentUserId + "," + selPri);
+	      					lookShow();
+	      					break;
+			    	  	case 4:
+			    	  		initTable("../../projectAdmin/proesByUserPri/" + currentUserId + "," + selPri);
+	      					lookShow();
+	      					break;
+			    	  	}
+			      	} 
+				});
+			});
+		
+			function lookShow() {
+				$("#search-g").show();
+				$("#keySpan").show();
+				$("#keyWords").show();
+				$("#checkTool").show();
+			}
+			var allData = null;
+			var proes = null;
+			var ajaxUrl = null;
+			function initTable(url) {
+				ajaxUrl = url;
+				$.ajax({
+					url: url,
+					datatype: "json",
+					type: "get",
+					data: {},
+					success: function (data, status, xhr) {
+						$("#proTable").empty();
+						allData = eval("(" + data + ")");
+						proes = allData;
+						totalRecords = eval("(" + data + ")").length;
+						
+						//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+						if(totalRecords % pageSize != 0) {
+							totalPages = Math.floor(totalRecords / pageSize) + 1;
+						} else {
+							totalPages = totalRecords / pageSize;
+						}
+						//根据totalPages初始化页码插件
+						$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+						$("#Pagination").pagination(totalPages);
+					} 
+				});
+			}
+			var pageSize = 10;
+			var pageNo = 1;//当前的页码
+			var totalRecords = 0;
+			var totalPages = 0;
+	
+			function circleInfos() {
+				 $("#proTable").empty();
+				 $.each(proes, function(index, item) {
+					 if(index >= ((pageNo-1)*pageSize) && index < (pageNo*pageSize)) {
+						 new UserCommon().fillTable("proTable",item,index);
+						 
+					 } else if(index > (pageNo*pageSize)) {
+						 return;
+					 }
+					 //为checkbox添加监听事件
+					 new UserCommon().checkboxListener();
+			      });
+			}
+			
+			/**
+			 * 根据reportId填充单个用户详细信息查看表单
+			 */
+			function fillDetail(id) {
+				$.each(proes, function(index, item) {
+					if(item.id == id) {
+						admin_role_add('<strong>项目查看</strong>',"viewPro.html?menuCode=" + menuCode + "&projectId=" + item.id,'680','560');
+					}
+			    });
+			}
+			
+			/**
+			 * 根据projectId填充信息添加跟进任务
+			 */
+			function fillPfollow(id) {
+				$.each(proes, function(index, item) {
+					if(item.id == id) {
+						admin_role_add('<strong>跟进任务</strong>',"addPfollows.html?menuCode=" +" I00_04" + "&projectName=" + item.projectName + "&projectId=" + item.id + "&selPri=" + selPri, iframeJson.width*0.55);
+					}
+			    });
+			}
+			
+			
+			/**
+			 * 选择修改后填充相关信息
+			 */
+			function fillUpdateForm() {
+				var but = $("input[name='selectFlag']");
+				var selProIds;
+				var num = 0;
+				for(var i=0; i<but.length; i++) {
+					if(but[i].checked) { 
+						if(num == 0) {
+							selProIds = but[i].value;
+						}
+						num += 1;
+						//alert(but[i].value);
+					}
+				} 
+				if(num == 1) {
+					$.each(proes, function(index, item) {
+						if(item.id == selProIds) {
+							admin_role_add('<strong>项目修改</strong>',"editPro.html?menuCode=" + menuCode + "&projectId=" + item.id +"&selPri=" +selPri,'680','560');
+						}
+				    });
+				} else {
+					new UserCommon().check("success","请选择一个项目！",null,"warning");
+				}
+			}
+	
+			function deleteproes() {
+				var str = "";
+				$("input[name='selectFlag']").each(function(){
+					if($(this).is(':checked')) str += $(this).val() + ",";
+				});
+				
+	
+				if(str != null && str.trim() != "") {
+					str = str.substring(0, str.length-1);
+					layer.confirm('要删除么？',function(index){
+						$.ajax({
+						      url: "../../projectAdmin/project/" + str,
+						      datatype: "text",
+						      type: "delete",
+						      data: {},
+						      success: function (data) {
+						    	  var json = eval("(" + data + ")");
+						    	  if(json.status == 1) {
+						    		  new UserCommon().check("success",json.msg,null,"success");
+						    		  initTable(ajaxUrl);
+						    		  layer.close(index);
+						    	  } else {
+						    		  new UserCommon().check("success",json.msg,null,"fail");
+						    	  }
+						      }
+						});
+					});
+				} else {
+					new UserCommon().check("success","请选择要删除的客户！",null,"warning");
+				}
+			}
+	
+			function getProByKey() {
+				var keyWords = $("#keyWords").val();
+				proes = new Array();
+				$.each(allData, function(index, item) {
+					if(item.projectName.indexOf(keyWords) != -1) {
+						proes.push(item);
+					}
+				});
+				
+				totalRecords = proes.length;
+				//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+				if(totalRecords % pageSize != 0) {
+					totalPages = Math.floor(totalRecords / pageSize) + 1;
+				} else {
+					totalPages = totalRecords / pageSize;
+				}
+				//根据totalPages初始化页码插件
+				$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+				$("#Pagination").pagination(totalPages);
+			}
+			
+			function advancedSearch(dto) {
+				$.ajax({
+					url: "../../projectAdmin/selectByAdvancedSearch" ,
+					datatype: "json",
+					type: "post",
+					data: JSON.stringify(dto),
+					success: function (data, status, xhr) {
+						$("#proTable").empty();
+						proes = data;
+						totalRecords = proes.length;
+						//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+						if(totalRecords % pageSize != 0) {
+							totalPages = Math.floor(totalRecords / pageSize) + 1;
+						} else {
+							totalPages = totalRecords / pageSize;
+						}
+						
+						$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+						$("#Pagination").pagination(totalPages);
+					} 
+				});
+			}
+			/*管理员-角色-添加*/
+			function admin_role_add(title,url,w){
+				new UserCommon().layer_show(title,url,w);
+			}
+			function addPro() {
+				admin_role_add('<strong>项目添加</strong>',"addPro.html?menuCode=" + menuCode + "&selPri=" + selPri,'680');
+			}
+	</script>
+</head>
+<body>
+	<div class="bt-div">
+		<div class="bt-div-in">
+			<button id="add-g" class="btn btn-default btn-xs bt-one" onclick="addPro()">
+				<span class="glyphicon glyphicon-plus color-add"></span> 添加
+			</button>
+			<button id="update-g" class="btn btn-default btn-xs bt-two" onclick="fillUpdateForm()">
+				<span class="glyphicon glyphicon-edit color-edit"></span> 修改
+			</button>
+			<button id="delete-g" class="btn btn-default btn-xs bt-three" onclick="deleteproes()">
+				<span class="glyphicon glyphicon-trash color-del"></span> 删除
+			</button>
+			<span class="bt-div-title" id="keySpan">项目名称:</span>
+			<input class="bt-div-input" type="text" id="keyWords">
+			<button class="btn btn-default bt-div-bt" id="search-g" onclick="getProByKey()">
+				<span class="glyphicon glyphicon-search color-zn"></span> 搜索
+			</button>
+			<button type="button" class="btn btn-default bt-div-bt" style="display: inline-block;" onclick="slideRight()">
+				<span class="glyphicon glyphicon-filter color-zn"></span> 高级筛选
+			</button>
+		</div>
+	</div>
+	<div class="bt-div-two-table">
+		<div class="table-responsive centerTable">
+			<table class="table table-data-bottom text-center tableHidden">
+				<thead>
+					<tr class="table-first-tr" fieldType="controlCB" fieldName="id">
+						<th fieldType="checkbox" fieldName="id"><input type="checkbox" name="ifAll" class="all"></th>
+						<th fieldType="num" fieldName="">序号</th>
+						<th fieldType="text" fieldName="projectName">项目名称</th>
+						<th fieldType="text" fieldName="area">项目区域</th>
+						<th fieldType="text" fieldName="type">项目领域</th>
+						<th fieldType="text" fieldName="salesman.userName">业务员</th>
+						<th fieldType="datetime" fieldName="createDate">发布时间</th>
+						<th fieldType="text" fieldName="assignman.userName">指派人</th>
+						<!-- <th fieldType="detailInfo" fieldName="id">详细信息</th> -->
+						<th fieldType="followInfo" fieldName="id">操作</th>
+					</tr>
+				</thead>
+				<tbody id="proTable">
+				</tbody>
+			</table> 
+		</div>
+		<!-- 分页 -->
+		<div class="pages">
+	        <div id="Pagination"></div>
+	        <div class="searchPage">
+	          <span class="page-sum" id="sumPage"></span>
+	          <span class="page-go">跳转<input type="text">页</span>
+	          <a class="page-btn" href="javascript:;">GO</a>
+	        </div>
+	    </div>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<div class="search-background" id="background" onclick="hidebg()"></div>
+</body>
+</html>

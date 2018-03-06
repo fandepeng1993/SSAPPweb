@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.mes.dao.IWmsProductDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.mes.pojo.WmsProduct" >
+    <id column="D_ID" property="dId" jdbcType="INTEGER" />
+    <result column="WarehouseCode" property="warehousecode" jdbcType="VARCHAR" />
+    <result column="Bin" property="bin" jdbcType="VARCHAR" />
+    <result column="Pro_No" property="proNo" jdbcType="VARCHAR" />
+    <result column="Pro_Name" property="proName" jdbcType="VARCHAR" />
+    <result column="D_Type" property="dType" jdbcType="VARCHAR" />
+    <result column="D_Steel" property="dSteel" jdbcType="VARCHAR" />
+    <result column="D_Spec" property="dSpec" jdbcType="VARCHAR" />
+    <result column="D_FurnaceNo" property="dFurnaceno" jdbcType="VARCHAR" />
+    <result column="D_Unit" property="dUnit" jdbcType="VARCHAR" />
+    <result column="D_Quantity" property="dQuantity" jdbcType="INTEGER" />
+    <result column="D_Weight" property="dWeight" jdbcType="DECIMAL" />
+    <result column="D_Numbers" property="dNumbers" jdbcType="DECIMAL" />
+    <result column="R_Quantity" property="rQuantity" jdbcType="INTEGER" />
+    <result column="R_Weight" property="rWeight" jdbcType="DECIMAL" />
+    <result column="R_Numbers" property="rNumbers" jdbcType="DECIMAL" />
+    <result column="M_Quantity" property="mQuantity" jdbcType="INTEGER" />
+    <result column="M_Weight" property="mWeight" jdbcType="DECIMAL" />
+    <result column="M_Numbers" property="mNumbers" jdbcType="DECIMAL" />
+    <result column="S_Quantity" property="sQuantity" jdbcType="INTEGER" />
+    <result column="S_Weight" property="sWeight" jdbcType="DECIMAL" />
+    <result column="S_Numbers" property="sNumbers" jdbcType="DECIMAL" />
+    <result column="D_Create" property="dCreate" jdbcType="VARCHAR" />
+    <result column="D_CreateDate" property="dCreatedate" jdbcType="VARCHAR" />
+    <result column="D_Update" property="dUpdate" jdbcType="VARCHAR" />
+    <result column="D_UpdateDate" property="dUpdatedate" jdbcType="VARCHAR" />
+    <result column="I_Quantity" property="iQuantity" jdbcType="INTEGER" />
+    <result column="I_Weight" property="iWeight" jdbcType="DECIMAL" />
+    <result column="I_Numbers" property="iNumbers" jdbcType="DECIMAL" />
+    <result column="F_Quantity" property="fQuantity" jdbcType="INTEGER" />
+    <result column="F_Weight" property="fWeight" jdbcType="DECIMAL" />
+    <result column="F_Numbers" property="fNumbers" jdbcType="DECIMAL" />
+    <result column="D_Standards" property="dStandards" jdbcType="VARCHAR" />
+  </resultMap>
+  <cache 
+  	eviction="FIFO" 
+  	flushInterval="900000" 
+	size="512" 
+	readOnly="true"/> 
+  <select id="getViewEntitys" resultMap="BaseResultMap" >
+    select Pro_Name,D_Steel,D_Spec,D_Quantity,D_Weight,Bin from wms_product where D_Weight != 0
+  </select>
+  <select id="getWmsProductsByPageNoAndSize" resultMap="BaseResultMap" >
+    select Pro_Name,D_Steel,D_Spec,D_Quantity,D_Weight,Bin from wms_product where D_Weight != 0
+    limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="getEntitysCount" resultType="java.lang.Integer" >
+    select count(*) from wms_product where D_Weight != 0
+  </select>
+  <select id="getTotalWeight" resultType="java.math.BigDecimal" >
+    select sum(D_Weight) from wms_product where D_Weight != 0
+  </select>
+  <select id="getTotalQuantity" resultType="java.math.BigDecimal" >
+    select sum(D_Quantity) from wms_product where D_Weight != 0
+  </select>
+</mapper>

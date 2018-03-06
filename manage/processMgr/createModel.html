@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>创建模型</title>
+<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+<script src="../../js/json/LAreaData2.js" type="text/javascript"></script>
+<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+<script type="text/javascript" src="../../js/bootstrap.autocomplete.js"></script>
+<script type="text/javascript" src="../../js/checkUser.js"></script>
+<script type="text/javascript" src="../../js/UserUtil.js"></script>
+<script type="text/javascript" src="../../js/UserCommon.js"></script>
+<script type="text/javascript" src="../../js/oaProcessJson.js"></script>
+<script src="../../js/jquery-form.js"></script>
+<script type="text/javascript">
+	function initLaydate(id) {
+		if ($("#" + id).attr("id")) {
+			laydate({
+				elem : '#' + id, //目标元素。由于laydate.js封装了一个轻量级的选择器引擎，因此elem还允许你传入class、tag但必须按照这种方式 '#id .class'
+				event : 'focus' //响应事件。如果没有传入event，则按照默认的click
+			});
+		}
+	}
+
+	//当前页面所属菜单的menuCode
+	var menuCode;
+	//初始化页面
+	$(document).ready(function() {
+		menuCode = Request["menuCode"];
+		initForm();
+	});
+
+	//构建form表单
+	function initForm() {
+		$.ajax({
+			url : "../../formAdmin/formsByMenuCode/" + menuCode,
+			datatype : "json",
+			type : "get",
+			data : {},
+			success : function(data, status, xhr) {
+				element = eval("(" + data + ")");
+				new UserCommon().createForm("addModelForm", element, 4);
+				//初始化层的大小
+				initLayerSize();
+				//为checkbox添加监听事件
+				new UserCommon().checkboxListener();
+				new UserCommon().radioListener();
+			}
+		});
+	}
+
+	/**
+	 *	添加弹出框填写完成之后保存调用的函数
+	 */
+	function createModeler() {
+		var formObj = $("#addModelForm");
+		var msg = "不能为空！";
+		if (new UserCommon().show("edit-promit", formObj, msg)) {
+			var formObjJson = $("#addModelForm").serializeNestedObject();
+			console.log(formObjJson);
+			$.ajax({
+				url : "../../ProcessDefinitionlController/createModeler",
+				datatype : "text",
+				type : "post",
+				data : JSON.stringify(formObjJson),
+				success : function(data) {
+					if (data.status == 1) {
+						window.parent.location.assign("../../modeler.html?modelId=" + data.msg);
+					} else {
+						new UserCommon().check("success", data.msg, null,"fail");
+					}
+				}
+			});
+		}
+	}
+</script>
+</head>
+<body>
+	<div class="edit">
+		<div class="edit-content">
+			<div class="edit-in">
+				<form id="addModelForm">
+					<div class="zsy">
+						<div class="zsy-common">
+							<div class="zsy-common-left">
+								<label><span style="color: red; font-size: 18px">*</span>模型名称：</label>
+							</div>
+							<div class="zsy-common-right">
+								<input type="text" iseditable="true" name="modelName"
+									value="" isreadonly="false" isdisable="false" isvisible="true"
+									label="模型名称" errormsg="不能为空！" isempty="false"
+									class="input-text" style="">
+							</div>
+						</div>
+					</div>
+					<div class="zsy">
+						<div class="zsy-common">
+							<div class="zsy-common-left">
+			                     <label>
+                                     <span style="color: red; font-size: 18px">*</span>模型唯一标识：
+                                 </label>
+							</div>
+							<div class="zsy-common-right">
+								<input type="text" iseditable="true" name="modelLogo"
+									value="" isreadonly="false" isdisable="false" isvisible="true"
+									label="模型唯一标识" errormsg="不能为空！" isempty="false"
+									class="input-text" style="">
+							</div>
+						</div>
+					</div>
+					<div class="zsy-common">
+						<div class="zsy-common-left">
+								<label><span style="color: red; font-size: 18px">*</span>所属面板：</label>
+						</div>
+						<div class="zsy-common-right">
+							<select type="" id="panel" name="panel" isreadonly="false"
+								iseditable="true" isdisable="true" isvisible="true"
+								label="所属面板" errormsg="不能为空！" isempty="true" style=""><option
+									value="财务管理">财务管理 </option>
+								<option value="考勤管理">考勤管理 </option>
+								<option value="人事管理">人事管理 </option>
+								<option value="生产管理 ">生产管理 </option>
+								<option value="行政管理">行政管理 </option>
+								<option value="销售管理">销售管理 </option>
+							</select>
+						</div>
+					</div>
+				</form>
+			</div>
+			<div class="edit-bottom">
+				<button type="button" class="btn btn-xs edit-close btn-primary"
+					onclick="new UserCommon().layer_close();">
+					<i class="glyphicon glyphicon-remove"></i>&nbsp;关闭
+				</button>
+
+				<button type="button" class="btn btn-xs edit-save btn-primary" onclick="createModeler()">
+					<i class="glyphicon glyphicon-remove"></i>&nbsp;下一步
+				</button>
+			</div>
+		</div>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert"
+				aria-hidden="true">&times;</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span> <span></span>
+			<div>
+				<img src="../../images/sanjiao.png" width="10">
+			</div>
+		</div>
+	</div>
+</body>
+</html>

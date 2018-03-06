@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.ISpeakBoardDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.SpeakBoard" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="rootId" property="rootId" jdbcType="INTEGER" />
+    <result column="isleaf" property="isleaf" jdbcType="INTEGER" />
+    <result column="content" property="content" jdbcType="LONGVARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    <result column="cus_name" property="customerName" jdbcType="VARCHAR" />
+    
+    <!-- <association property="customer" javaType="com.sss.pojo.Customer">
+		<id column="cc_customer_id" property="id" jdbcType="INTEGER" />
+		<result column="cc_salesman_userId" property="salesman.userId" jdbcType="INTEGER" />
+	    <result column="cc_customer_name" property="customerName" jdbcType="VARCHAR" />
+	    <result column="cc_customer_area" property="area" jdbcType="VARCHAR" />
+	    <result column="cc_customer_industry" property="industry" jdbcType="VARCHAR" />
+	    <result column="cc_customer_website" property="website" jdbcType="VARCHAR" />
+	    <result column="cc_customer_source" property="source" jdbcType="VARCHAR" />
+	    <result column="cc_customer_type" property="type" jdbcType="VARCHAR" />
+	    <result column="cc_customer_note" property="note" jdbcType="VARCHAR" />
+	    <result column="cc_customer_createdate" property="createdate" jdbcType="VARCHAR" />
+	</association> -->
+	
+	<association property="parentBoard" javaType="com.sss.pojo.SpeakBoard">
+		<id column="cu_boa_id" property="id" jdbcType="INTEGER" />
+	    <result column="cu_boa_content" property="content" jdbcType="VARCHAR" />
+	    <result column="cu_boa_rootId" property="rootId" jdbcType="INTEGER" />
+	    <result column="cu_boa_isleaf" property="isleaf" jdbcType="INTEGER" />
+	    <result column="cu_boa_createdate" property="createdate" jdbcType="VARCHAR" />
+	    <result column="cu_boa_customerName" property="customerName" jdbcType="VARCHAR" />
+	    <association property="user" javaType="com.sss.pojo.User">
+			<id column="ccu_user_id" property="userId" jdbcType="INTEGER" />
+		    <result column="ccu_user_name" property="userName" jdbcType="VARCHAR" />
+		    <result column="ccu_user_photo" property="photoUrl" jdbcType="VARCHAR" />
+		</association>
+		<!-- <association property="customer" javaType="com.sss.pojo.Customer">
+			<id column="ccu_cus_id" property="id" jdbcType="INTEGER" />
+		    <result column="ccu_cus_name" property="customerName" jdbcType="VARCHAR" />
+		</association> -->
+	</association>
+    
+    <association property="user" javaType="com.sss.pojo.User">
+		<id column="cu_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="cu_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="cu_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="cu_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="cu_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="cu_user_status" property="status" jdbcType="VARCHAR" />
+	    <result column="cu_user_photo" property="photoUrl" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+		 SELECT
+			spbo.*,
+			u.user_id as cu_user_id,
+		    u.user_name as cu_user_name,
+		    u.photoUrl as cu_user_photo,
+			spboo.id as cu_boa_id,
+		  	spboo.content as cu_boa_content,
+		  	spboo.rootId as cu_boa_rootId,
+		  	spboo.isleaf as cu_boa_isleaf,
+		  	spboo.createdate as cu_boa_createdate,
+			spboo.cus_name as cu_boa_customerName,
+			uu.user_id as ccu_user_id,
+	  		uu.user_name as ccu_user_name,
+	  		uu.photoUrl as ccu_user_photo
+		FROM
+			ss_speakboard spbo
+		LEFT JOIN
+			ss_speakboard spboo
+		ON
+			spboo.id = spbo.pid
+		LEFT JOIN
+			ss_user u
+		ON
+			spbo.userId = u.user_id
+		LEFT JOIN
+			ss_user uu
+		ON
+			spboo.userId = uu.user_id
+  </sql>		
+
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> 
+    where spbo.id != 1 
+    order by spbo.createdate desc
+  </select>
+  <select id="selectRootByCusName"  resultMap="BaseResultMap" parameterType="java.lang.String" >
+    <include refid="associateQuery" /> 
+    where spbo.rootId = 1
+    	and spbo.cus_name = #{customerName,jdbcType=VARCHAR}
+    order by spbo.createdate desc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+   	<include refid="associateQuery" />
+    where spbo.id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selByRootIdLazy" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where spbo.rootId = #{rootId,jdbcType=INTEGER} order by spbo.createdate desc
+    limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="selByRootId" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where spbo.rootId = #{rootId,jdbcType=INTEGER} order by spbo.createdate desc
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_speakboard
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.SpeakBoard" >
+    insert into ss_speakboard (id, cus_name, pid, 
+      rootId, userId, isleaf, 
+      createdate, content)
+    values (#{id,jdbcType=INTEGER}, #{customerName,jdbcType=VARCHAR}, #{parentBoard.id,jdbcType=INTEGER}, 
+      #{rootId,jdbcType=INTEGER}, #{user.userId,jdbcType=INTEGER}, #{isleaf,jdbcType=INTEGER}, 
+      #{createdate,jdbcType=VARCHAR}, #{content,jdbcType=LONGVARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.SpeakBoard" >
+  	<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+    </selectKey>
+    insert into ss_speakboard
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="customerName != null " >
+        cus_name,
+      </if>
+      <if test="parentBoard != null and parentBoard.id != null " >
+        pid,
+      </if>
+      <if test="rootId != null" >
+        rootId,
+      </if>
+      <if test="user != null and user.userId != null"  >
+        userId,
+      </if>
+      <if test="isleaf != null" >
+        isleaf,
+      </if>
+        createdate,
+      <if test="content != null" >
+        content,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="customerName != null " >
+        #{customerName,jdbcType=VARCHAR},
+      </if>
+      <if test="parentBoard != null and parentBoard.id != null ">
+        #{parentBoard.id,jdbcType=INTEGER},
+      </if>
+      <if test="rootId != null" >
+        #{rootId,jdbcType=INTEGER},
+      </if>
+      <if test="user != null and user.userId != null" >
+        #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="isleaf != null" >
+        #{isleaf,jdbcType=INTEGER},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null" >
+        #{content,jdbcType=LONGVARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.SpeakBoard" >
+    update ss_speakboard
+    <set >
+      <if test="customerName != null " >
+        cus_name = #{customerName,jdbcType=VARCHAR},
+      </if>
+      <if test="parentBoard != null and parentBoard.id != null " >
+        pid = #{parentBoard.id,jdbcType=INTEGER},
+      </if>
+      <if test="rootId != null" >
+        rootId = #{rootId,jdbcType=INTEGER},
+      </if>
+      <if test="user != null and user.userId != null" >
+        userId = #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="isleaf != null" >
+        isleaf = #{isleaf,jdbcType=INTEGER},
+      </if>
+      <if test="createdate != null" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null" >
+        content = #{content,jdbcType=LONGVARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.SpeakBoard" >
+    update ss_speakboard
+    set cus_name = #{customerName,jdbcType=VARCHAR},
+      pid = #{parentBoard.id,jdbcType=INTEGER},
+      rootId = #{rootId,jdbcType=INTEGER},
+      userId = #{user.userId,jdbcType=INTEGER},
+      isleaf = #{isleaf,jdbcType=INTEGER},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by spbo.createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by spbo.createdate desc
+  </select>
+  <!-- 搜索公司名  -->
+  <select id="selectCusName"  resultType="java.util.Map" >
+    select cus_name,max(createdate) as recent
+		from ss_speakboard spo
+		group by cus_name
+		having cus_name is not null
+		order by recent desc
+  </select>
+  <select id="selectCusAllByCusName" resultMap="BaseResultMap" parameterType="java.lang.String">
+   <include refid="associateQuery" />  where spbo.rootId in 
+	(select id from ss_speakboard where cus_name = #{customerName,jdbcType=VARCHAR}) 
+	or spbo.id in
+	(select id from ss_speakboard where cus_name = #{customerName,jdbcType=VARCHAR})
+	order by spbo.createdate desc 
+  </select>
+</mapper>

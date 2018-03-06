@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>设置审批人</title>
+<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+<script src="../../js/json/LAreaData2.js" type="text/javascript"></script>
+<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+<script type="text/javascript" src="../../js/bootstrap.autocomplete.js"></script>
+<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+<script type="text/javascript" src="../../js/checkUser.js"></script>
+<script type="text/javascript" src="../../js/UserUtil.js"></script>
+<script type="text/javascript" src="../../js/UserCommon.js"></script>
+<script type="text/javascript">
+	//当前页面所属菜单的menuCode
+	var processDefinitionKey;
+	var activiyId;
+	var processDefinitionId;
+	var activityType;
+	var activityName;
+	//初始化页面
+	$(document).ready(function() {
+		processDefinitionKey = Request["processDefinitionKey"];//查询配置文件
+		activiyId = Request["activiyId"];//根据节点id查询一条数据
+		processDefinitionId = Request["processDefinitionId"];//跳回流程图页面
+		activityType = Request["activityType"];//节点类型显示表单
+		activityName = Request["activityName"];//节点类型显示表单
+		$("#userName").parent().append("<a name=\"selLeader\" id=\"selLeader\" class=\"btn btn-xs\" style=\"margin-left:5px;width:30px;height:20px;border:1px solid #999;font-weight:bold;\"" + 
+		"onClick=\"selectUser()\">...</a>");
+		initForm(processDefinitionKey,activiyId,activityType);
+	});
+
+
+	function initForm(processDefinitionKey,activiyId,activityType){
+		$.ajax({
+			url : "../../ProcessDefinitionlController/getPropertiesByProcessDefId/" + processDefinitionKey+"," +activiyId,
+			datatype : "json",
+			type : "get",
+			data : {},
+			success : function(data, status, xhr) {
+				console.log(data);
+				if(data!=null && data.length>0){
+					$.each(data,function(index,item){
+						//填充初值
+						$("#activityName").text(item.activityName);
+						$("#activiyId").val(item.activiyId);
+						$("#userName").val(item.userName);
+						if(activityType == "userTask"||activityType == "serviceTask"){
+							$('#zsy-common-Y').hide();
+							if(item.value!="deptMgr" & item.value!="initiator"){
+								$("#value").val("userNo");
+								$("#userNo").val(item.value);
+								$('#zsy-common-h').show();
+							}else{
+								$("#value").val(item.value);
+								$('#zsy-common-h').hide();
+							}
+						}
+						if(activityType == "exclusiveGateway"){
+							$('#zsy-common-H').hide();
+							$('#zsy-common-Y').show();
+							$("#exclusiveGatewayValue").val(item.value); 
+						}
+					});
+				}else{
+					//填充初值
+					$("#activityName").text(activityName);
+					$("#activiyId").val(activiyId);
+					//$("#userName").val(item.userName);
+					if(activityType == "userTask"||activityType == "serviceTask" ||activityType =="sendTask"||activityType =="receiveTask" ||activityType =="scriptTask" ||activityType =="manualTask"||activityType =="businessRuleTask"){
+						$('#zsy-common-Y').hide();
+					}
+					if(activityType == "exclusiveGateway"){
+						$('#zsy-common-H').hide();
+						$('#zsy-common-Y').show();
+					}
+				}
+				
+				
+				//初始化层的大小
+				initLayerSize(false, true);
+				//为checkbox添加监听事件
+				new UserCommon().checkboxListener();
+				new UserCommon().radioListener();
+			}
+		});
+	}
+	
+	function showApprove(){
+		var value=$("#value").val();
+		if(value!="deptMgr" & value!="initiator" &value!="-1"){
+			$('#zsy-common-h').show();
+		}else{
+			$('#zsy-common-h').hide();
+			$("#userName").val("");
+			$("#userNo").val("");
+		}
+	}
+	function selectUser() {
+		window.parent.admin_role_add('<strong>选择用户</strong>',"../manage/userMgr/select_user.html?userId=" + currentUserId + "&selPri=1", '800');
+	}
+	//给父页面赋值
+	function fillSelectedUser(userDetail) {
+		$("#userNo").val(userDetail.userNo);
+	}
+	//修改配置参数
+	function save() {
+		var formObj = $("#setApproveForm");
+		var msg = "不能为空！";
+		if (new UserCommon().show("edit-promit", formObj, msg)) {
+			var formObjJson = $("#setApproveForm").serializeNestedObject();
+			console.log(formObjJson);
+			$.ajax({
+				url : "../../ProcessDefinitionlController/setProcessProperties/"+processDefinitionKey,
+				datatype : "json",
+				type : "post",
+				data : JSON.stringify(formObjJson),
+				success : function(data) {
+					if (data.status == 1) {
+						new UserCommon().check("success", data.msg, null, "success");
+						setTimeout(function() {
+							window.parent.location.assign("../../diagram-viewer/index.html?processDefinitionId="+processDefinitionId);
+							//window.parent.location.href = "../diagram-viewer/index.html.html?";
+						}, 1000);
+					} else {
+						new UserCommon().check("success", data.msg,null, "fail");
+					}
+				}
+			});
+		}
+	}
+</script>
+</head>
+<body>
+	<div class="edit" >
+		<div class="edit-content" >
+			<div class="edit-in">
+				<form id="setApproveForm">
+					<div class="zsy">
+						<div class="zsy-common">
+							<div class="zsy-common-left">
+								<label>当前节点id：</label>
+							</div>
+							<div class="zsy-common-right">
+								<input type="text" id="activiyId" iseditable="true"
+									name="activiyId" value="" isreadonly="true"
+									isdisable="false" isvisible="true" label="当前节点id"
+									errormsg="不能为空！" isempty="true" class="input-text" readonly  style=""> 
+									<!-- <span id="activiyId"></span> -->
+							</div>
+							
+						</div>
+						<div class="zsy-common">
+							<div class="zsy-common-left">
+								<label>当前节点名称：</label>
+							</div>
+							<div class="zsy-common-right">
+								<span id="activityName"></span>
+							</div>
+						</div>
+					</div>
+				
+					<div class="zsy" id="zsy-common-H" >
+						<div class="zsy-common">
+							<div class="zsy-common-left">
+								<label>指定审批人：</label>
+							</div>
+							<div class="zsy-common-right">
+								<select onclick="showApprove()" type="text" id="value" iseditable="true" name="value" value="" isreadonly="false"
+									isdisable="false" isvisible="true" label="当前审批人"
+									errormsg="不能为空！" isempty="true" class="input-text" style="">
+									<option value="-1">请选择</option>
+									<option value="deptMgr">部门主管</option>
+									<option value="initiator">流程发起人</option>
+									<option value="userNo">员工姓名</option>
+								</select>
+							</div>
+						</div>
+						<div class="zsy-common" id="zsy-common-h" style="display:none;">
+							<div class="zsy-common-left">
+								<label>审批人：</label>
+							</div>
+							<div class="zsy-common-right">
+								<input type="text" id="userNo" iseditable="true" name="userNo" value="" isreadonly="false" isdisable="false"
+									isvisible="true" label="审批人工号" errormsg="不能为空！" isempty="true"
+									class="input-text" style="">
+								<input type="text" id="userName" iseditable="true" name="userName" value="" isreadonly="false" isdisable="false"
+									isvisible="true" label="审批人姓名" errormsg="不能为空！" isempty="true" 
+									class="input-text" >
+							</div>
+						</div>
+					</div>
+					
+					
+					<div class="zsy" id="zsy-common-Y" style="display:none;">
+						<div class="zsy-common" >
+							<div class="zsy-common-left">
+								<label>选择节点条件：</label>
+							</div>
+							<div class="zsy-common-right">
+								<select  type="text" id="exclusiveGatewayValue" iseditable="true" name="exclusiveGatewayValue" value="" isreadonly="false"
+									isdisable="false" isvisible="true" label="当前节点"
+									errormsg="不能为空！" isempty="true"  class="input-text" style="">
+									<option value="-1">请选择</option>
+									<option value="dept">用户所属公司</option>
+									<option value="department" >销售人员所属公司</option>
+									<option value="condition">是否特殊情况</option>
+									<option value="money">金额是否大于5000</option>
+									<option value="company">任务后用户所属公司</option>
+									<option value="disposal">处置方案</option>
+									<option value="baoche">是否包车</option>
+									<option value="deptId">申请人所在部门ID</option>
+									<option value="人资事业部">人资事业部</option>
+								</select>
+							</div>
+						</div>
+						<!-- <div class="zsy-common" id="zsy-common-y" style="display:none;">
+							<div class="zsy-common-left">
+								<label>审批人名字：</label>
+							</div>
+							<div class="zsy-common-right">
+								<input type="text" id="userName" iseditable="true" name="userName" value="" isreadonly="false" isdisable="false"
+									isvisible="true" label="审批人姓名" errormsg="不能为空！" isempty="true" 
+									class="input-text" >
+								<input type="hidden" id="userNo" iseditable="true" name="userNo" value="" isreadonly="false" isdisable="false"
+									isvisible="true" label="审批人工号" errormsg="不能为空！" isempty="true"
+									class="input-text" style="">
+							</div>
+						</div> -->
+					</div>
+					
+				
+				</form>
+			</div>
+			<div class="edit-bottom">
+				<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();">
+					<i class="glyphicon glyphicon-remove"></i>&nbsp;关闭
+				</button>
+				<button type="button" class="btn btn-xs edit-save btn-primary" onclick="save()">
+					<i class="glyphicon glyphicon-ok"></i>&nbsp;更新
+				</button>
+			</div>
+		</div>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert"
+				aria-hidden="true">&times;</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span> <span></span>
+			<div>
+				<img src="../../images/sanjiao.png" width="10">
+			</div>
+		</div>
+	</div>
+</body>
+</html>

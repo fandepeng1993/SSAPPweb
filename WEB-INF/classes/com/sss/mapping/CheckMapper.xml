@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.ICheckDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.Check" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="checkRule" property="checkRule" jdbcType="VARCHAR" />
+    <result column="checkFormula" property="checkFormula" jdbcType="VARCHAR" />
+    <result column="salary" property="salary" jdbcType="DECIMAL" />
+    <result column="createdate" property="createDate" jdbcType="VARCHAR" />
+    <association property="dept" javaType="com.sss.pojo.Department">
+		<id column="cd_dept_id" property="deptId" jdbcType="INTEGER" />
+	    <result column="cd_dept_name" property="deptName" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		c.*,
+  		d.dept_id as cd_dept_id,
+  		d.dept_name as cd_dept_name
+    from 
+    	ss_check c
+   	left join
+   		ss_department d
+   	on
+   		c.deptId = d.dept_id
+  </sql>
+  <sql id="associateQueryByCP">
+  	select 
+  		c.*,
+  		cp.salary,
+  		d.dept_id as cd_dept_id,
+  		d.dept_name as cd_dept_name
+    from 
+    	ss_check_pos cp
+   	left join
+   		ss_check c
+   	on
+   		cp.checkId = c.id
+   	left join 
+   		ss_department d
+   	on
+   		c.deptId = d.dept_id
+  </sql>
+  <!-- 返回一个list的写法 -->
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by c.createdate desc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where c.id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectByDeptId"  resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+  	<include refid="associateQuery" />
+  	where c.deptId = #{deptId,jdbcType=INTEGER} order by c.createdate desc
+  </select>
+  <select id="selectByDeptIds"  resultMap="BaseResultMap" >
+  	<include refid="associateQuery" />
+  	where c.deptId in 
+  	<foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach> 
+ 	order by c.createdate desc
+  </select>
+  <select id="selectByPosId"  resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+  	<include refid="associateQueryByCP" />
+  	where cp.positionId = #{posId,jdbcType=INTEGER} order by c.createdate desc
+  </select>
+  <select id="selectWithPosId"  resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+  	<include refid="associateQueryByCP" />
+  	where cp.positionId = #{posId,jdbcType=INTEGER}
+  		 and cp.checkId = #{id,jdbcType=INTEGER}
+  	order by c.createdate desc
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_check
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.Check" >
+    insert into ss_check (id, name, deptId, 
+      checkRule, checkFormula, createDate)
+    values (#{id,jdbcType=INTEGER}, #{name,jdbcType=VARCHAR}, #{dept.deptId,jdbcType=INTEGER}, 
+      #{checkRule,jdbcType=VARCHAR}, #{checkFormula,jdbcType=VARCHAR},
+      #{createDate,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.Check" >
+  	<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+    </selectKey>
+    insert into ss_check
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="name != null" >
+        name,
+      </if>
+      <if test="dept != null and dept.deptId != null" >
+        deptId,
+      </if>
+      <if test="checkRule != null" >
+        checkRule,
+      </if>
+      <if test="checkFormula != null" >
+        checkFormula,
+      </if>
+        createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="name != null" >
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="dept != null and dept.deptId != null" >
+        #{dept.deptId,jdbcType=INTEGER},
+      </if>
+      <if test="checkRule != null" >
+        #{checkRule,jdbcType=VARCHAR},
+      </if>
+      <if test="checkFormula != null" >
+        #{checkFormula,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate == null or createDate == ''" >
+        now(),
+      </if>
+      <if test="createDate != null and createDate != ''" >
+        #{createDate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.Check" >
+    update ss_check
+    <set >
+      <if test="name != null" >
+        name = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="dept != null and dept.deptId != null" >
+        deptId = #{dept.deptId,jdbcType=INTEGER},
+      </if>
+      <if test="checkRule != null" >
+        checkRule = #{checkRule,jdbcType=VARCHAR},
+      </if>
+      <if test="checkFormula != null" >
+        checkFormula = #{checkFormula,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null and createDate != ''" >
+        createdate = #{createDate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.Check" >
+    update ss_check
+    set name = #{name,jdbcType=VARCHAR},
+      deptId = #{dept.deptId,jdbcType=INTEGER},
+      checkRule = #{checkRule,jdbcType=VARCHAR},
+      checkFormula = #{checkFormula,jdbcType=VARCHAR},
+      createdate = #{createDate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by c.createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by c.createdate desc
+  </select>
+</mapper>

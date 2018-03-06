@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>消息推送</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script>
+		$(document).ready(function () {
+			//初始化层的大小
+			initLayerSize();
+		});
+		/**
+		 *	添加弹出框填写完成之后保存调用的函数
+		 */
+		function push() {
+			$("#userId").val(currentUserId);
+			var formObj = $("#pushForm");
+			//var obj = $("#hello");
+			var msg = "不能为空！";
+			//alert(UE.getEditor('editor').getContent());
+			//$("#note").val(UE.getEditor('editor').getContent());
+			if(new UserCommon().show("edit-promit", formObj, msg)) {
+				var formObjJson = $("#pushForm").serializeNestedObject();
+			 	$.ajax({
+				      url: "../../messagePushServlet",
+				      datatype: "text",
+				      type: "post",
+				      data: JSON.stringify(formObjJson),
+				      success: function (data) {
+				    	  var json = eval("(" + data + ")");
+				    	  if(json.status == 1) {
+				    		  new UserCommon().check("success",json.msg,null,"success");
+				    		  setTimeout(function (){
+				    			  //new UserCommon().layer_close();
+				    			  window.parent.location.href = "jPushMgr.html";
+				    		  }, 1000);
+				    	  } else {
+				    		  new UserCommon().check("success",json.msg,null,"fail");
+				    	  }
+				      }
+				});
+			}
+		}
+	</script>
+</head>
+<body>
+   <!-- 添加 -->
+    <div class="edit">
+		<div class="edit-content">
+			<div class="edit-in" style="height:190px">
+				<form id="pushForm">
+					<p class="edit-p">
+						<div class="zsy">
+						  <div class="zsy-common">
+						    <div class="zsy-common-left">
+						      <label>
+						        <span style="color:red;font-size:18px">*</span>标题：
+						       </label>
+						    </div>
+						    <div class="zsy-common-right">
+						      <input type="text" name="title" label="标题" errormsg="不能为空！" isempty="false" class="input-text">
+						    </div>
+						  </div>
+						  <div class="zsy-common">
+						    <div class="zsy-common-left">
+						      <label>
+						        <span style="color:red;font-size:18px">*</span>消息内容：
+						      </label>
+						    </div>
+						    <div class="zsy-common-right">
+						      <input type="text" name="content" label="消息内容" errormsg="不能为空！" isempty="false" class="input-text">
+						    </div>
+						  </div>
+						</div>
+						<div class="zsy">
+						  <div class="zsy-common">
+						    <div class="zsy-common-left">
+						      <label>
+						        	别名：
+						       </label>
+						    </div>
+						    <div class="zsy-common-right">
+						      <input type="text" name="alias" label="别名" errormsg="不能为空！" isempty="true" class="input-text">
+						    </div>
+						  </div>
+						  <div class="zsy-common">
+						    <div class="zsy-common-left">
+						      <label>
+						        	标签：
+						      </label>
+						    </div>
+						    <div class="zsy-common-right">
+						      <input type="text" name="tag" label="标签" errormsg="不能为空！" isempty="true" class="input-text"></div>
+						  </div>
+						</div>
+						<div class="zsy">
+						  <div class="zsy-common">
+						    <div class="zsy-common-left">
+						      <label>
+						        	<span style="color:red;font-size:18px">*</span>类别：
+						       </label>
+						    </div>
+						    <div class="zsy-common-right">
+						      <select name="category" label="类别" errormsg="不能为空！" isempty="false" >
+						      	<option value="waitTodoMsg">待办</option>
+						      	<option value="noticeMsg">通知</option>
+						      	<option value="announceMsg">公告</option>
+						      </select>
+						    </div>
+						  </div>
+						</div>
+					</p>
+				</form>
+				<p style="font-size:12px;margin-left:50px;margin-top:100px">注：1、若不填写别名和标签，则向所有人推送。</p>
+				<p style="font-size:12px;margin-left:72px;">2、若向多个别名或多个标签推送，可使用“,”将不同的别名或标签分隔开。</p>
+			</div>
+			<div class="edit-bottom">
+				<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();"><i class="glyphicon glyphicon-remove"></i>&nbsp;关闭</button>
+				<button type="button" class="btn btn-xs edit-save btn-primary" onclick="push()"><i class="glyphicon glyphicon-ok"></i>&nbsp;推送</button>
+			</div>
+		</div>	
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span>
+			<span></span>
+			<div><img src="../../images/sanjiao.png" width="10"></div>
+		</div>
+	</div>
+</body>
+</html>

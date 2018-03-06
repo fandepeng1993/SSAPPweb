@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IReportDownloadDAO" >
+  <insert id="insertUploadRecord" parameterType="java.util.Map">
+  	INSERT INTO 
+  		tbl_upload_record (upload_record_id, customer_no, customer_name, contract_no, delivery_date, report_sheet_url, report_sheet_type)  
+    VALUES
+    <foreach collection="list" item="item" index="index" separator=",">  
+      (null, #{item.customerNo,jdbcType=VARCHAR}, #{item.customerName,jdbcType=VARCHAR}, #{item.contractNo,jdbcType=VARCHAR}, #{item.deliveryDate,jdbcType=VARCHAR}, #{item.reportSheetUrl,jdbcType=VARCHAR}, #{item.reportSheetType,jdbcType=TINYINT})  
+    </foreach>    
+  </insert>
+  
+  <select id="selectReportsByContractNo" resultType="java.util.Map" parameterType="java.lang.String">
+  	SELECT
+  		upload_record_id AS recordId, customer_no AS customerNo, customer_name AS customerName, contract_no AS contractNo, delivery_date AS deliveryDate, report_sheet_url AS reportSheetUrl
+  	FROM
+  		tbl_upload_record
+  	WHERE
+  		customer_no = #{customerNo,jdbcType=VARCHAR} AND contract_no = #{contractNo,jdbcType=VARCHAR} AND report_sheet_type = 0
+  </select>
+  
+  <select id="selectWarrantysByDeliveryDate" resultType="java.util.Map" parameterType="java.lang.String">
+  	SELECT
+  		upload_record_id AS recordId, customer_no AS customerNo, customer_name AS customerName, contract_no AS contractNo, delivery_date AS deliveryDate, report_sheet_url AS reportSheetUrl
+  	FROM
+  		tbl_upload_record
+  	WHERE
+  		customer_no = #{customerNo,jdbcType=VARCHAR} AND contract_no = #{contractNo,jdbcType=VARCHAR} AND delivery_date = #{deliveryDate,jdbcType=VARCHAR} AND report_sheet_type = 1
+  </select>
+  
+  <select id="selectUploadRecordById" resultType="java.util.Map" parameterType="java.lang.Integer">
+  	SELECT
+  		upload_record_id AS recordId, customer_no AS customerNo, customer_name AS customerName, contract_no AS contractNo, delivery_date AS deliveryDate, report_sheet_url AS reportSheetUrl
+  	FROM
+  		tbl_upload_record
+  	WHERE
+  		upload_record_id = #{recordId,jdbcType=INTEGER}
+  </select>
+  
+  <delete id="delUploadRecordById">
+  	DELETE FROM tbl_upload_record WHERE upload_record_id = #{recordId,jdbcType=INTEGER}
+  </delete>
+  
+  <delete id="batchDelUploadRecords">
+  	DELETE FROM tbl_upload_record WHERE upload_record_id IN 
+  	<foreach collection="list" item="recordId" open="(" separator="," close=")">
+  		#{recordId,jdbcType=INTEGER}
+  	</foreach>
+  </delete>
+  
+</mapper>

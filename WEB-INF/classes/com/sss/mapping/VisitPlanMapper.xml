@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IVisitPlanDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.VisitPlan" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="contactPosition" property="contactPosition" jdbcType="VARCHAR" />
+    <result column="contactTel" property="contactTel" jdbcType="VARCHAR" />
+    <result column="reason" property="reason" jdbcType="VARCHAR" />
+    <result column="address" property="address" jdbcType="VARCHAR" />
+    <result column="target" property="target" jdbcType="LONGVARCHAR" />
+    <result column="traffic" property="traffic" jdbcType="VARCHAR" />
+    <result column="tripPlan" property="tripPlan" jdbcType="LONGVARCHAR" />
+    <result column="fromdate" property="fromdate" jdbcType="VARCHAR" />
+    <result column="enddate" property="enddate" jdbcType="VARCHAR" />
+    <result column="trafficExpense" property="trafficExpense" jdbcType="DECIMAL" />
+    <result column="hotelExpense" property="hotelExpense" jdbcType="DECIMAL" />
+    <result column="receptionExpense" property="receptionExpense" jdbcType="DECIMAL" />
+    <result column="otherExpense" property="otherExpense" jdbcType="DECIMAL" />
+    <result column="note" property="note" jdbcType="LONGVARCHAR" />
+    <result column="status" property="status" jdbcType="INTEGER" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    
+    <association property="user" javaType="com.sss.pojo.User">
+		<id column="vu_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="vu_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="vu_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="vu_user_sex" property="sex" jdbcType="VARCHAR" />
+	</association>
+	<association property="customer" javaType="com.sss.pojo.Customer">
+		<id column="vc_customer_id" property="id" jdbcType="INTEGER" />
+	    <result column="vc_customer_name" property="customerName" jdbcType="VARCHAR" />
+	</association>
+	<association property="contact" javaType="com.sss.pojo.Contact">
+		<id column="vc_contact_id" property="id" jdbcType="INTEGER" />
+		<result column="vc_contact_name" property="name" jdbcType="VARCHAR" />
+		<result column="vc_contact_officeTel" property="officeTel" jdbcType="VARCHAR" />
+		<result column="vc_contact_telephone" property="telephone" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		v.*,
+  		u.user_id as vu_user_id,
+  		u.user_no as vu_user_no,
+  		u.user_name as vu_user_name,
+  		u.sex as vu_user_sex,
+  		c.id as vc_customer_id,
+  		c.customer_name as vc_customer_name,
+  		con.id as vc_contact_id,
+  		con.name as vc_contact_name,
+  		con.officeTel as vc_contact_officeTel,
+  		con.telephone as vc_contact_telephone
+    from 
+    	ss_visitplan v
+   	left join
+   		ss_user u
+   	on
+   		v.userId = u.user_id
+   	left join
+   		ss_customer c
+   	on
+   		v.customerId = c.id
+   	left join
+   		ss_contact con
+   	on
+   		v.contactId = con.id
+  </sql>
+  <!-- 返回一个list的写法 -->
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by v.createdate desc
+  </select>
+  <select id="selByUserId"  resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" /> 
+    where v.userId = #{userId,jdbcType=INTEGER} order by v.createdate desc
+  </select>
+  <select id="getVisitsByUIds" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where v.userId in 
+    <foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>  
+    order by v.createdate desc
+  </select>
+  
+  <select id="selectByDateAndUser" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where v.userId = #{userId,jdbcType=INTEGER}
+    	and v.fromdate &gt;= #{fromdateBegin,jdbcType=VARCHAR}
+    	and v.fromdate &lt;= #{fromdateEnd,jdbcType=VARCHAR}
+    order by v.createdate desc
+  </select>
+  
+  <select id="getCountByUIdAndDate" resultType="java.lang.Integer">
+    select count(*) from ss_visit
+    where createdate &gt;= #{fromdate,jdbcType=VARCHAR} and 
+    		userId = #{userId,jdbcType=INTEGER}
+  </select>
+  <select id="getCountByUIdsAndDate" resultType="java.lang.Integer">
+    select count(*) from ss_visit
+    where userId in 
+	    <foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+		  #{item}  
+		</foreach>
+    	and createdate &gt;= #{fromdate,jdbcType=VARCHAR} 
+  </select>
+  <select id="getVisitCountWithOutRecord" resultType="java.lang.Integer">
+    select count(*) from ss_visit
+    where userId in 
+	    <foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+		  #{item}  
+		</foreach>
+    	and createdate &gt;= #{fromdate,jdbcType=VARCHAR} 
+    	and status = 0;
+  </select>
+  <select id="searchVisitByDTO"  resultMap="BaseResultMap" parameterType="com.sss.pojo.dto.SearchVisitDTO" >
+	<include refid="associateQuery" />
+	where 
+	  <if test="userName != null and userName != ''" >
+	      u.user_name like "%"#{userName,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="userName == null or userName == ''" >
+	      u.user_name like "%%" 
+	  </if>
+	  <if test="(userId != null and userId != 0) or userIds != null" >
+	      AND (v.userId = #{userId,jdbcType=INTEGER}
+	      		or v.userId in 
+		    <foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+			  #{item}  
+			</foreach>
+			)
+	  </if>
+	  <if test="customerId != null and customerId != 0" >
+	      AND v.customerId = #{customerId,jdbcType=INTEGER}
+	  </if>
+	  <if test="customerName != null and customerName != ''" >
+	      AND c.customer_name like "%"#{customerName,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="address != null and address != ''" >
+	      AND v.address = #{address,jdbcType=VARCHAR}
+	  </if>
+	  <!-- <if test="type != null and type != ''" >
+	      AND v.type = #{type,jdbcType=VARCHAR}
+	  </if> -->
+	  <if test="status != null and status != 0" >
+	      AND v.status = #{status,jdbcType=INTEGER}
+	  </if>
+	  <if test="fromdateBegin != null and fromdateBegin != ''" >
+	      AND v.fromdate &gt;= #{fromdateBegin,jdbcType=VARCHAR}
+	  </if>
+	  <if test="fromdateEnd != null and fromdateEnd != ''" >
+	      AND v.fromdate &lt;= #{fromdateEnd,jdbcType=VARCHAR}
+	  </if>
+	  <if test="enddateBegin != null and enddateBegin != ''" >
+	      AND v.enddate &gt;= #{enddateBegin,jdbcType=VARCHAR}
+	  </if>
+	  <if test="enddateEnd != null and enddateEnd != ''" >
+	      AND v.enddate &lt;= #{enddateEnd,jdbcType=VARCHAR}
+	  </if>
+	order by v.createdate desc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where v.id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_visitplan
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.VisitPlan" >
+    insert into ss_visitplan (id, userId, customerId, 
+      contactId, contactPosition, contactTel, 
+      reason, address, traffic, fromdate, 
+      enddate, trafficExpense, hotelExpense, 
+      receptionExpense, otherExpense, 
+      target, tripPlan, note, status, createdate
+      )
+    values (#{id,jdbcType=INTEGER}, #{user.userId,jdbcType=INTEGER}, #{customer.id,jdbcType=INTEGER}, 
+      #{contact.id,jdbcType=INTEGER}, #{contactPosition,jdbcType=VARCHAR}, #{contactTel,jdbcType=VARCHAR}, 
+      #{reason,jdbcType=VARCHAR}, #{address,jdbcType=VARCHAR}, #{traffic,jdbcType=VARCHAR}, #{fromdate,jdbcType=VARCHAR}, 
+      #{enddate,jdbcType=VARCHAR}, #{trafficExpense,jdbcType=DECIMAL}, #{hotelExpense,jdbcType=DECIMAL}, 
+      #{receptionExpense,jdbcType=DECIMAL}, #{otherExpense,jdbcType=DECIMAL}, 
+      #{target,jdbcType=LONGVARCHAR}, #{tripPlan,jdbcType=LONGVARCHAR}, #{note,jdbcType=LONGVARCHAR}, 
+      #{status,jdbcType=INTEGER}, #{createdate,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.VisitPlan" >
+    insert into ss_visitplan
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="user != null and user.userId != null" >
+        userId,
+      </if>
+      <if test="customer != null and customer.id != null" >
+        customerId,
+      </if>
+      <if test="contact != null and contact.id != null" >
+        contactId,
+      </if>
+      <if test="contactPosition != null" >
+        contactPosition,
+      </if>
+      <if test="contactTel != null" >
+        contactTel,
+      </if>
+      <if test="reason != null" >
+        reason,
+      </if>
+      <if test="address != null" >
+        address,
+      </if>
+      <if test="traffic != null" >
+        traffic,
+      </if>
+      <if test="fromdate != null" >
+        fromdate,
+      </if>
+      <if test="enddate != null" >
+        enddate,
+      </if>
+      <if test="trafficExpense != null" >
+        trafficExpense,
+      </if>
+      <if test="hotelExpense != null" >
+        hotelExpense,
+      </if>
+      <if test="receptionExpense != null" >
+        receptionExpense,
+      </if>
+      <if test="otherExpense != null" >
+        otherExpense,
+      </if>
+      <if test="target != null" >
+        target,
+      </if>
+      <if test="tripPlan != null" >
+        tripPlan,
+      </if>
+      <if test="note != null" >
+        note,
+      </if>
+      <if test="status != null" >
+        status,
+      </if>
+      createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="user != null and user.userId != null" >
+        #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="customer != null and customer.id != null" >
+        #{customer.id,jdbcType=INTEGER},
+      </if>
+      <if test="contact != null and contact.id != null" >
+        #{contact.id,jdbcType=INTEGER},
+      </if>
+      <if test="contactPosition != null" >
+        #{contactPosition,jdbcType=VARCHAR},
+      </if>
+      <if test="contactTel != null" >
+        #{contactTel,jdbcType=VARCHAR},
+      </if>
+      <if test="reason != null" >
+        #{reason,jdbcType=VARCHAR},
+      </if>
+      <if test="address != null" >
+        #{address,jdbcType=VARCHAR},
+      </if>
+      <if test="traffic != null" >
+        #{traffic,jdbcType=VARCHAR},
+      </if>
+      <if test="fromdate != null" >
+        #{fromdate,jdbcType=VARCHAR},
+      </if>
+      <if test="enddate != null" >
+        #{enddate,jdbcType=VARCHAR},
+      </if>
+      <if test="trafficExpense != null" >
+        #{trafficExpense,jdbcType=DECIMAL},
+      </if>
+      <if test="hotelExpense != null" >
+        #{hotelExpense,jdbcType=DECIMAL},
+      </if>
+      <if test="receptionExpense != null" >
+        #{receptionExpense,jdbcType=DECIMAL},
+      </if>
+      <if test="otherExpense != null" >
+        #{otherExpense,jdbcType=DECIMAL},
+      </if>
+      <if test="target != null" >
+        #{target,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="tripPlan != null" >
+        #{tripPlan,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="note != null" >
+        #{note,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="status != null" >
+        {status,jdbcType=INTEGER},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.VisitPlan" >
+    update ss_visitplan
+    <set >
+      <if test="user != null and user.userId != null" >
+        userId = #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="customer != null and customer.id != null" >
+        customerId = #{customer.id,jdbcType=INTEGER},
+      </if>
+      <if test="contact != null and contact.id != null" >
+        contactId = #{contact.id,jdbcType=INTEGER},
+      </if>
+      <if test="contactPosition != null" >
+        contactPosition = #{contactPosition,jdbcType=VARCHAR},
+      </if>
+      <if test="contactTel != null" >
+        contactTel = #{contactTel,jdbcType=VARCHAR},
+      </if>
+      <if test="reason != null" >
+        reason = #{reason,jdbcType=VARCHAR},
+      </if>
+      <if test="address != null" >
+        address = #{address,jdbcType=VARCHAR},
+      </if>
+      <if test="traffic != null" >
+        traffic = #{traffic,jdbcType=VARCHAR},
+      </if>
+      <if test="fromdate != null" >
+        fromdate = #{fromdate,jdbcType=VARCHAR},
+      </if>
+      <if test="enddate != null" >
+        enddate = #{enddate,jdbcType=VARCHAR},
+      </if>
+      <if test="trafficExpense != null" >
+        trafficExpense = #{trafficExpense,jdbcType=DECIMAL},
+      </if>
+      <if test="hotelExpense != null" >
+        hotelExpense = #{hotelExpense,jdbcType=DECIMAL},
+      </if>
+      <if test="receptionExpense != null" >
+        receptionExpense = #{receptionExpense,jdbcType=DECIMAL},
+      </if>
+      <if test="otherExpense != null" >
+        otherExpense = #{otherExpense,jdbcType=DECIMAL},
+      </if>
+      <if test="target != null" >
+        target = #{target,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="tripPlan != null" >
+        tripPlan = #{tripPlan,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="note != null" >
+        note = #{note,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="status != null" >
+        status = #{status,jdbcType=INTEGER},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.VisitPlan" >
+    update ss_visitplan
+    set userId = #{user.userId,jdbcType=INTEGER},
+      customerId = #{customer.id,jdbcType=INTEGER},
+      contactId = #{contact.id,jdbcType=INTEGER},
+      contactPosition = #{contactPosition,jdbcType=VARCHAR},
+      contactTel = #{contactTel,jdbcType=VARCHAR},
+      reason = #{reason,jdbcType=VARCHAR},
+      address = #{address,jdbcType=VARCHAR},
+      traffic = #{traffic,jdbcType=VARCHAR},
+      fromdate = #{fromdate,jdbcType=VARCHAR},
+      enddate = #{enddate,jdbcType=VARCHAR},
+      trafficExpense = #{trafficExpense,jdbcType=DECIMAL},
+      hotelExpense = #{hotelExpense,jdbcType=DECIMAL},
+      receptionExpense = #{receptionExpense,jdbcType=DECIMAL},
+      otherExpense = #{otherExpense,jdbcType=DECIMAL},
+      target = #{target,jdbcType=LONGVARCHAR},
+      tripPlan = #{tripPlan,jdbcType=LONGVARCHAR},
+      note = #{note,jdbcType=LONGVARCHAR},
+      status = #{status,jdbcType=INTEGER},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by v.createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by v.createdate desc
+  </select>
+</mapper>

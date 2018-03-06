@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IMenuPojoDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.MenuPojo" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="menuCode" property="menuCode" jdbcType="VARCHAR" />
+    <result column="pojoName" property="pojoName" jdbcType="VARCHAR" />
+  </resultMap>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select * from ss_menupojo
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selByMenuCode" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select * from ss_menupojo
+    where menuCode = #{menuCode,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_menupojo
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.MenuPojo" >
+    insert into ss_menupojo (id, menuCode, pojoName
+      )
+    values (#{id,jdbcType=INTEGER}, #{menucode,jdbcType=VARCHAR}, #{pojoname,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.MenuPojo" >
+    insert into ss_menupojo
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="menucode != null" >
+        menuCode,
+      </if>
+      <if test="pojoname != null" >
+        pojoName,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="menucode != null" >
+        #{menucode,jdbcType=VARCHAR},
+      </if>
+      <if test="pojoname != null" >
+        #{pojoname,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.MenuPojo" >
+    update ss_menupojo
+    <set >
+      <if test="menucode != null" >
+        menuCode = #{menucode,jdbcType=VARCHAR},
+      </if>
+      <if test="pojoname != null" >
+        pojoName = #{pojoname,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.MenuPojo" >
+    update ss_menupojo
+    set menuCode = #{menucode,jdbcType=VARCHAR},
+      pojoName = #{pojoname,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	select * from ss_menupojo
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    select * from ss_menupojo
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+  </select>
+</mapper>

@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<!-- 已知属性：pojoName_firstLowercase, pojoName_firstUppercase -->
+<!-- 已知属性：pkColumn, pkColumnType, pkFieldName, pkIfExpression, pkFieldJdbcType -->
+<!-- 已知属性：column, columnType, isNeed, fieldName, ifExpression, fieldJdbcType。构建循环字符串 -->
+<mapper namespace="com.sss.dao.ISSUserIpDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.SSUserIp" >
+			<id column="id" property="id" jdbcType="INTEGER"/>
+			<result column="telephone" property="telephone" jdbcType="VARCHAR"/>
+			<result column="ip" property="ip" jdbcType="VARCHAR"/>
+			<result column="name" property="name" jdbcType="VARCHAR"/>
+			<result column="status" property="status" jdbcType="INTEGER"/>
+			<result column="createdate" property="createdate" jdbcType="VARCHAR"/>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		master.*
+    from 
+    	ss_user_ip master
+  </sql>
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" />
+  </select>
+  <!-- 懒加载查询所有的接口 -->
+  <select id="selectListLazy" resultMap="BaseResultMap" >
+	select * from ss_user_ip 
+	limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where master.id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectByTel" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    <include refid="associateQuery" />
+    where master.telephone = #{telephone,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_user_ip
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <!-- 批量删除接口 -->
+  <delete id="deleteByPrimaryKeys" parameterType="java.util.List">
+    delete from ss_user_ip
+    where id in 
+    <foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.SSUserIp" >
+    insert into ss_user_ip 
+		(
+			id,
+			telephone,
+			ip,
+			name,
+			status,
+			createdate
+		)
+    values 
+		(
+			#{id,jdbcType=INTEGER},
+			#{telephone,jdbcType=VARCHAR},
+			#{ip,jdbcType=VARCHAR},
+			#{name,jdbcType=VARCHAR},
+			#{status,jdbcType=INTEGER},
+			#{createdate,jdbcType=VARCHAR}
+		)
+  </insert>
+  <!-- 批量添加接口 -->
+  <insert id="insertEntitys" parameterType="java.util.List">
+	insert into ss_user_ip 
+		(
+			id,
+			telephone,
+			ip,
+			name,
+			status,
+			createdate
+		)
+	values
+	<foreach collection="list" item="item" index="index" separator=",">
+		(
+				null,
+				#{item.telephone,jdbcType=VARCHAR},
+				#{item.ip,jdbcType=VARCHAR},
+				#{item.name,jdbcType=VARCHAR},
+				#{item.status,jdbcType=INTEGER},
+				#{item.createdate,jdbcType=VARCHAR}
+		)
+	</foreach>
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.SSUserIp" >
+  	<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+    </selectKey>
+    insert into ss_user_ip
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+				<if test="id != null and id != 0">
+					id,
+				</if>
+				<if test="telephone != null and telephone != ''">
+					telephone,
+				</if>
+				<if test="ip != null and ip != ''">
+					ip,
+				</if>
+				<if test="name != null and name != ''">
+					name,
+				</if>
+				<if test="status != null">
+					status,
+				</if>
+				createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+				<if test="id != null and id != 0">
+					#{id,jdbcType=INTEGER},
+				</if>
+				<if test="telephone != null and telephone != ''">
+					#{telephone,jdbcType=VARCHAR},
+				</if>
+				<if test="ip != null and ip != ''">
+					#{ip,jdbcType=VARCHAR},
+				</if>
+				<if test="name != null and name != ''">
+					#{name,jdbcType=VARCHAR},
+				</if>
+				<if test="status != null">
+					#{status,jdbcType=INTEGER},
+				</if>
+				<if test="createdate == null or createdate == ''">
+					now(),
+				</if>
+				<if test="createdate != null and createdate != ''">
+					#{createdate,jdbcType=VARCHAR},
+				</if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.SSUserIp" >
+    update ss_user_ip
+    <set >
+			<if test="id != null and id != 0">
+				id = #{id,jdbcType=INTEGER},
+			</if>
+			<if test="telephone != null and telephone != ''">
+				telephone = #{telephone,jdbcType=VARCHAR},
+			</if>
+			<if test="ip != null and ip != ''">
+				ip = #{ip,jdbcType=VARCHAR},
+			</if>
+			<if test="name != null and name != ''">
+				name = #{name,jdbcType=VARCHAR},
+			</if>
+			<if test="status != null">
+				status = #{status,jdbcType=INTEGER},
+			</if>
+			<if test="createdate != null and createdate != ''">
+				createdate = #{createdate,jdbcType=VARCHAR},
+			</if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.SSUserIp" >
+    update ss_user_ip
+    set 
+			id = #{id,jdbcType=INTEGER},
+			telephone = #{telephone,jdbcType=VARCHAR},
+			ip = #{ip,jdbcType=VARCHAR},
+			name = #{name,jdbcType=VARCHAR},
+			status = #{status,jdbcType=INTEGER},
+			createdate = #{createdate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+  </select>
+</mapper>

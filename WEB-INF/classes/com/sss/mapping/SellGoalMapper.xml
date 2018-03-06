@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.ISellGoalDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.SellGoal" >
+    <id column="sellgoal_id" property="sellgoalId" jdbcType="INTEGER" />
+    <result column="planyear" property="planyear" jdbcType="VARCHAR" />
+    <result column="January" property="january" jdbcType="DOUBLE" />
+    <result column="February" property="february" jdbcType="DOUBLE" />
+    <result column="March" property="march" jdbcType="DOUBLE" />
+    <result column="April" property="april" jdbcType="DOUBLE" />
+    <result column="May" property="may" jdbcType="DOUBLE" />
+    <result column="June" property="june" jdbcType="DOUBLE" />
+    <result column="July" property="july" jdbcType="DOUBLE" />
+    <result column="August" property="august" jdbcType="DOUBLE" />
+    <result column="September" property="september" jdbcType="DOUBLE" />
+    <result column="October" property="october" jdbcType="DOUBLE" />
+    <result column="November" property="november" jdbcType="DOUBLE" />
+    <result column="December" property="december" jdbcType="DOUBLE" />
+    <result column="goaltype" property="goaltype" jdbcType="VARCHAR" />
+    <result column="plangoal" property="plangoal" jdbcType="DOUBLE" />
+    <result column="pubdate" property="pubdate" jdbcType="VARCHAR" />
+    <result column="details" property="details" jdbcType="VARCHAR" />
+	<association property="user" javaType="com.sss.pojo.User">
+		<id column="su_user_id" property="userId" jdbcType="INTEGER" />
+    	<result column="su_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="su_telephone" property="telephone" jdbcType="VARCHAR" />
+	</association>
+	<association property="respPeople" javaType="com.sss.pojo.User">
+		<id column="sr_user_id" property="userId" jdbcType="INTEGER" />
+    	<result column="sr_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="sr_telephone" property="telephone" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery" >
+    select s.*,
+		u.user_id as su_user_id,
+		u.user_name as su_user_name,
+		u.telephone as su_telephone,
+		u1.user_id as sr_user_id,
+		u1.user_name as sr_user_name,
+		u1.telephone as sr_telephone
+	from
+		ss_sellgoal s
+	left join
+		ss_user u
+	on
+		s.userId = u.user_id
+	left join
+		ss_user u1
+	on
+		s.resp_people = u1.user_id
+  </sql>
+  	<select id="selectList" resultMap="BaseResultMap">
+		<include refid="associateQuery" />
+		order by u.user_id asc
+	</select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where s.sellgoal_id = #{sellgoalId,jdbcType=INTEGER} order by u.user_id asc
+  </select>
+  <select id="selectListByYear"  resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where s.planyear = #{year,jdbcType=VARCHAR}
+  </select>
+  <select id="selectListByUserId"  resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where s.resp_people = #{userId,jdbcType=INTEGER} and 
+    		s.planyear = #{year,jdbcType=VARCHAR} and
+    		s.userId != #{userId,jdbcType=INTEGER}
+  </select>
+  <select id="selectByUser"  resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where s.planyear = #{year,jdbcType=VARCHAR} and
+    		s.userId = #{userId,jdbcType=INTEGER}
+  </select>
+  <select id="selectListByUserName"  resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where s.planyear = #{year,jdbcType=VARCHAR} and
+    		u.user_name = #{userName,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_sellgoal
+    where s.sellgoal_id = #{sellgoalId,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.SellGoal" >
+    insert into ss_sellgoal (sellgoal_id, userId, resp_people, planyear, 
+      January, February, March, 
+      April, May, June, July, 
+      August, September, October, 
+      November, December, goaltype, 
+      plangoal, pubdate, details
+      )
+    values (#{sellgoalId,jdbcType=INTEGER}, #{user.userId,jdbcType=INTEGER},#{respPeople.userId,jdbcType=INTEGER}, #{planyear,jdbcType=VARCHAR}, 
+      #{january,jdbcType=DOUBLE}, #{february,jdbcType=DOUBLE}, #{march,jdbcType=DOUBLE}, 
+      #{april,jdbcType=DOUBLE}, #{may,jdbcType=DOUBLE}, #{june,jdbcType=DOUBLE}, #{july,jdbcType=DOUBLE}, 
+      #{august,jdbcType=DOUBLE}, #{september,jdbcType=DOUBLE}, #{october,jdbcType=DOUBLE}, 
+      #{november,jdbcType=DOUBLE}, #{december,jdbcType=DOUBLE}, #{goaltype,jdbcType=VARCHAR}, 
+      #{plangoal,jdbcType=DOUBLE}, #{pubdate,jdbcType=VARCHAR}, #{details,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.SellGoal" >
+    insert into ss_sellgoal
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="sellgoalId != null" >
+        sellgoal_id,
+      </if>
+      <if test="respPeople != null and respPeople.userId != null and respPeople.userId != 0" >
+        resp_people,
+      </if>
+      <if test="user != null and user.userId != null and user.userId != 0" >
+        userId,
+      </if>
+      <if test="planyear != null" >
+        planyear,
+      </if>
+      <if test="january != null" >
+        January,
+      </if>
+      <if test="february != null" >
+        February,
+      </if>
+      <if test="march != null" >
+        March,
+      </if>
+      <if test="april != null" >
+        April,
+      </if>
+      <if test="may != null" >
+        May,
+      </if>
+      <if test="june != null" >
+        June,
+      </if>
+      <if test="july != null" >
+        July,
+      </if>
+      <if test="august != null" >
+        August,
+      </if>
+      <if test="september != null" >
+        September,
+      </if>
+      <if test="october != null" >
+        October,
+      </if>
+      <if test="november != null" >
+        November,
+      </if>
+      <if test="december != null" >
+        December,
+      </if>
+      <if test="goaltype != null" >
+        goaltype,
+      </if>
+      <if test="plangoal != null" >
+        plangoal,
+      </if>
+      <if test="details != null" >
+        details,
+      </if>
+        pubdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="sellgoalId != null" >
+        #{sellgoalId,jdbcType=INTEGER},
+      </if>
+       <if test="respPeople != null and respPeople.userId != null and respPeople.userId != 0" >
+      	#{respPeople.userId,jdbcType=INTEGER},
+      </if>
+      <if test="user != null and user.userId != null and user.userId != 0" >
+        #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="planyear != null" >
+        #{planyear,jdbcType=VARCHAR},
+      </if>
+      <if test="january != null" >
+        #{january,jdbcType=DOUBLE},
+      </if>
+      <if test="february != null" >
+        #{february,jdbcType=DOUBLE},
+      </if>
+      <if test="march != null" >
+        #{march,jdbcType=DOUBLE},
+      </if>
+      <if test="april != null" >
+        #{april,jdbcType=DOUBLE},
+      </if>
+      <if test="may != null" >
+        #{may,jdbcType=DOUBLE},
+      </if>
+      <if test="june != null" >
+        #{june,jdbcType=DOUBLE},
+      </if>
+      <if test="july != null" >
+        #{july,jdbcType=DOUBLE},
+      </if>
+      <if test="august != null" >
+        #{august,jdbcType=DOUBLE},
+      </if>
+      <if test="september != null" >
+        #{september,jdbcType=DOUBLE},
+      </if>
+      <if test="october != null" >
+        #{october,jdbcType=DOUBLE},
+      </if>
+      <if test="november != null" >
+        #{november,jdbcType=DOUBLE},
+      </if>
+      <if test="december != null" >
+        #{december,jdbcType=DOUBLE},
+      </if>
+      <if test="goaltype != null" >
+        #{goaltype,jdbcType=VARCHAR},
+      </if>
+      <if test="plangoal != null" >
+        #{plangoal,jdbcType=DOUBLE},
+      </if>
+      <if test="details != null" >
+        #{details,jdbcType=VARCHAR},
+      </if>
+      <if test="pubdate == null or pubdate == ''" >
+        now(),
+      </if>
+      <if test="pubdate != null and pubdate != ''" >
+        #{pubdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.SellGoal" >
+    update ss_sellgoal
+    <set>
+     <if test="respPeople != null and respPeople.userId != null" >
+        resp_people = #{respPeople.userId,jdbcType=VARCHAR},
+      </if>
+      <if test="user != null and user.userId != null" >
+        userId = #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="planyear != null" >
+        planyear = #{planyear,jdbcType=VARCHAR},
+      </if>
+      <if test="january != null" >
+        January = #{january,jdbcType=DOUBLE},
+      </if>
+      <if test="february != null" >
+        February = #{february,jdbcType=DOUBLE},
+      </if>
+      <if test="march != null" >
+        March = #{march,jdbcType=DOUBLE},
+      </if>
+      <if test="april != null" >
+        April = #{april,jdbcType=DOUBLE},
+      </if>
+      <if test="may != null" >
+        May = #{may,jdbcType=DOUBLE},
+      </if>
+      <if test="june != null" >
+        June = #{june,jdbcType=DOUBLE},
+      </if>
+      <if test="july != null" >
+        July = #{july,jdbcType=DOUBLE},
+      </if>
+      <if test="august != null" >
+        August = #{august,jdbcType=DOUBLE},
+      </if>
+      <if test="september != null" >
+        September = #{september,jdbcType=DOUBLE},
+      </if>
+      <if test="october != null" >
+        October = #{october,jdbcType=DOUBLE},
+      </if>
+      <if test="november != null" >
+        November = #{november,jdbcType=DOUBLE},
+      </if>
+      <if test="december != null" >
+        December = #{december,jdbcType=DOUBLE},
+      </if>
+      <if test="goaltype != null" >
+        goaltype = #{goaltype,jdbcType=VARCHAR},
+      </if>
+      <if test="plangoal != null" >
+        plangoal = #{plangoal,jdbcType=DOUBLE},
+      </if>
+      <if test="pubdate != null and pubdate != ''" >
+        pubdate = #{pubdate,jdbcType=VARCHAR},
+      </if>
+      <if test="details != null" >
+        details = #{details,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where sellgoal_id = #{sellgoalId,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.SellGoal" >
+    update ss_sellgoal
+    set
+		resp_people = #{respPeople.userId,jdbcType=INTEGER},
+		userId = #{user.userId,jdbcType=INTEGER},
+     	planyear = #{planyear,jdbcType=VARCHAR},
+      	January = #{january,jdbcType=DOUBLE},
+      	February = #{february,jdbcType=DOUBLE},
+      	March = #{march,jdbcType=DOUBLE},
+      	April = #{april,jdbcType=DOUBLE},
+      	May = #{may,jdbcType=DOUBLE},
+      	June = #{june,jdbcType=DOUBLE},
+     	July = #{july,jdbcType=DOUBLE},
+     	August = #{august,jdbcType=DOUBLE},
+      	September = #{september,jdbcType=DOUBLE},
+      	October = #{october,jdbcType=DOUBLE},
+      	November = #{november,jdbcType=DOUBLE},
+      	December = #{december,jdbcType=DOUBLE},
+      	goaltype = #{goaltype,jdbcType=VARCHAR},
+      	plangoal = #{plangoal,jdbcType=DOUBLE},
+      	pubdate = #{pubdate,jdbcType=VARCHAR},
+      	details = #{details,jdbcType=VARCHAR}
+    where sellgoal_id = #{sellgoalId,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by u.user_id asc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by u.user_id asc
+  </select>
+</mapper>

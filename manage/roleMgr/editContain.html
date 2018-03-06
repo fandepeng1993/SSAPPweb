@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>设置用户角色</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" type="text/css" href="../../css/plugins/iCheck/custom.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		var users;
+		var roleId;
+		$(document).ready(function(){ 
+			roleId = Request["roleId"];
+			setTimeout(function (){
+				fillUserTable();
+			},50);
+		});
+		
+		//用于设置该角色人员
+		var pageObj1 = {
+				"pageSize": 7,
+				"pageNo": 1,
+				"totalRecords": 0,
+				"totalPages": 0
+		};
+		
+		function circleAll() {
+			$("#userTable").empty();
+			$.each(users, function(index, item) {
+				new UserCommon().fillTable("userTable", item, index);
+			});
+		}
+		
+		function circleInfos() {
+			$("#userTable tr").hide();
+			$.each(users, function(index, item) {
+				if(index >= ((pageObj1.pageNo-1)*pageObj1.pageSize) && index < (pageObj1.pageNo*pageObj1.pageSize)) {
+					$("#userTable tr").eq(index).show();
+				} else if(index > (pageObj1.pageNo*pageObj1.pageSize)) {
+					return;
+				}
+			});
+			//为checkbox添加监听事件
+			new UserCommon().checkboxListener();
+			//初始化层的大小
+			initLayerSize();
+		}
+		
+		function fillUserTable() {
+			$.ajax({
+				url: "../../userAdmin/allUsers",
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					$("#userTable").empty();
+					users = data;
+					pageObj1.totalRecords = users.length;
+					
+					//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+					if(pageObj1.totalRecords % pageObj1.pageSize != 0) {
+						pageObj1.totalPages = Math.floor(pageObj1.totalRecords / pageObj1.pageSize) + 1;
+					} else {
+						pageObj1.totalPages = pageObj1.totalRecords / pageObj1.pageSize;
+					}
+					circleAll();
+					//根据totalPages初始化页码插件
+					$("#sumPage1").html("共<strong class=\"allPage1\">" + pageObj1.totalPages + "</strong>页");
+					$("#Pagination1").pagination(pageObj1.totalPages, {paginationIndex:1});
+				} 
+			});
+		}
+		
+		function getUserByKey() {
+			var keyWords = $("#keyWords").val();
+			$.ajax({
+				url: "../../userAdmin/getUsersByKey?keyWords=" + encodeURI(keyWords),
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					$("#userTable").empty();
+					users = data;
+					pageObj1.totalRecords = users.length;
+					
+					//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+					if(pageObj1.totalRecords % pageObj1.pageSize != 0) {
+						pageObj1.totalPages = Math.floor(pageObj1.totalRecords / pageObj1.pageSize) + 1;
+					} else {
+						pageObj1.totalPages = pageObj1.totalRecords / pageObj1.pageSize;
+					}
+					circleAll();
+					//根据totalPages初始化页码插件
+					$("#sumPage1").html("共<strong class=\"allPage1\">" + pageObj1.totalPages + "</strong>页");
+					$("#Pagination1").pagination(pageObj1.totalPages, {paginationIndex:1});
+				} 
+			});
+		}
+		
+		function saveRoleUsers() {
+			var formObj = {
+				"roleId": roleId,
+				"userIds": []
+			};
+			var arr = new Array();
+			$("input[name='selectFlag']").each(function(){
+				if($(this).is(':checked')) {
+					arr.push($(this).val());
+				}
+			});
+			formObj.userIds = arr;
+			if(formObj.userIds == null || formObj.userIds == "") {
+				new UserCommon().check("success","请至少选中一个用户！",null,"warning");
+			} else {
+				$.ajax({
+				      url: "../../roleUserAdmin/addRoleUsers",
+				      datatype: "text",
+				      type: "post",
+				      data: JSON.stringify(formObj),
+				      success: function (data) {
+				    	  var json = eval("(" + data + ")");
+				    	  if(json.status == 1) {
+				    		  new UserCommon().check("success",json.msg,"contain_user.html?roleId=" + roleId,"success");
+				    		  setTimeout(function (){
+				    			  //new UserCommon().layer_close();
+				    			  window.parent.location.href = "contain_user.html?roleId=" + roleId;
+				    		  }, 1000);
+				    	  } else {
+				    		  new UserCommon().check("success",json.msg,null,"fail");
+				    	  }
+				      }
+				});
+			}
+		}
+		
+		/*管理员-角色-添加*/
+		function admin_role_add(title,url,w){
+			new UserCommon().layer_show(title,url,w);
+		}
+		function fillUserDetail(userId) {
+			admin_role_add('<strong>人员查看</strong>','../userMgr/viewUser.html?userId=' + userId, iframeJson.width*0.8);
+		}
+	</script>
+</head>
+<body>
+	<!-- 设置角色 -->
+	<div class="bt-div">
+		<div class="bt-div-in">
+			<label style="float: left">姓名或工号：</label>
+			<input type="text" id="keyWords" style="float: left; margin-top: -3px;">
+			<button style="display:block;float: left;margin-left:-1px; " type="button" class="btn btn-default bt-div-bt" onclick="getUserByKey()">
+				<span class="glyphicon glyphicon-search color-zn"></span> 搜索
+			</button>
+		</div>
+	</div>
+	<div class="bt-div-two-table">
+		<div class="table-responsive centerTable">
+			<form id="roleUserForm ">
+				<input type="hidden" name="roleId" id="roleId">
+				<table class="table table-data-bottom text-center">
+					<!-- <thead>
+						<tr class="table-first-tr">
+							<th>
+								<input type="checkbox" name="ifAll" class="all">
+							</th>
+							<th>序号</th>
+							<th>用户工号</th>
+							<th>姓名</th>
+							<th>性别</th>
+							<th>角色</th>
+							<th>岗位</th>
+							<th>所在部门</th>
+						</tr>
+					</thead> -->
+					<thead>
+						<tr fieldType="controlCB" fieldName="userId" style="background:#ebebeb;">
+		                	<th fieldType="roleUserCB" fieldName="userId">
+								<input type="checkbox" name="ifAll" class="all">
+							</th>
+							<th fieldType="num" fieldName="">序号</th>
+							<th fieldType="text" fieldName="userNo">用户工号</th>
+							<th fieldType="viewUserDetail" fieldName="userName">姓名</th>
+							<th fieldType="text" fieldName="sex">性别</th>
+							<th fieldType="text" fieldName="positionName">岗位</th>
+							<th fieldType="text" fieldName="deptName">所在部门</th>
+						</tr>
+					</thead>
+					<tbody id="userTable">
+					</tbody>
+				</table> 
+			</form>	
+			<!-- 分页 -->
+			<div class="pages">
+		        <div id="Pagination1"></div>
+		        <div class="searchPage">
+		          <span class="page-sum" id="sumPage1"></span>
+		          <span class="page-go">跳转<input type="text">页</span>
+		          <a class="page-btn" href="javascript:;">GO</a>
+		        </div>
+		    </div>
+	    </div>
+    </div>
+	<div class="edit-bottom">
+		<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();"><i class="glyphicon glyphicon-remove"></i>&nbsp;关闭</button>
+		<button type="button" class="btn btn-xs edit-save btn-primary" onclick="saveRoleUsers()"><i class="glyphicon glyphicon-ok"></i>&nbsp;保存</button>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span>
+			<span></span>
+			<div><img src="../../images/sanjiao.png" width="10"></div>
+		</div>
+	</div>
+</body>
+</html>

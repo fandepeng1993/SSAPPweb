@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.mes.dao.IProduceMWorkOrderDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.mes.pojo.ProduceMWorkOrder" >
+    <id column="D_ID" property="dId" jdbcType="INTEGER" />
+    <result column="D_No" property="dNo" jdbcType="VARCHAR" />
+    <result column="P_Type" property="pType" jdbcType="INTEGER" />
+    <result column="ProduceM_RouteNo" property="producemRouteno" jdbcType="INTEGER" />
+    <result column="ProduceM_No" property="producemNo" jdbcType="VARCHAR" />
+    <result column="ProduceM_Name" property="producemName" jdbcType="VARCHAR" />
+    <result column="ProduceM_Spec" property="producemSpec" jdbcType="VARCHAR" />
+    <result column="CardNo" property="cardno" jdbcType="VARCHAR" />
+    <result column="ProduceM_Number" property="producemNumber" jdbcType="INTEGER" />
+    <result column="ProduceM_Weight" property="producemWeight" jdbcType="DECIMAL" />
+    <result column="ProduceM_Weights" property="producemWeights" jdbcType="DECIMAL" />
+    <result column="ContractNo" property="contractno" jdbcType="VARCHAR" />
+    <result column="DeliveryDate" property="deliverydate" jdbcType="VARCHAR" />
+    <result column="D_Steel" property="dSteel" jdbcType="VARCHAR" />
+    <result column="D_Spec2" property="dSpec2" jdbcType="VARCHAR" />
+    <result column="D_Create" property="dCreate" jdbcType="VARCHAR" />
+    <result column="D_CreateDate" property="dCreatedate" jdbcType="VARCHAR" />
+    <result column="ProduceM_BeginDate" property="producemBegindate" jdbcType="VARCHAR" />
+    <result column="ProduceM_Id" property="producemId" jdbcType="INTEGER" />
+    <result column="state" property="state" jdbcType="INTEGER" />
+  </resultMap>
+  <cache 
+  	eviction="FIFO" 
+  	flushInterval="900000" 
+	size="512" 
+	readOnly="true"/> 
+  <select id="getViewEntitys" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select CardNo,ContractNo,ProduceM_Name,ProduceM_Number,ProduceM_Weight,D_CreateDate,t1.state 
+	from ProduceM_WorkOrder t left join view_workorder_state t1 on t.D_ID=t1.D_ID 
+	where t.D_CreateDate>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <select id="getPwosByPageNoAndSize" resultMap="BaseResultMap" >
+    select CardNo,ContractNo,ProduceM_Name,ProduceM_Number,ProduceM_Weight,D_CreateDate,t1.state 
+	from ProduceM_WorkOrder t left join view_workorder_state t1 on t.D_ID=t1.D_ID 
+	where t.D_CreateDate>=#{startTime,jdbcType=VARCHAR} limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="getEntitysCount" resultType="java.lang.Integer" parameterType="java.lang.String" >
+    select count(*) from ProduceM_WorkOrder 
+    where D_CreateDate>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <select id="getTotalWeight" resultType="java.math.BigDecimal" parameterType="java.lang.String" >
+    select sum(ProduceM_Weight) from ProduceM_WorkOrder 
+    where D_CreateDate>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <select id="getTotalQuantity" resultType="java.math.BigDecimal" parameterType="java.lang.String" >
+    select sum(ProduceM_Number) from ProduceM_WorkOrder 
+    where D_CreateDate>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  
+  <select id="getViewEntitysByproduceM_Name" resultMap="BaseResultMap" >
+    select CardNo,ContractNo,ProduceM_Name,ProduceM_Number,ProduceM_Weight,D_CreateDate,t1.state 
+	from ProduceM_WorkOrder t left join view_workorder_state t1 on t.D_ID=t1.D_ID 
+	where ProduceM_Name=#{produceM_Name,jdbcType=INTEGER} and D_CreateDate>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <select id="getTotalWeightByProduceM_Name" resultType="java.math.BigDecimal" >
+    select sum(ProduceM_Weight) from ProduceM_WorkOrder 
+    where ProduceM_Name=#{produceM_Name,jdbcType=INTEGER} and D_CreateDate>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <select id="getTotalQuantityByProduceM_Name" resultType="java.math.BigDecimal" >
+    select sum(ProduceM_Number) from ProduceM_WorkOrder 
+    where ProduceM_Name=#{produceM_Name,jdbcType=INTEGER} and D_CreateDate>=#{startTime,jdbcType=VARCHAR}
+  </select>
+</mapper>

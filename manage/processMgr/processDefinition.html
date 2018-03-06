@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>流程定义管理</title>
+</head>
+<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+<link href="../../css/font-awesome.min.css" rel="stylesheet">
+<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+<script type="text/javascript" src="../../js/checkUser.js"></script>
+<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+<script type="text/javascript" src="../../js/UserUtil.js"></script>
+<script type="text/javascript" src="../../js/UserCommon.js"></script>
+<script type="text/javascript">
+	var aH3;
+	var aDiv;
+	function initTab() {
+		aH3=$("#cen_right_top").children("h3");
+		aDiv=$("#cen_right_top").children("div");
+		for(var i=0;i<aH3.length;i++) {
+			aH3[i].index=i;
+			aH3[i].onclick=function() {
+				for(var i=0;i<aH3.length;i++) {
+					aH3[i].className="";
+					aDiv[i].style.display="none";
+				}
+				this.className="white";
+				aDiv[this.index].style.display="block";
+			}
+		}
+	}
+
+	var menuCode;
+	var keyWords;
+	$(document).ready(function() {
+		initTab();
+		menuCode = Request["menuCode"];
+		$("#add-g").show();
+		$("#keyWords").show();
+		$("#search-g").show();
+		$("#keySpan").show();
+		initTable1();
+		initTable2();
+	});
+	
+	var pageObj1, pageObj2;
+	for(var i=1; i<=2; i++) {
+		var temp = {
+			"pageSize": 10,
+			"pageNo": 1,
+			"totalRecords": 0,
+			"totalPages": 0
+		};
+		eval("pageObj" + i + "=temp");
+	}
+	
+	//插入流程定义列表
+	/*两次encodeURI,第一次编码得到的是UTF-8形式的URL，第二次编码得到的依然是UTF-8形式的URL，
+	但是在效果上相当于首先进行了一 次UTF-8编码(此时已经全部转换为ASCII字符)，再进行了一次iso-8859-1编码，
+	因为对英文字符来说UTF-8编码和ISO- 8859-1编码的效果相同*/
+	var definition;
+	var ajaxUrl = null;
+	function initTable1() {
+		var currentPageObj = pageObj1;
+		ajaxUrl="../../ProcessDefinitionlController/getAllDepolyedProcess" ,
+		keyWords = $("#keyWords").val();
+		$.ajax({
+			url : "../../ProcessDefinitionlController/getAllDepolyedProcess?keyWords=" + encodeURI(encodeURI(keyWords)),
+			datatype : "json",
+			type : "get",
+			data : {},
+			success : function(data, status, xhr) {
+				$("#processTable1").empty();
+				definition = data;
+				currentPageObj.totalRecords = data.length;
+				//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+				if (currentPageObj.totalRecords % currentPageObj.pageSize != 0) {
+					currentPageObj.totalPages = Math.floor(currentPageObj.totalRecords / currentPageObj.pageSize) + 1;
+				} else {
+					currentPageObj.totalPages = currentPageObj.totalRecords / currentPageObj.pageSize;
+				}
+				//根据totalPages初始化页码插件
+				$("#sumPage1").html("共<strong class=\"allPage1\">" + currentPageObj.totalPages + "</strong>页");
+				$("#Pagination1").pagination(currentPageObj.totalPages, {paginationIndex:1});
+			}
+		});
+	}
+	
+
+	//插入流程模型部署列表
+	var processModel;
+	var ajaxUrl2;
+	function initTable2() {
+		var currentPageObj = pageObj2;
+		ajaxUrl2="../../ProcessDefinitionlController/getModelerProcess/";
+		$.ajax({
+			url : ajaxUrl2,
+			datatype : "json",
+			type : "get",
+			data : {},
+			success : function(data, status, xhr) {
+				$("#processTable2").empty();
+				processModel = data;
+				currentPageObj.totalRecords = data.length;
+				//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+				if (currentPageObj.totalRecords % currentPageObj.pageSize != 0) {
+					currentPageObj.totalPages = Math.floor(currentPageObj.totalRecords / currentPageObj.pageSize) + 1;
+				} else {
+					currentPageObj.totalPages = currentPageObj.totalRecords / currentPageObj.pageSize;
+				}
+				//根据totalPages初始化页码插件
+				$("#sumPage2").html("共<strong class=\"allPage2\">" + currentPageObj.totalPages + "</strong>页");
+				$("#Pagination2").pagination(currentPageObj.totalPages, {paginationIndex:2});
+			}
+		});
+	}
+
+	//填充tbody数据
+	function circleInfos(objIndex) {
+		var currentPageObj = eval("pageObj" + objIndex);
+		$("#processTable" + objIndex).empty();
+		var tasks;
+		if(objIndex == 1) tasks = definition;
+		if(objIndex == 2) tasks = processModel;
+		$.each(tasks, function(index, item) {
+			if (index >= ((currentPageObj.pageNo - 1) * currentPageObj.pageSize) && index < (currentPageObj.pageNo * currentPageObj.pageSize)) {
+				//new UserCommon().fillTable("processTable" + objIndex, item, index);
+				new UserCommon().fillTable("processTable" + objIndex, item, index);
+				//为checkbox添加监听事件
+				/* new UserCommon().checkboxListener(); */
+				inittAble();
+			} else if (index > (currentPageObj.pageNo * currentPageObj.pageSize)) {
+				return;
+			}
+		});
+		
+	}
+	//根据流程设计模型部署ID部署流程定义
+	function deployModel(modelId){
+		layer.confirm('确定部署吗？',function(index){
+			if(modelId!=null) {
+			 	$.ajax({
+					url: "../../ProcessDefinitionlController/deployModel/"+modelId,
+					datatype: "text",
+					type: "get",
+					data: {},
+					success: function (data) {
+						if(data.status == 1) {
+							new UserCommon().check("success",data.msg,null,"success");
+							initTable2(ajaxUrl2);
+							layer.close(index);
+							/* setTimeout(function (){
+								window.location.href = "processDefinition.html?menuCode=" + menuCode;
+							}, 1000); */
+						} else {
+							new UserCommon().check("success",data.msg,null,"fail");
+						}
+					}
+				});
+			}
+		});
+	}
+	//编辑模型
+	function updateModel(modelId){
+		window.location.assign("../../modeler.html?modelId="+modelId);
+	}
+	//删除模型
+	function deleteModel(modelId){
+		layer.confirm('确认删除么？',function(index){
+			if(modelId!=null) {
+			 	$.ajax({
+					url: "../../ProcessDefinitionlController/deleteModel/"+modelId,
+					datatype: "text",
+					type: "get",
+					data: {},
+					success: function (data) {
+						if(data.status == 1) {
+							new UserCommon().check("success",data.msg,null,"success");
+							initTable2(ajaxUrl2);
+							layer.close(index);
+							/* setTimeout(function (){
+								window.location.href = "processDefinition.html?menuCode=" + menuCode;
+							}, 1000); */
+						} else {
+							new UserCommon().check("success",data.msg,null,"fail");
+						}
+					}
+				});
+			}
+		});
+	}
+	//流程定义转化为模型
+	function convertToModel(pfId){
+		layer.confirm('确认转换为模型？',function(index){
+		 	$.ajax({
+				url: "../../ProcessDefinitionlController/convertToModel/"+pfId,
+				datatype: "text",
+				type: "get",
+				data: {},
+				success: function (data) {
+					if(data.status == 1) {
+						new UserCommon().check("success",data.msg,null,"success");
+						initTable1(ajaxUrl);
+			    		layer.close(index);
+						initTable2(ajaxUrl2);
+						/* setTimeout(function (){
+							window.location.href = "processDefinition.html?menuCode=" + menuCode;
+						}, 1000); */
+					} else {
+						new UserCommon().check("success",data.msg,null,"fail");
+					}
+				}
+			});
+		});
+	}
+	//挂起
+	function suspendDefinition(definitionId, isSuspended){
+		var message = "";
+		if(!isSuspended){
+			message = "您是否要将该流程挂起 ?<br/>挂起流程,<span style='color:red;'>该流程对应的业务将暂时使用！！！</span>请慎重您的选择！！！ <br/>点击确认进行挂起 , 点击取消取消该操作";
+		}else{
+			message = "您将要激活该流程！<br/>激活流程,<span style='color:green;'>该流程对应的业务将开启使用！！！</span> <br/>点击确认进行激活 , 点击取消取消该操作";
+		}  
+		layer.confirm(message,function(index){
+			$.ajax({
+				url:"../../ProcessDefinitionlController/updateState/"+definitionId+","+isSuspended,
+				datatype: "text",
+				type: "get",
+				data: {},
+				success: function (data) {
+					if(data.status == 1) {
+						new UserCommon().check("success",data.msg,null,"success");
+						initTable1(ajaxUrl);
+			    		layer.close(index);
+						/* 
+						setTimeout(function (){
+							window.location.href = "processDefinition.html?menuCode=" + menuCode;
+						}, 1000); */
+					} else {
+						new UserCommon().check("success",data.msg,null,"fail");
+					}
+				}
+			});
+		});
+	}
+	
+	//删除流程
+	function deleteDefinition(pfId){
+		layer.confirm("您是否要删除删除流程定义?<br/>删除流程定义,<span style='color:red;'>将清空所有用户发起的流程实例！！！</span>请慎重您的选择！！！ <br/>点击确认进行删除 , 点击取消取消该操作",function(index){
+			$.ajax({
+				url:"../../ProcessDefinitionlController/deleteDefinition/"+pfId,
+				datatype: "text",
+				type: "get",
+				data: {},
+				success: function (data) {
+					if(data.status == 1) {
+						/* new UserCommon().check("success",data.msg,null,"success");
+						setTimeout(function (){
+							window.location.href = "processDefinition.html?menuCode=" + menuCode;
+						}, 1000); */
+						new UserCommon().check("success",data.msg,null,"success");
+			    		  initTable1(ajaxUrl);
+			    		  layer.close(index);
+					} else {
+						new UserCommon().check("success",data.msg,null,"fail");
+					}
+				}
+			});
+		});
+	}
+	//审批人设置
+	function updateDefinition(pfId){
+		//window.location.assign("../../diagram-viewer/index.html?processDefinitionId=" + pfId);
+		admin_role_add('<strong>审批人设置</strong>',"../../diagram-viewer/index.html?processDefinitionId=" + pfId, iframeJson.width);
+	}
+	function selectXML(pfId) {
+		$.ajax({
+			url:"../../ProcessDefinitionlController/selectXML/"+pfId,
+			datatype: "text",
+			type: "get",
+			data: {},
+			success: function (data) {
+				if(data.status == 1) {
+					new UserCommon().check("success",data.msg,null,"success");
+					setTimeout(function (){
+						window.location.href = "processDefinition.html?menuCode=" + menuCode;
+					}, 1000);
+				} else {
+					new UserCommon().check("success",data.msg,null,"fail");
+				}
+			}
+		});
+	}
+	function addDefinition(){
+		admin_role_add('<strong>流程部署</strong>',"addProcessDefinition.html?menuCode="+ menuCode , iframeJson.width*0.5);
+	}
+	function createModeler(){
+		admin_role_add('<strong>创建模型</strong>',"createModel.html?" , iframeJson.width*0.5);
+	}
+	function admin_role_add(title, url, w) {
+		new UserCommon().layer_show(title, url, w);
+	}
+</script>
+<script type="text/javascript"></script>
+<body>
+<div class="bt-div">
+		<div class="bt-div-in">
+			<button type="button" class="btn btn-default btn-xs bt-one" id="add-g" style="width:75px" onclick="addDefinition()">
+				<span class="glyphicon glyphicon-plus color-add"></span> 流程部署
+			</button>
+			<button type="button" class="btn btn-default btn-xs bt-one"   style="width:75px;display:inline-block;" onclick="createModeler()">
+				<span class="glyphicon glyphicon-plus color-add"></span> 创建模型
+			</button> 
+			<span class="bt-div-title" id="keySpan">流程定义名称:</span>
+			<input type="text" id="keyWords" class="bt-div-input">
+			<button type="button" class="btn btn-default bt-div-bt" id="search-g" onclick="initTable1()">
+				<span class="glyphicon glyphicon-search color-zn"></span> 智能搜索
+			</button>
+		</div>
+	</div>
+	
+	
+	<div id="cen_right_top">
+		<h3 class="white">流程定义列表</h3>
+		<h3>模型部署列表</h3>
+		<div class="div" style="display: block">
+			<!--流程定义列表 -->
+			<div class="bt-div-two-table" id="pro1">
+				<div class="table-responsive centerTable">
+				<table class="table table-data-bottom text-center tableHidden">
+				<thead>
+					<tr class="table-first-tr" fieldType="radioTable" fieldName="pfId">
+						<th fieldType="num" fieldName="">序号</th>
+						<th fieldType="text" fieldName="pfId">流程定义Id</th>
+						<th fieldType="text" fieldName="pfDeployId">流程部署Id</th>
+						<th fieldType="text" fieldName="pfName">流程名称</th>
+						<th fieldType="text" fieldName="pfKey">流程标识</th>
+						<th fieldType="processDefinitionXML" fieldName="pfId" secondFieldName="pfResource" thirdFieldName="pfDeployId">流程XML</th>
+						<th fieldType="text" fieldName="pfVersion">版本号</th>
+						<th fieldType="text" fieldName="pfDeployTime">部署时间</th>
+						<th fieldType="processDefinitionOper" fieldName="pfId" secondFieldName="isSuspended">操作</th>
+					</tr>
+				</thead>
+				<tbody id="processTable1">
+				</tbody>
+			</table>
+		</div>
+			</div>
+			<!-- 分页 -->
+			<div class="pages">
+				<div id="Pagination1"></div>
+				<div class="searchPage">
+					<span class="page-sum" id="sumPage1"></span> <span class="page-go">跳转<input type="text">页 </span> 
+					<a class="page-btn" href="javascript:;">GO</a>
+				</div>
+			</div>
+		</div>
+		<div class="div">
+			<!--模型部署列表 -->
+			<div class="bt-div-two-table" id="pro2">
+				<div class="table-responsive centerTable">
+					<table class="table table-data-bottom text-center tableHidden">
+						<thead>
+							<tr class="table-first-tr" fieldType="radioTable" fieldName="id">
+								<th fieldType="num" fieldName="">序号</th>
+								<th fieldType="text" fieldName="modelId">模型Id</th>
+								<th fieldType="text" fieldName="modelName">模型名称</th>
+								<th fieldType="text" fieldName="modelKey">模型标识</th>
+								<th fieldType="text" fieldName="modelCategory">所属面板</th>
+								<!-- <th fieldType="text" fieldName="modelMetaInfo">模型部署信息</th> -->
+								<th fieldType="text" fieldName="modelVersion">版本号</th>
+								<th fieldType="text" fieldName="modelCreateTime">创建时间</th>
+								<th fieldType="text" fieldName="modelLastTime">修改时间</th>
+								<!-- <th fieldType="text" fieldName="modelEditor">创建人</th> -->
+								<th fieldType="processModelOper" fieldName="modelId">操作</th>
+							</tr>
+						</thead>
+						<tbody id="processTable2"></tbody>
+					</table>
+				</div>
+			</div>
+			<!-- 分页 -->
+			<div class="pages">
+				<div id="Pagination2"></div>
+				<div class="searchPage">
+					<span class="page-sum" id="sumPage2"></span> 
+					<span class="page-go">跳转<input type="text">页 </span> 
+					<a class="page-btn" href="javascript:;">GO</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+			<span></span>
+		</div>
+	</div>
+</body>
+</html>

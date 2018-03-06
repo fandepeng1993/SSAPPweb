@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IVisitRecordDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.VisitRecord" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    <result column="specVisitTime" property="specVisitTime" jdbcType="VARCHAR" />
+    <result column="content" property="content" jdbcType="LONGVARCHAR" />
+    
+    <association property="creator" javaType="com.sss.pojo.User">
+		<id column="vu_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="vu_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="vu_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="vu_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="vu_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="vu_user_status" property="status" jdbcType="VARCHAR" />
+	</association>
+    <association property="customer" javaType="com.sss.pojo.Customer">
+		<id column="vc_customer_id" property="id" jdbcType="INTEGER" />
+	    <result column="vc_customer_name" property="customerName" jdbcType="VARCHAR" />
+	    <result column="vc_customer_area" property="area" jdbcType="VARCHAR" />
+	    <result column="vc_customer_industry" property="industry" jdbcType="VARCHAR" />
+	    <result column="vc_customer_website" property="website" jdbcType="VARCHAR" />
+	    <result column="vc_customer_source" property="source" jdbcType="VARCHAR" />
+	    <result column="vc_customer_type" property="type" jdbcType="VARCHAR" />
+	    <result column="vc_customer_note" property="note" jdbcType="VARCHAR" />
+	    <result column="vc_customer_createdate" property="createdate" jdbcType="VARCHAR" />
+	</association>
+	<association property="visit" javaType="com.sss.pojo.Visit">
+		<id column="vv_visit_id" jdbcType="INTEGER" property="visitId" />
+	    <result column="vv_visit_address" jdbcType="VARCHAR" property="address" />
+	    <result column="vv_visit_visitDate" jdbcType="VARCHAR" property="visitdate" />
+	    <result column="vv_visit_note" jdbcType="VARCHAR" property="note" />
+	    <result column="vv_visit_createdate" property="createdate" jdbcType="VARCHAR" />
+		<result column="vv_visit_type" property="type" jdbcType="VARCHAR" />
+    	<result column="vv_visit_status" property="status" jdbcType="INTEGER" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		vr.*,
+  		u.user_id as vu_user_id,
+  		u.user_name as vu_user_name,
+  		u.user_no as vu_user_no,
+  		u.position_id as vu_position_id,
+  		u.sex as vu_user_sex,
+  		u.status as vu_user_status,
+  		cus.id as vc_customer_id,
+  		cus.customer_name as vc_customer_name,
+  		cus.area as vc_customer_area,
+  		cus.industry as vc_customer_industry,
+  		cus.website as vc_customer_website,
+  		cus.source as vc_customer_source,
+  		cus.type as vc_customer_type,
+  		cus.note as vc_customer_note,
+  		cus.createdate as vc_customer_createdate,
+  		v.visit_id as vv_visit_id,
+  		v.address as vv_visit_address,
+  		v.visitDate as vv_visit_visitDate,
+  		v.note as vv_visit_note,
+  		v.createdate as vv_visit_createdate,
+  		v.type as vv_visit_type,
+  		v.status as vv_visit_status
+    from 
+    	ss_visitrecord vr
+    left join
+    	ss_user u
+    on
+    	vr.creator = u.user_id
+   	left join
+   		ss_customer cus
+   	on
+   		vr.customerId = cus.id
+   	left join 
+   		ss_visit v
+   	on 
+   		vr.visitId = v.visit_id
+  </sql>
+  
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by vr.createdate desc
+  </select>
+  <select id="selectListByUId"  resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" /> 
+    where vr.creator = #{userId,jdbcType=INTEGER} order by vr.createdate desc
+  </select>
+  <select id="getVRsByUIds" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where vr.creator in 
+    <foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>  
+    order by vr.createdate desc
+  </select>
+  <select id="selectListByCusId"  resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" /> 
+    where vr.customerId = #{cusId,jdbcType=INTEGER} order by vr.createdate desc
+  </select>
+  <select id="selByUIdAndKey" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where vr.creator = #{userId,jdbcType=INTEGER} and cus.customer_name like "%"#{keyWords,jdbcType=VARCHAR}"%" order by vr.createdate desc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+	<include refid="associateQuery" />
+    where vr.id = #{id,jdbcType=INTEGER} order by vr.createdate desc
+  </select>
+  <select id="getCountByUIdAndDate" resultType="java.lang.Integer">
+    select count(*) from ss_visitrecord
+    where specVisitTime &gt;= #{fromdate,jdbcType=VARCHAR} and 
+    		creator = #{userId,jdbcType=INTEGER}
+  </select>
+  <select id="getCountByUIdsAndDate" resultType="java.lang.Integer">
+    select count(*) from ss_visitrecord
+    where creator in 
+	    <foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+		  #{item}  
+		</foreach>
+    	and specVisitTime &gt;= #{fromdate,jdbcType=VARCHAR} 
+  </select>
+  <select id="searchByDTO"  resultMap="BaseResultMap" parameterType="com.sss.pojo.dto.SearchVisitRDTO" >
+	<include refid="associateQuery" />
+	where 
+	  <if test="content != null and content != ''" >
+	      vr.content like "%"#{content,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="content == null or content == ''" >
+	      vr.content like "%%" 
+	  </if>
+	  <if test="id != null and id != 0" >
+	      AND vr.id = #{id,jdbcType=INTEGER}
+	  </if>
+	  <if test="creatorId != null and creatorId != 0" >
+	      AND vr.creator = #{creatorId,jdbcType=INTEGER}
+	  </if>
+	  <if test="customerId != null and customerId != 0" >
+	      AND vr.customerId = #{customerId,jdbcType=INTEGER}
+	  </if>
+	  <if test="visitId != null and visitId != 0" >
+	      AND vr.visitId = #{visitId,jdbcType=INTEGER}
+	  </if>
+	  <if test="fromdate != null and fromdate != ''" >
+	      AND vr.createdate &gt;= #{fromdate,jdbcType=VARCHAR}
+	  </if>
+	  <if test="enddate != null and enddate != ''" >
+	      AND vr.createdate &lt;= #{enddate,jdbcType=VARCHAR}
+	  </if>
+	order by vr.createdate desc
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_visitrecord
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.VisitRecord" >
+    insert into ss_visitrecord (id, creator, customerId, visitId, 
+      createdate, specVisitTime, content
+      )
+    values (#{id,jdbcType=INTEGER}, #{creator.userId,jdbcType=INTEGER}, #{customer.id,jdbcType=INTEGER}, #{visit.visitId,jdbcType=INTEGER}, 
+      #{createdate,jdbcType=VARCHAR}, #{specVisitTime,jdbcType=VARCHAR}, #{content,jdbcType=LONGVARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.VisitRecord" >
+    <selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+    </selectKey>
+    insert into ss_visitrecord
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="creator != null and creator.userId != 0" >
+        creator,
+      </if>
+      <if test="customer != null and customer.id != 0" >
+        customerId,
+      </if>
+      <if test="visit != null and visit.visitId != 0" >
+        visitId,
+      </if>
+      <if test="specVisitTime != null" >
+        specVisitTime,
+      </if>
+      <if test="content != null" >
+        content,
+      </if>
+      	createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="creator != null and creator.userId != 0" >
+       #{creator.userId,jdbcType=INTEGER},
+      </if>
+      <if test="customer != null and customer.id != 0" >
+        #{customer.id,jdbcType=INTEGER},
+      </if>
+      <if test="visit != null and visit.visitId != 0" >
+        #{visit.visitId,jdbcType=INTEGER},
+      </if>
+      <if test="specVisitTime != null" >
+        #{specVisitTime,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null" >
+        #{content,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.VisitRecord" >
+    update ss_visitrecord
+    <set >
+	  <if test="creator != null and creator.userId != 0" >
+        creator = #{creator.userId,jdbcType=INTEGER},
+      </if>
+      <if test="customer != null and customer.id != 0" >
+        customerId = #{customer.id,jdbcType=INTEGER},
+      </if>
+      <if test="visit != null and visit.visitId != 0" >
+        visitId = #{visit.visitId,jdbcType=INTEGER},
+      </if>
+      <if test="specVisitTime != null" >
+        specVisitTime = #{specVisitTime,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null" >
+        content = #{content,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.VisitRecord" >
+    update ss_visitrecord
+    set creator = #{creator.userId,jdbcType=INTEGER},
+      customerId = #{customer.id,jdbcType=INTEGER},
+      visitId = #{visit.visitId,jdbcType=INTEGER},
+      createdate = #{createdate,jdbcType=VARCHAR},
+      specVisitTime = #{specVisitTime,jdbcType=VARCHAR},
+      content = #{content,jdbcType=LONGVARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by vr.createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by vr.createdate desc
+  </select>
+</mapper>

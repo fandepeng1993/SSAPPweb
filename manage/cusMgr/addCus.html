@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>添加客户</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script src="../../js/json/LAreaData2.js" type="text/javascript"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.autocomplete.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+	
+		function initCalendar() {
+			laydate({
+			    elem: '#birthday', //目标元素。由于laydate.js封装了一个轻量级的选择器引擎，因此elem还允许你传入class、tag但必须按照这种方式 '#id .class'
+			    event: 'focus' //响应事件。如果没有传入event，则按照默认的click
+			});
+		}
+		var aH3;
+		var aDiv;
+		function initTab() {
+			aH3=$("#cen_right_top").children("h3");
+			aDiv=$("#cen_right_top").children("div");
+			for(var i=0;i<aH3.length;i++)
+			{
+				aH3[i].index=i;
+				aH3[i].onclick=function() {
+					for(var i=0;i<aH3.length;i++) {
+						aH3[i].className="";
+						aDiv[i].style.display="none";
+					}
+					this.className="white";
+					aDiv[this.index].style.display="block";
+				}
+			}
+		}
+	
+		//var currentUserId = Request["userId"];
+		//用于展现表单的menuCode
+		var menuCode;
+		var selPri;
+		$(document).ready(function(){
+			/* $.ajax({
+		        url: 'https://crm.xiaoshouyi.com/json/crm_account/customer-info-detail.action?enterpriseName=松阳上上德盛不锈钢有限公司',
+		        type: "GET",
+		        dataType: "jsonp",
+		        callback: "callback",
+		        success: function (data) {
+		        	//alert("请求成功！");
+		        	
+		        },
+		        error: function(data){
+	            	alert("请求出错！");
+	            	alert(JSON.stringify(data));
+	          	},
+	          	complete: function(data){
+	          		alert("请求出错1！");
+	          		alert(JSON.stringify(data));
+	          	}
+		    }); */
+			
+			menuCode = Request["menuCode"];
+		    selPri = Request["selPri"];
+			initForm();
+			initTab();
+		});
+		
+		//根据ss_form表取出数据构建form表单
+		function initForm() {
+			$.ajax({
+				url: "../../formAdmin/formsByMenuCode/" + menuCode,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					element = eval("(" + data + ")");
+					new UserCommon().createForm("addCusForm", element, 2);
+					
+					initAreaAndType();
+					//为radio添加监听事件
+					new UserCommon().radioListener();
+					
+					$("#createdate").parent().parent().hide();
+					$("#userName").parent().append("<a name=\"selLeader\" id=\"selLeader\" class=\"btn btn-xs\" style=\"margin-left:5px;width:30px;height:20px;border:1px solid #999;font-weight:bold;\"" + 
+									"onClick=\"selectUser()\">...</a>");
+					$("#userId").val(currentUserId);
+					$("#userName").val(currentUserName);
+					
+					//初始化层的大小
+					initLayerSize();
+				} 
+			});
+			//初始化联系人表单
+			$.ajax({
+				url: "../../formAdmin/formsByMenuCode/E00_02",
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					element = eval("(" + data + ")");
+					new UserCommon().createForm("addContactForm", element, 4);
+					$("#conCusName").attr("isempty", true);
+					$("#conCusName").parent().parent().hide();
+					//为radio添加监听事件
+					new UserCommon().radioListener();
+					$("#conCreatedate").parent().parent().hide();
+					initCalendar();
+					getCompany();
+				} 
+			});
+		}
+		
+		function selectUser() {
+			window.parent.admin_role_add('<strong>选择用户</strong>',"../userMgr/select_user.html?userId=" + currentUserId + "&selPri=" + selPri, '800');
+		}
+		
+		/**
+		 *	添加弹出框填写完成之后保存调用的函数
+		 */
+		function save() {
+			fillAreaInput();
+			fillTypeInput();
+			$("#creatorId").val(currentUserId);
+			//看业务员是否为"",若是,则将#userId改为""
+			if($("#userName").val() == "") {
+				$("#userId").val("");
+			}
+			//看业务员被赋值没有，若有则赋值分配人为currentUserId
+			if($("#userId").val() != "") {
+				$("#assignPeopleId").val(currentUserId);
+			}
+			//alert(UE.getEditor('editor').getContent());
+			var formObj = $("#addCusForm");
+			//var obj = $("#hello");
+			var msg = "不能为空！";
+			if(new UserCommon().show("edit-promit", formObj, msg)) {
+				var conFormObj = $("#addContactForm");
+				if(new UserCommon().show("edit-promit", conFormObj, msg)) {
+					var formObjJson = $("#addCusForm").serializeNestedObject();
+				 	$.ajax({
+						url: "../../cusAdmin/customer",
+						datatype: "text",
+						type: "post",
+						data: JSON.stringify(formObjJson),
+						success: function (data) {
+							var json = eval("(" + data + ")");
+							if(json.status == 1) {
+								saveContact(eval("(" + json.msg + ")").id);
+							} else {
+								new UserCommon().check("success",json.msg,null,"fail");
+							}
+						}
+					});
+				} else {
+					for(var i=0;i<aH3.length;i++) {
+						aH3[i].className="";
+						aDiv[i].style.display="none";
+					}
+					aH3[1].className="white";
+					aDiv[1].style.display="block";
+					new UserCommon().show("edit-promit", conFormObj, "不！");
+				}
+			} else {
+				for(var i=0;i<aH3.length;i++) {
+					aH3[i].className="";
+					aDiv[i].style.display="none";
+				}
+				aH3[0].className="white";
+				aDiv[0].style.display="block";
+				new UserCommon().show("edit-promit", formObj, msg);
+			}
+		}
+		
+		function initAreaAndType() {
+			//初始化省市区选择
+			$("#areaDTO").parent().html("<select id=\"selProvince\" >" + 
+						"<option value=\"0\">--请选择省份--</option>" + 
+						"</select>" + 
+						"<select id=\"selCity\" >" + 
+							"<option value=\"0\">--请选择城市--</option>" + 
+						"</select>" + 
+						"<select id=\"selDistrict\" >" + 
+							"<option value=\"0\">--请选择区/县--</option>" + 
+						"</select>");
+			
+			$.each(provs_data, function (k, p) { 
+				var option = "<option value='" + p.value + "'  text='" + p.text + "'>" + p.text + "</option>";
+				$("#selProvince").append(option);
+			});
+			 
+			$("#selProvince").change(function () {
+				var selValue = $(this).val(); 
+				$("#selCity option:gt(0)").remove();
+				$("#selDistrict option:gt(0)").remove(); 
+				
+				var cityArr = citys_data[selValue];
+				$.each(cityArr, function (k, p) {
+					var option = "<option value='" + p.value + "'  text='" + p.text + "'>" + p.text + "</option>";
+					$("#selCity").append(option);
+				});
+			});
+			 
+			$("#selCity").change(function () {
+				var selValue = $(this).val();
+				$("#selDistrict option:gt(0)").remove(); 
+				
+				var districtArr = dists_data[selValue];
+				$.each(districtArr, function (k, p) {
+					var option = "<option value='" + p.value + "'  text='" + p.text + "'>" + p.text + "</option>";
+					$("#selDistrict").append(option);
+				}); 
+			}); 
+			
+			//初始化客户类型选择
+			$("#typeDTO").parent().html("<select id=\"typeSel\" >" + 
+						"<option value=\"交易类型\">交易类型</option>" + 
+						"<option value=\"顾问类型\">顾问类型</option>" + 
+						"</select>" +
+						"<label><input type=\"radio\" checked=\"checked\" class=\"radius-left\" name=\"typeRadio\" value=\"新客户\">新客户</label>" +
+						"<label><input type=\"radio\" class=\"radius-left\" name=\"typeRadio\" value=\"意向客户\">意向客户</label>" +
+						"<label><input type=\"radio\" class=\"radius-left\" name=\"typeRadio\" value=\"潜在客户\">潜在客户</label>" +
+						"<label><input type=\"radio\" class=\"radius-left\" name=\"typeRadio\" value=\"正式客户\">正式客户</label>" +
+						"<label><input type=\"radio\" class=\"radius-left\" name=\"typeRadio\" value=\"VIP客户\">VIP客户</label>");
+		}
+
+		function fillAreaInput() {
+			var selProvince = $("#selProvince").find("option:selected").text();
+			var selCity = $("#selCity").find("option:selected").text();
+			var selDistrict = $("#selDistrict").find("option:selected").text();
+			var areaStr = "";
+			if(selProvince != "--请选择省份--") {
+				areaStr = areaStr + selProvince + ",";
+			}
+			if(selCity != "--请选择城市--") {
+				areaStr = areaStr + selCity + ",";
+			}
+			if(selDistrict != "--请选择区/县--") {
+				areaStr = areaStr + selDistrict + ",";
+			}
+			$("#area").val(areaStr.substring(0, areaStr.length - 1));
+		}
+		
+		function fillTypeInput() {
+			var typeSel = $("#typeSel").val();
+			var typeRadio = $('input[name="typeRadio"]:checked').val();
+			$("#type").val(typeSel + "|" + typeRadio);
+		}
+		
+		function getCompany() {
+			var keyWords = $("#customerName").val();
+			//根据关键字查询相关企业名称
+			$("#customerName").autocomplete({
+				source:function(query,process){
+		            var matchCount = this.options.items;//返回结果集最大数量
+		            $.get("../../cusAdmin/customers",{"iccid":query,"matchCount":matchCount},function(respData){
+		            	respData = $.parseJSON(respData);//解析返回的数据
+	            		return process(respData);
+	            	});
+		        },
+		        formatItem:function(item){
+		            return item["customerName"];
+		        },
+		        setValue:function(item){
+		            return {'data-value':item["customerName"], 'real-value':item["customerName"]};
+		        }
+			});
+		}
+		
+		/**
+		 *	添加弹出框填写完成之后保存调用的函数
+		 */
+		function saveContact(cusId) {
+			$("#customerId").val(cusId);
+			$("#conCreatorId").val(currentUserId);
+			
+		 	var formObjJson = $("#addContactForm").serializeNestedObject();
+		 	$.ajax({
+				url: "../../contactAdmin/contact",
+				datatype: "text",
+				type: "post",
+				data: JSON.stringify(formObjJson),
+				success: function (data) {
+					var json = eval("(" + data + ")");
+					if(json.status == 1) {
+						new UserCommon().check("success","添加成功！",null,"success");
+						setTimeout(function (){
+							window.parent.initTable(window.parent.ajaxUrl);
+							new UserCommon().layer_close();
+							//window.parent.location.href = "cusMgr.html?menuCode=" + menuCode;
+						}, 1000);
+					} else {
+						new UserCommon().check("success",json.msg,null,"fail");
+					}
+				}
+			});
+		}
+		
+	</script>
+</head>
+<body>
+	<div class="edit">
+		<div class="edit-content">
+			<div class="edit-in">
+				<div id="cen_right_top">
+					<h3 class="white">客户基本信息</h3>
+					<h3>联系人</h3>
+					<div class="div" style="display:block">
+						<form id="addCusForm">
+						</form>
+					</div>
+					<div class="div">
+						<form id="addContactForm">
+						</form>
+					</div>
+				</div>
+			</div>
+			<div class="edit-bottom">
+				<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();"><i class="glyphicon glyphicon-remove"></i>&nbsp;关闭</button>
+				<button type="button" class="btn btn-xs edit-save btn-primary" onclick="save()"><i class="glyphicon glyphicon-ok"></i>&nbsp;保存</button>
+			</div>
+		</div>	
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span>
+			<span></span>
+			<div><img src="../../images/sanjiao.png" width="10"></div>
+		</div>
+	</div>
+</body>
+</html>

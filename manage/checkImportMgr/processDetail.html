@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>流程明细查看</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript">
+		//var currentUserId = Request["userId"];
+		//用于展现表单的menuCode
+		var ids;
+		$(document).ready(function(){
+			ids = Request["ids"];
+			viewAll();
+		});
+		
+		function viewAll(){
+			$.ajax({
+				url: "../../processAdmin/processs/" + ids,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					$("#processTable").empty();
+					allData = data;
+					totalRecords = allData.length;
+					//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+					if(totalRecords % pageSize != 0) {
+						totalPages = Math.floor(totalRecords / pageSize) + 1;
+					} else {
+						totalPages = totalRecords / pageSize;
+					}
+					//根据totalPages初始化页码插件
+					$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+					$("#Pagination").pagination(totalPages);
+					//初始化层的大小
+					initLayerSize();
+				} 
+			});
+		}
+		
+		var pageSize = 10;
+		var pageNo = 1;//当前的页码
+		var totalRecords = 0;
+		var totalPages = 0;
+		
+		function circleInfos() {
+			 $("#processTable").empty();
+			 $.each(allData, function(index, item) {
+				 if(index >= ((pageNo-1)*pageSize) && index < (pageNo*pageSize)) {
+					 new UserCommon().fillTable("processTable",item,index);
+				 } else if (index > (pageNo*pageSize)) {
+					 return;
+				 }
+		      });
+		}
+	</script>
+</head>
+<body>
+<div class="table-responsive" style="height:450px;">
+			<table class="table table-data-bottom">
+				<thead>
+					<tr class="table-first-tr" fieldName="id">
+						<th fieldType="num" fieldName="">序号</th>
+						<th fieldType="text" fieldName="user.userName">审核人</th>
+						<th fieldType="text" fieldName="user.position.positionName">职位</th>
+						<th fieldType="datetime" fieldName="createdate">操作时间</th>
+						<th fieldType="text" fieldName="details">操作内容</th>
+						<th fieldType="text" fieldName="currentstate">操作状态</th>
+						<!-- <th fieldType="detailInfo" fieldName="id">退回原因</th> -->
+					</tr>
+				</thead>
+				<tbody id="processTable">
+				</tbody>
+			</table> 
+		</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<div class="pages">
+		<div id="Pagination"></div>
+		<div class="searchPage">
+			<span class="page-sum" id="sumPage"></span> <span class="page-go">跳转<input
+				type="text">页
+			</span> <a href="javascript:;" class="page-btn">GO</a>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span>
+			<span></span>
+			<div><img src="../../images/sanjiao.png" width="10"></div>
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.mes.dao.ILSenderBillLogDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.mes.pojo.LSenderBillLog" >
+    <id column="L_ID" property="lId" jdbcType="INTEGER" />
+    <result column="L_ParentNo" property="lParentNo" jdbcType="VARCHAR" />
+    <result column="L_ParentID" property="lParentId" jdbcType="VARCHAR" />
+    <result column="L_Name" property="lName" jdbcType="VARCHAR" />
+    <result column="L_Type" property="lType" jdbcType="VARCHAR" />
+    <result column="L_Steel" property="lSteel" jdbcType="VARCHAR" />
+    <result column="L_Spec" property="lSpec" jdbcType="VARCHAR" />
+    <result column="ContractNo" property="contractno" jdbcType="VARCHAR" />
+    <result column="L_Quantity" property="lQuantity" jdbcType="INTEGER" />
+    <result column="L_Unit" property="lUnit" jdbcType="VARCHAR" />
+    <result column="L_Weight" property="lWeight" jdbcType="DECIMAL" />
+    <result column="L_Numbers" property="lNumbers" jdbcType="DECIMAL" />
+    <result column="L_weighedWeight" property="lWeighedWeight" jdbcType="DECIMAL" />
+    <result column="L_State" property="lState" jdbcType="INTEGER" />
+    <result column="BarCode" property="barcode" jdbcType="VARCHAR" />
+    <result column="Pro_No" property="proNo" jdbcType="VARCHAR" />
+    <result column="D_FurnaceNo" property="dFurnaceno" jdbcType="VARCHAR" />
+    <result column="D_RFID" property="dRfid" jdbcType="VARCHAR" />
+    <result column="D_Create" property="dCreate" jdbcType="VARCHAR" />
+    <result column="D_CreateDate" property="dCreatedate" jdbcType="VARCHAR" />
+    <result column="L_Number" property="lNumber" jdbcType="DECIMAL" />
+    <result column="L_Weights" property="lWeights" jdbcType="DECIMAL" />
+    <result column="D_Standards" property="dStandards" jdbcType="VARCHAR" />
+  </resultMap>
+  <cache 
+  	eviction="FIFO" 
+  	flushInterval="900000" 
+	size="512" 
+	readOnly="true"/> 
+  <select id="getViewEntitys" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select ContractNo,L_Name,D_FurnaceNo,L_Steel,L_Spec,D_Standards,L_Quantity,L_Numbers,L_Weight,L_weighedWeight,D_CreateDate,D_Create from l_sender_bill_log 
+    where D_CreateDate>=#{startTime,jdbcType=VARCHAR} order by D_CreateDate desc
+  </select>
+  <select id="getEntitysByPojo"  resultMap="BaseResultMap" >
+	select ContractNo,L_Name,D_FurnaceNo,L_Steel,L_Spec,D_Standards,L_Quantity,L_Numbers,L_Weight,L_weighedWeight,D_CreateDate,D_Create from l_sender_bill_log 
+	where 
+	  <if test="lsbl.contractno != null and lsbl.contractno != ''" >
+	      ContractNo like "%"#{lsbl.contractno,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="lsbl.contractno == null or lsbl.contractno == ''" >
+	      ContractNo like "%%" 
+	  </if>
+	  <if test="lsbl.lName != null and lsbl.lName != ''" >
+	      AND L_Name like "%"#{lsbl.lName,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="lsbl.lSteel != null and lsbl.lSteel != ''" >
+	      AND L_Steel like "%"#{lsbl.lSteel,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="lsbl.dFurnaceno != null and lsbl.dFurnaceno != ''" >
+	      AND D_FurnaceNo like "%"#{lsbl.dFurnaceno,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="lsbl.dStandards != null and lsbl.dStandards != ''" >
+	      AND D_Standards like "%"#{lsbl.dStandards,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="lsbl.dCreatedate != null and lsbl.dCreatedate != ''" >
+	      AND D_CreateDate &gt;= #{lsbl.dCreatedate,jdbcType=VARCHAR}
+	  </if>
+	order by D_CreateDate desc
+	limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="getLSBLsByPageNoAndSize" resultMap="BaseResultMap" >
+    select ContractNo,L_Name,D_FurnaceNo,L_Steel,L_Spec,D_Standards,L_Quantity,L_Numbers,L_Weight,L_weighedWeight,D_CreateDate,D_Create from l_sender_bill_log 
+    where D_CreateDate>=#{startTime,jdbcType=VARCHAR}  order by D_CreateDate desc limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="getEntitysCount" resultType="java.lang.Integer" parameterType="java.lang.String" >
+    select count(*) from l_sender_bill_log
+    where D_CreateDate>=#{startTime,jdbcType=VARCHAR} order by D_CreateDate desc
+  </select>
+  <select id="getTotalWeight" resultType="java.math.BigDecimal" parameterType="java.lang.String" >
+    select sum(L_Weight) from l_sender_bill_log
+    where D_CreateDate>=#{startTime,jdbcType=VARCHAR} order by D_CreateDate desc
+  </select>
+  <select id="getTotalWeighedWeight" resultType="java.math.BigDecimal" parameterType="java.lang.String" >
+    select sum(L_weighedWeight) from l_sender_bill_log
+    where D_CreateDate>=#{startTime,jdbcType=VARCHAR} order by D_CreateDate desc
+  </select>
+  <select id="getSumWeightByContractno" resultType="java.math.BigDecimal" parameterType="java.lang.String" >
+    select sum(L_weighedWeight) from l_sender_bill_log
+    where ContractNo like "%"#{contractno,jdbcType=VARCHAR}"%"
+  </select>
+  <select id="getTotalQuantity" resultType="java.math.BigDecimal" parameterType="java.lang.String" >
+    select sum(L_Quantity) from l_sender_bill_log
+    where D_CreateDate>=#{startTime,jdbcType=VARCHAR} order by D_CreateDate desc
+  </select>
+  <select id="getTotalWeightByPojo"  resultType="java.math.BigDecimal" parameterType="com.sss.mes.pojo.LSenderBillLog" >
+	select sum(L_Weight) from l_sender_bill_log 
+	where 
+	  <if test="contractno != null and contractno != ''" >
+	      ContractNo like "%"#{contractno,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="contractno == null or contractno == ''" >
+	      ContractNo like "%%" 
+	  </if>
+	  <if test="lName != null and lName != ''" >
+	      AND L_Name like "%"#{lName,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="lSteel != null and lSteel != ''" >
+	      AND L_Steel like "%"#{lSteel,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="dFurnaceno != null and dFurnaceno != ''" >
+	      AND D_FurnaceNo like "%"#{dFurnaceno,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="dStandards != null and dStandards != ''" >
+	      AND D_Standards like "%"#{dStandards,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="dCreatedate != null and dCreatedate != ''" >
+	      AND D_CreateDate &gt;= #{dCreatedate,jdbcType=VARCHAR}
+	  </if>
+  </select>
+  <select id="getTotalWeighedWeightByPojo"  resultType="java.math.BigDecimal" parameterType="com.sss.mes.pojo.LSenderBillLog" >
+	select sum(L_weighedWeight) from l_sender_bill_log 
+	where 
+	  <if test="contractno != null and contractno != ''" >
+	      ContractNo like "%"#{contractno,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="contractno == null or contractno == ''" >
+	      ContractNo like "%%" 
+	  </if>
+	  <if test="lName != null and lName != ''" >
+	      AND L_Name like "%"#{lName,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="lSteel != null and lSteel != ''" >
+	      AND L_Steel like "%"#{lSteel,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="dFurnaceno != null and dFurnaceno != ''" >
+	      AND D_FurnaceNo like "%"#{dFurnaceno,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="dStandards != null and dStandards != ''" >
+	      AND D_Standards like "%"#{dStandards,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="dCreatedate != null and dCreatedate != ''" >
+	      AND D_CreateDate &gt;= #{dCreatedate,jdbcType=VARCHAR}
+	  </if>
+  </select>
+  <select id="getTotalQuantityByPojo"  resultType="java.math.BigDecimal" parameterType="com.sss.mes.pojo.LSenderBillLog" >
+	select sum(L_Quantity) from l_sender_bill_log 
+	where 
+	  <if test="contractno != null and contractno != ''" >
+	      ContractNo like "%"#{contractno,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="contractno == null or contractno == ''" >
+	      ContractNo like "%%" 
+	  </if>
+	  <if test="lName != null and lName != ''" >
+	      AND L_Name like "%"#{lName,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="lSteel != null and lSteel != ''" >
+	      AND L_Steel like "%"#{lSteel,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="dFurnaceno != null and dFurnaceno != ''" >
+	      AND D_FurnaceNo like "%"#{dFurnaceno,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="dStandards != null and dStandards != ''" >
+	      AND D_Standards like "%"#{dStandards,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="dCreatedate != null and dCreatedate != ''" >
+	      AND D_CreateDate &gt;= #{dCreatedate,jdbcType=VARCHAR}
+	  </if>
+  </select>
+</mapper>

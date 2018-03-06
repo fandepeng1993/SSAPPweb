@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>查看员工积分</title>
+	
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.cookie.js"></script>
+	<!-- angularjs自动化表单部分 -->
+	<script type="text/javascript" src="../../js/loadAngularResource.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		//var currentUserId = Request["userId"];
+		//用于展现表单的menuCode
+		var menuCode;
+		var userScore;
+		var element;
+		$(document).ready(function(){
+			menuCode = Request["menuCode"];
+			var userScoreId = Request["userScoreId"];
+			getUScore(userScoreId);
+		});
+		
+		//根据ss_form表取出数据构建form表单
+		function initForm() {
+			$.ajax({
+				url: "../../formAdmin/formsByMenuCode/" + menuCode,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					element = eval("(" + data + ")");
+					
+					if(!useAngularForm) {
+						$("#createSubmitForm").remove();
+						
+						new UserCommon().createForm("updateUScoreForm", element, 4);
+						new UserCommon().fillForm("updateUScoreForm", userScore);
+						$("#userName").val(userScore.employee.userName);
+						$("#score").parent().append("<span style=\"font-family:微软雅黑\" id=\"fullScoreSpan\"></span>");
+						
+						initInstSelect(userScore.employee.position.positionId);
+						//初始化层的大小
+						initLayerSize();
+					}
+				} 
+			});
+		}
+		
+		//自动化创建表单之后需要调用的函数
+		function afterCreateCustomForm() {
+			new UserCommon().fillForm("updateUScoreForm", userScore);
+			$("#userName").val(userScore.employee.userName);
+			$("#score").parent().append("<span style=\"font-family:微软雅黑\" id=\"fullScoreSpan\"></span>");
+			initInstSelect(userScore.employee.position.positionId);
+		}
+		
+		function getUScore(userScoreId) {
+			$.ajax({
+				url: "../../uScoreAdmin/userScore/" + userScoreId,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					userScore = eval("(" + data + ")");
+					initForm();
+				} 
+			});
+		}
+		
+		function initInstSelect(posId) {
+			$.ajax({
+				url: "../../instAdmin/getInstsByPosId/" + posId,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					$("#institution").empty();
+					str = "<option value=\"-1\">请选择</option>";
+					$.each(eval("(" + data + ")"), function(index, item) {
+						str = str + "<option value=\"" + item.id + "\">" + item.name + "</option>";
+					});
+					$("#institution").append(str);
+					
+					$("#institution").val(userScore.institution.id);
+					$("#institution").attr("readOnly", "readOnly");
+					changeFullScore();
+				} 
+			});
+		}
+		
+		function changeFullScore() {
+			$("#fullScoreSpan").prop("innerHTML", "");
+			$.ajax({
+				url: "../../instAdmin/institution/" + $("#institution").val(),
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					if(trim(data) != "null") {
+						$("#fullScoreSpan").prop("innerHTML", "满分:" + eval("(" + data + ")").score + "分");
+					}
+				} 
+			});
+		}
+	</script>
+</head>
+<body>
+	<div class="edit">
+		<div class="edit-content">
+			<div class="edit-in">
+				<form id="updateUScoreForm">
+					<div id="createSubmitForm" ng-app="app" ng-controller="creatSubmitFormCtrl" class="previewText">
+						<div style="border:1px solid #d9d9d9;max-height: 500px;">
+							<div gridster='gridsterOpts' ng-style="{width:((gridsterOpts.columns)*200)+1+'px'}">
+								<ul>
+									<li gridster-item="item" ng-repeat="item in sercoundItems" ng-style="{zIndex:100-item.row}">
+										<my-directivelist>
+										</my-directivelist>
+									</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+			<div class="edit-bottom">
+				<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();">
+				<i class="glyphicon glyphicon-remove"></i>&nbsp;关闭
+				</button>
+			</div>
+		</div>	
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span>
+			<span></span>
+			<div><img src="../../images/sanjiao.png" width="10"></div>
+		</div>
+	</div>
+</body>
+</html>

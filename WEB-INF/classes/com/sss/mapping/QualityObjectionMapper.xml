@@ -1,0 +1,446 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IQualityObjectionDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.QualityObjection" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="contractno" property="contractno" jdbcType="VARCHAR" />
+    <result column="proName" property="proName" jdbcType="VARCHAR" />
+    <result column="spec" property="spec" jdbcType="VARCHAR" />
+    <result column="steel" property="steel" jdbcType="VARCHAR" />
+    <result column="standards" property="standards" jdbcType="VARCHAR" />
+    <result column="quantity" property="quantity" jdbcType="VARCHAR" />
+    <result column="deliveryTime" property="deliveryTime" jdbcType="VARCHAR" />
+    <result column="appendix" property="appendix" jdbcType="VARCHAR" />
+    <result column="defectDesc" property="defectDesc" jdbcType="VARCHAR" />
+    <result column="defectReason" property="defectReason" jdbcType="VARCHAR" />
+    <result column="correctAction" property="correctAction" jdbcType="VARCHAR" />
+    <result column="qualityDeptView" property="qualityDeptView" jdbcType="VARCHAR" />
+    <result column="proMgrView" property="proMgrView" jdbcType="VARCHAR" />
+    <result column="saleMgrView" property="saleMgrView" jdbcType="VARCHAR" />
+    <result column="status" property="status" jdbcType="INTEGER" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    
+    <association property="creator" javaType="com.sss.pojo.User">
+		<id column="qu_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="qu_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="qu_user_name" property="userName" jdbcType="VARCHAR" />
+	</association>
+	<association property="qualityMgr" javaType="com.sss.pojo.User">
+		<id column="qq_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="qq_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="qq_user_name" property="userName" jdbcType="VARCHAR" />
+	</association>
+	<association property="proMgr" javaType="com.sss.pojo.User">
+		<id column="qp_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="qp_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="qp_user_name" property="userName" jdbcType="VARCHAR" />
+	</association>
+	<association property="saleMgr" javaType="com.sss.pojo.User">
+		<id column="qs_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="qs_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="qs_user_name" property="userName" jdbcType="VARCHAR" />
+	</association>
+    <association property="customer" javaType="com.sss.pojo.Customer">
+		<id column="qc_customer_id" property="id" jdbcType="INTEGER" />
+		<result column="qc_salesman_userId" property="salesman.userId" jdbcType="INTEGER" />
+	    <result column="qc_customer_name" property="customerName" jdbcType="VARCHAR" />
+	    <!-- <result column="qc_customer_area" property="area" jdbcType="VARCHAR" />
+	    <result column="qc_customer_industry" property="industry" jdbcType="VARCHAR" />
+	    <result column="qc_customer_website" property="website" jdbcType="VARCHAR" />
+	    <result column="qc_customer_source" property="source" jdbcType="VARCHAR" />
+	    <result column="qc_customer_type" property="type" jdbcType="VARCHAR" />
+	    <result column="qc_customer_note" property="note" jdbcType="VARCHAR" />
+	    <result column="qc_customer_createdate" property="createdate" jdbcType="VARCHAR" /> -->
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		q.*,
+  		cus.id as qc_customer_id,
+  		cus.salesman as qc_salesman_userId,
+  		cus.customer_name as qc_customer_name,
+  		<!-- cus.area as qc_customer_area,
+  		cus.industry as qc_customer_industry,
+  		cus.website as qc_customer_website,
+  		cus.source as qc_customer_source,
+  		cus.type as qc_customer_type,
+  		cus.note as qc_customer_note,
+  		cus.createdate as qc_customer_createdate, -->
+  		u.user_id as qu_user_id,
+  		u.user_no as qu_user_no,
+  		u.user_name as qu_user_name,
+  		u1.user_id as qq_user_id,
+  		u1.user_no as qq_user_no,
+  		u1.user_name as qq_user_name,
+  		u2.user_id as qp_user_id,
+  		u2.user_no as qp_user_no,
+  		u2.user_name as qp_user_name,
+  		u3.user_id as qs_user_id,
+  		u3.user_no as qs_user_no,
+  		u3.user_name as qs_user_name
+    from 
+    	ss_qualityobjection q
+   	left join 
+   		ss_user u
+   	on 
+   		q.creator = u.user_id
+ 	left join 
+   		ss_user u1
+   	on 
+   		q.qualityMgr = u1.user_id
+   	left join 
+   		ss_user u2
+   	on 
+   		q.proMgr = u2.user_id
+   	left join 
+   		ss_user u3
+   	on 
+   		q.saleMgr = u3.user_id
+   	left join
+   		ss_customer cus
+   	on
+   		q.cusId = cus.id
+  </sql>
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by q.createdate desc
+  </select>
+  <select id="selectListByUserId"  resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" /> 
+    where q.creator = #{userId,jdbcType=INTEGER}
+    order by q.createdate desc
+  </select>
+  <select id="selectByUIdAndStatus"  resultMap="BaseResultMap">
+    <include refid="associateQuery" /> 
+    where q.creator in 
+    <foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>  
+    and q.status &gt;= #{status,jdbcType=INTEGER}
+    order by q.createdate desc
+  </select>
+  <select id="selectEqualStatus"  resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" /> 
+    where q.status = #{status,jdbcType=INTEGER}
+    order by q.createdate desc
+  </select>
+  <select id="selectOverStatus"  resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" /> 
+    where q.status &gt;= #{status,jdbcType=INTEGER}
+    order by q.createdate desc
+  </select>
+  <select id="selectListByUserIdLazy" resultMap="BaseResultMap" >
+    <include refid="associateQuery" /> 
+    where q.creator = #{userId,jdbcType=INTEGER}
+    order by q.createdate desc
+    limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="selectByUIdAndStatusLazy"  resultMap="BaseResultMap">
+    <include refid="associateQuery" /> 
+    where q.creator in 
+    <foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>  
+    and q.status &gt;= #{status,jdbcType=INTEGER}
+    order by q.createdate desc
+    limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="selectEqualStatusLazy"  resultMap="BaseResultMap" >
+    <include refid="associateQuery" /> 
+    where q.status = #{status,jdbcType=INTEGER}
+    order by q.createdate desc
+    limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="selectOverStatusLazy"  resultMap="BaseResultMap" >
+    <include refid="associateQuery" /> 
+    where q.status &gt;= #{status,jdbcType=INTEGER}
+    order by q.createdate desc
+    limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where q.id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_qualityobjection
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.QualityObjection" >
+    insert into ss_qualityobjection (id, creator, qualityMgr, proMgr, saleMgr, cusId, 
+      contractno, proName, spec, 
+      steel, standards, quantity, 
+      deliveryTime, appendix, defectDesc, 
+      defectReason, correctAction, qualityDeptView, 
+      proMgrView, saleMgrView, status
+      )
+    values (#{id,jdbcType=INTEGER}, #{creator.userId,jdbcType=INTEGER}, #{qualityMgr.userId,jdbcType=INTEGER}, 
+      #{proMgr.userId,jdbcType=INTEGER}, #{saleMgr.userId,jdbcType=INTEGER}, #{customer.id,jdbcType=INTEGER}, 
+      #{contractno,jdbcType=VARCHAR}, #{proName,jdbcType=VARCHAR}, #{spec,jdbcType=VARCHAR}, 
+      #{steel,jdbcType=VARCHAR}, #{standards,jdbcType=VARCHAR}, #{quantity,jdbcType=VARCHAR}, 
+      #{deliveryTime,jdbcType=VARCHAR}, #{appendix,jdbcType=VARCHAR}, #{defectDesc,jdbcType=VARCHAR}, 
+      #{defectReason,jdbcType=VARCHAR}, #{correctAction,jdbcType=VARCHAR}, #{qualityDeptView,jdbcType=VARCHAR}, 
+      #{proMgrView,jdbcType=VARCHAR}, #{saleMgrView,jdbcType=VARCHAR}, #{status,jdbcType=INTEGER}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.QualityObjection" >
+    insert into ss_qualityobjection
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="creator != null and creator.userId != 0" >
+        creator,
+      </if>
+      <if test="qualityMgr != null and qualityMgr.userId != 0" >
+        qualityMgr,
+      </if>
+      <if test="proMgr != null and proMgr.userId != 0" >
+        proMgr,
+      </if>
+      <if test="saleMgr != null and saleMgr.userId != 0" >
+        saleMgr,
+      </if>
+      <if test="customer != null and customer.id != 0" >
+        cusId,
+      </if>
+      <if test="contractno != null" >
+        contractno,
+      </if>
+      <if test="proName != null" >
+        proName,
+      </if>
+      <if test="spec != null" >
+        spec,
+      </if>
+      <if test="steel != null" >
+        steel,
+      </if>
+      <if test="standards != null" >
+        standards,
+      </if>
+      <if test="quantity != null" >
+        quantity,
+      </if>
+      <if test="deliveryTime != null and deliveryTime != ''" >
+        deliveryTime,
+      </if>
+      <if test="appendix != null" >
+        appendix,
+      </if>
+      <if test="defectDesc != null" >
+        defectDesc,
+      </if>
+      <if test="defectReason != null" >
+        defectReason,
+      </if>
+      <if test="correctAction != null" >
+        correctAction,
+      </if>
+      <if test="qualityDeptView != null" >
+        qualityDeptView,
+      </if>
+      <if test="proMgrView != null" >
+        proMgrView,
+      </if>
+      <if test="saleMgrView != null" >
+        saleMgrView,
+      </if>
+      <if test="status != null" >
+        status,
+      </if>
+      	createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="creator != null and creator.userId != 0" >
+        #{creator.userId,jdbcType=INTEGER},
+      </if>
+      <if test="qualityMgr != null and qualityMgr.userId != 0" >
+        #{qualityMgr.userId,jdbcType=INTEGER},
+      </if>
+      <if test="proMgr != null and proMgr.userId != 0" >
+        #{proMgr.userId,jdbcType=INTEGER},
+      </if>
+      <if test="saleMgr != null and saleMgr.userId != 0" >
+        #{saleMgr.userId,jdbcType=INTEGER},
+      </if>
+      <if test="customer != null and customer.id != 0" >
+        #{customer.id,jdbcType=INTEGER},
+      </if>
+      <if test="contractno != null" >
+        #{contractno,jdbcType=VARCHAR},
+      </if>
+      <if test="proName != null" >
+        #{proName,jdbcType=VARCHAR},
+      </if>
+      <if test="spec != null" >
+        #{spec,jdbcType=VARCHAR},
+      </if>
+      <if test="steel != null" >
+        #{steel,jdbcType=VARCHAR},
+      </if>
+      <if test="standards != null" >
+        #{standards,jdbcType=VARCHAR},
+      </if>
+      <if test="quantity != null" >
+        #{quantity,jdbcType=VARCHAR},
+      </if>
+      <if test="deliveryTime != null and deliveryTime != ''" >
+        #{deliveryTime,jdbcType=VARCHAR},
+      </if>
+      <if test="appendix != null" >
+        #{appendix,jdbcType=VARCHAR},
+      </if>
+      <if test="defectDesc != null" >
+        #{defectDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="defectReason != null" >
+        #{defectReason,jdbcType=VARCHAR},
+      </if>
+      <if test="correctAction != null" >
+        #{correctAction,jdbcType=VARCHAR},
+      </if>
+      <if test="qualityDeptView != null" >
+        #{qualityDeptView,jdbcType=VARCHAR},
+      </if>
+      <if test="proMgrView != null" >
+        #{proMgrView,jdbcType=VARCHAR},
+      </if>
+      <if test="saleMgrView != null" >
+        #{saleMgrView,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null" >
+        #{status,jdbcType=INTEGER},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.QualityObjection" >
+    update ss_qualityobjection
+    <set >
+      <if test="creator != null and creator.userId != 0" >
+        creator = #{creator.userId,jdbcType=INTEGER},
+      </if>
+      <if test="qualityMgr != null and qualityMgr.userId != 0" >
+        qualityMgr = #{qualityMgr.userId,jdbcType=INTEGER},
+      </if>
+      <if test="proMgr != null and proMgr.userId != 0" >
+        proMgr = #{proMgr.userId,jdbcType=INTEGER},
+      </if>
+      <if test="saleMgr != null and saleMgr.userId != 0" >
+        saleMgr = #{saleMgr.userId,jdbcType=INTEGER},
+      </if>
+      <if test="customer != null and customer.id != 0" >
+        cusId = #{customer.id,jdbcType=INTEGER},
+      </if>
+      <if test="contractno != null" >
+        contractno = #{contractno,jdbcType=VARCHAR},
+      </if>
+      <if test="proName != null" >
+        proName = #{proName,jdbcType=VARCHAR},
+      </if>
+      <if test="spec != null" >
+        spec = #{spec,jdbcType=VARCHAR},
+      </if>
+      <if test="steel != null" >
+        steel = #{steel,jdbcType=VARCHAR},
+      </if>
+      <if test="standards != null" >
+        standards = #{standards,jdbcType=VARCHAR},
+      </if>
+      <if test="quantity != null" >
+        quantity = #{quantity,jdbcType=VARCHAR},
+      </if>
+      <if test="deliveryTime != null and deliveryTime != ''" >
+        deliveryTime = #{deliveryTime,jdbcType=VARCHAR},
+      </if>
+      <if test="appendix != null" >
+        appendix = #{appendix,jdbcType=VARCHAR},
+      </if>
+      <if test="defectDesc != null" >
+        defectDesc = #{defectDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="defectReason != null" >
+        defectReason = #{defectReason,jdbcType=VARCHAR},
+      </if>
+      <if test="correctAction != null" >
+        correctAction = #{correctAction,jdbcType=VARCHAR},
+      </if>
+      <if test="qualityDeptView != null" >
+        qualityDeptView = #{qualityDeptView,jdbcType=VARCHAR},
+      </if>
+      <if test="proMgrView != null" >
+        proMgrView = #{proMgrView,jdbcType=VARCHAR},
+      </if>
+      <if test="saleMgrView != null" >
+        saleMgrView = #{saleMgrView,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null" >
+        status = #{status,jdbcType=INTEGER},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.QualityObjection" >
+    update ss_qualityobjection
+    set creator = #{creator.userId,jdbcType=INTEGER},
+      qualityMgr = #{qualityMgr.userId,jdbcType=INTEGER},
+      proMgr = #{proMgr.userId,jdbcType=INTEGER},
+      saleMgr = #{saleMgr.userId,jdbcType=INTEGER},
+      cusId = #{customer.id,jdbcType=INTEGER},
+      contractno = #{contractno,jdbcType=VARCHAR},
+      proName = #{proName,jdbcType=VARCHAR},
+      spec = #{spec,jdbcType=VARCHAR},
+      steel = #{steel,jdbcType=VARCHAR},
+      standards = #{standards,jdbcType=VARCHAR},
+      quantity = #{quantity,jdbcType=VARCHAR},
+      deliveryTime = #{deliveryTime,jdbcType=VARCHAR},
+      appendix = #{appendix,jdbcType=VARCHAR},
+      defectDesc = #{defectDesc,jdbcType=VARCHAR},
+      defectReason = #{defectReason,jdbcType=VARCHAR},
+      correctAction = #{correctAction,jdbcType=VARCHAR},
+      qualityDeptView = #{qualityDeptView,jdbcType=VARCHAR},
+      proMgrView = #{proMgrView,jdbcType=VARCHAR},
+      saleMgrView = #{saleMgrView,jdbcType=VARCHAR},
+      status = #{status,jdbcType=INTEGER},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by q.createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by q.createdate desc
+  </select>
+</mapper>

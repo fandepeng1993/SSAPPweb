@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.mes.dao.IDeliverySchedulesDetailDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.mes.pojo.DeliverySchedulesDetail" >
+    <id column="D_Id" property="dId" jdbcType="INTEGER" />
+    <result column="D_No" property="dNo" jdbcType="VARCHAR" />
+    <result column="D_Order" property="dOrder" jdbcType="INTEGER" />
+    <result column="ContractNo" property="contractno" jdbcType="VARCHAR" />
+   	<result column="D_Name" property="dName" jdbcType="VARCHAR" />
+   	<result column="D_Steel" property="dSteel" jdbcType="VARCHAR" />
+   	<result column="D_Spec" property="dSpec" jdbcType="VARCHAR" />
+    <!-- <result column="D_NPS" property="dNps" jdbcType="VARCHAR" />
+    <result column="D_Quantity" property="dQuantity" jdbcType="INTEGER" />
+    <result column="D_Unit" property="dUnit" jdbcType="VARCHAR" /> -->
+  	<result column="D_Number" property="dNumber" jdbcType="INTEGER" />
+   	<result column="D_Weight" property="dWeight" jdbcType="DECIMAL" />
+   	<result column="D_Numbers" property="dNumbers" jdbcType="DECIMAL" />
+    <!-- <result column="D_Weights" property="dWeights" jdbcType="DECIMAL" />
+    <result column="S_Quantity" property="sQuantity" jdbcType="INTEGER" />
+    <result column="S_Unit" property="sUnit" jdbcType="VARCHAR" />
+    <result column="S_Number" property="sNumber" jdbcType="INTEGER" />
+    <result column="S_Weight" property="sWeight" jdbcType="DECIMAL" />
+    <result column="S_Numbers" property="sNumbers" jdbcType="DECIMAL" />
+    <result column="S_Weights" property="sWeights" jdbcType="DECIMAL" />
+    <result column="M_Quantity" property="mQuantity" jdbcType="INTEGER" />
+    <result column="M_Unit" property="mUnit" jdbcType="VARCHAR" />
+    <result column="M_Number" property="mNumber" jdbcType="INTEGER" />
+    <result column="M_Weight" property="mWeight" jdbcType="DECIMAL" />
+    <result column="M_Numbers" property="mNumbers" jdbcType="DECIMAL" />
+    <result column="M_Weights" property="mWeights" jdbcType="DECIMAL" />
+    <result column="R_Quantity" property="rQuantity" jdbcType="INTEGER" />
+    <result column="R_Unit" property="rUnit" jdbcType="VARCHAR" />
+    <result column="R_Number" property="rNumber" jdbcType="INTEGER" />
+    <result column="R_Weight" property="rWeight" jdbcType="DECIMAL" />
+    <result column="R_Numbers" property="rNumbers" jdbcType="DECIMAL" />
+    <result column="R_Weights" property="rWeights" jdbcType="DECIMAL" />
+    <result column="D_External" property="dExternal" jdbcType="DECIMAL" />
+    <result column="D_External_Start" property="dExternalStart" jdbcType="VARCHAR" />
+    <result column="D_External_End" property="dExternalEnd" jdbcType="VARCHAR" />
+    <result column="D_physicochemical" property="dPhysicochemical" jdbcType="DECIMAL" />
+    <result column="D_physicochemical_Start" property="dPhysicochemicalStart" jdbcType="VARCHAR" />
+    <result column="D_physicochemical_End" property="dPhysicochemicalEnd" jdbcType="VARCHAR" />
+    <result column="D_Check" property="dCheck" jdbcType="DECIMAL" />
+    <result column="D_Check_Start" property="dCheckStart" jdbcType="VARCHAR" />
+    <result column="D_Check_End" property="dCheckEnd" jdbcType="VARCHAR" />
+    <result column="D_lossless" property="dLossless" jdbcType="DECIMAL" />
+    <result column="D_lossless_Start" property="dLosslessStart" jdbcType="VARCHAR" />
+    <result column="D_lossless_End" property="dLosslessEnd" jdbcType="VARCHAR" />
+    <result column="D_packaging" property="dPackaging" jdbcType="DECIMAL" />
+    <result column="D_packaging_Start" property="dPackagingStart" jdbcType="VARCHAR" />
+    <result column="D_packaging_End" property="dPackagingEnd" jdbcType="VARCHAR" />
+    <result column="D_percent" property="dPercent" jdbcType="INTEGER" />
+    <result column="D_verify" property="dVerify" jdbcType="VARCHAR" />
+    <result column="D_Check_type" property="dCheckType" jdbcType="VARCHAR" /> -->
+   	<result column="D_Standards" property="dStandards" jdbcType="VARCHAR" />
+    <!-- <result column="D_Supply" property="dSupply" jdbcType="VARCHAR" />
+    <result column="D_FurnaceNo" property="dFurnaceno" jdbcType="VARCHAR" />
+    <result column="D_HeatNo" property="dHeatno" jdbcType="VARCHAR" />
+    <result column="D_BoxNo" property="dBoxno" jdbcType="VARCHAR" />
+    <result column="D_State" property="dState" jdbcType="INTEGER" />
+    <result column="D_IsSingle" property="dIssingle" jdbcType="INTEGER" />
+    <result column="DeptID" property="deptid" jdbcType="INTEGER" />
+    <result column="IsShow" property="isshow" jdbcType="INTEGER" />
+    <result column="D_Remark" property="dRemark" jdbcType="VARCHAR" /> -->
+    <result column="D_ContractNo" property="dContractNo" jdbcType="VARCHAR" />
+    <result column="D_ClientName" property="dClientName" jdbcType="VARCHAR" />
+    <result column="DeliveryDate" property="deliveryDate" jdbcType="VARCHAR" />
+    <result column="D_State" property="dState" jdbcType="INTEGER" />
+    <result column="UserCode" property="userCode" jdbcType="VARCHAR" />
+    <result column="OrderDate" property="orderDate" jdbcType="VARCHAR" />
+    <result column="D_Source" property="dSource" jdbcType="VARCHAR" />
+  </resultMap>
+  <resultMap id="BaseResultMap1" type="com.sss.pojo.dto.KeyValueDTO" >
+    <result column="keyWords" property="key" jdbcType="VARCHAR" />
+    <result column="value" property="value" jdbcType="DECIMAL" />
+  </resultMap>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select * from delivery_schedules_detail
+    where D_Id = #{dId,jdbcType=INTEGER}
+  </select>
+  <select id="selectByContractNo" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    SELECT
+		ds.D_ContractNo,
+		pc.D_ClientName,
+		ds.DeliveryDate,
+		ds.D_State,
+		ds.UserCode,
+		dsd.ContractNo,
+		dsd.D_Name,
+		dsd.D_Steel,
+		dsd.D_Standards,
+		dsd.D_Spec,
+		dsd.D_Number,
+		dsd.D_Numbers,
+		dsd.D_Weight,
+		ds.D_Source,
+		ds.OrderDate
+	FROM
+		delivery_schedules ds
+	INNER JOIN delivery_schedules_detail dsd
+	ON (
+		ds.D_ContractNo = #{contractNo,jdbcType=VARCHAR}
+		AND ds.D_No = dsd.D_No
+	)
+	LEFT JOIN producem_customer pc
+	ON 
+		D_CustomerNo = pc.D_ClientNo
+	where pc.D_ClientName != '上上德盛备货'
+  </select>
+  <select id="getSumOrderByContractno" resultMap="BaseResultMap1" parameterType="java.lang.String" >
+    SELECT
+		sum(dsd.D_Weight) as value, ds.Settlement as keyWords
+	FROM
+		delivery_schedules ds
+	INNER JOIN delivery_schedules_detail dsd
+	ON (
+		ds.D_ContractNo = #{contractNo,jdbcType=VARCHAR}
+		AND ds.D_No = dsd.D_No
+	)
+	group by ds.Settlement
+  </select>
+  <select id="getSumOrderByDate" resultMap="BaseResultMap1" >
+    SELECT
+		ds.UserCode as keyWords, sum(dsd.D_Weight) as value
+	FROM
+		delivery_schedules ds
+	INNER JOIN delivery_schedules_detail dsd
+	ON (
+		ds.D_No = dsd.D_No
+	)
+	LEFT JOIN producem_customer pc
+	ON 
+		D_CustomerNo = pc.D_ClientNo
+	where ds.OrderDate &gt;= #{fromdate,jdbcType=VARCHAR} and
+		  ds.OrderDate &lt;= #{enddate,jdbcType=VARCHAR} and 
+		  pc.D_ClientName != '上上德盛备货'
+	group by ds.UserCode
+	order by sum(dsd.D_Weight) desc
+  </select>
+</mapper>

@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IOrdersDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.Orders" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="pro_name" property="proName" jdbcType="VARCHAR" />
+    <result column="d_steel" property="dSteel" jdbcType="VARCHAR" />
+    <result column="d_spec" property="dSpec" jdbcType="VARCHAR" />
+    <result column="d_standards" property="dStandards" jdbcType="VARCHAR" />
+    <result column="buy_weight" property="buyWeight" jdbcType="VARCHAR" />
+    <result column="delivery_time" property="deliveryTime" jdbcType="VARCHAR" />
+    <result column="cusName" property="cusName" jdbcType="VARCHAR" />
+    <result column="contact" property="contact" jdbcType="VARCHAR" />
+    <result column="telphone" property="telphone" jdbcType="VARCHAR" />
+    <result column="remark" property="remark" jdbcType="LONGVARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="associateQuery">
+   	select 
+		*
+	from ss_orders o
+  </sql>
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by o.createdate desc
+  </select>
+  <select id="selectListCount" resultType="java.lang.Integer" >
+    select count(*) from ss_orders
+  </select>
+  <select id="selectListLazy"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by o.createdate desc
+    limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" /> 
+    where o.id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selByKeywords" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    <include refid="associateQuery" /> 
+    where o.pro_name like "%"#{keyword,jdbcType=VARCHAR}"%"
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_orders
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.Orders" >
+   	<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+	</selectKey>
+    insert into ss_orders (id, pro_name, 
+      d_steel, d_spec, d_standards, 
+      buy_weight, delivery_time, cusName, 
+      contact,telphone, remark, createdate)
+    values (#{id,jdbcType=INTEGER}, #{proName,jdbcType=VARCHAR}, 
+      #{dSteel,jdbcType=VARCHAR}, #{dSpec,jdbcType=VARCHAR}, #{dStandards,jdbcType=VARCHAR}, 
+      #{buyWeight,jdbcType=VARCHAR}, #{deliveryTime,jdbcType=VARCHAR}, #{cusName,jdbcType=VARCHAR}, 
+      #{contact,jdbcType=VARCHAR},#{telphone,jdbcType=VARCHAR}, #{remark,jdbcType=LONGVARCHAR}, #{createdate,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.Orders" >
+   	<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+	</selectKey>
+    insert into ss_orders
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="proName != null" >
+        pro_name,
+      </if>
+      <if test="dSteel != null" >
+        d_steel,
+      </if>
+      <if test="dSpec != null" >
+        d_spec,
+      </if>
+      <if test="dStandards != null" >
+        d_standards,
+      </if>
+      <if test="buyWeight != null" >
+        buy_weight,
+      </if>
+      <if test="deliveryTime != null and deliveryTime != ''" >
+        delivery_time,
+      </if>
+      <if test="cusName != null" >
+        cusName,
+      </if>
+      <if test="contact != null" >
+        contact,
+      </if>
+      <if test="telphone != null" >
+        telphone,
+      </if>
+      <if test="remark != null" >
+        remark,
+      </if>
+      	createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="proName != null" >
+        #{proName,jdbcType=VARCHAR},
+      </if>
+      <if test="dSteel != null" >
+        #{dSteel,jdbcType=VARCHAR},
+      </if>
+      <if test="dSpec != null" >
+        #{dSpec,jdbcType=VARCHAR},
+      </if>
+      <if test="dStandards != null" >
+        #{dStandards,jdbcType=VARCHAR},
+      </if>
+      <if test="buyWeight != null" >
+        #{buyWeight,jdbcType=VARCHAR},
+      </if>
+      <if test="deliveryTime != null and deliveryTime != ''" >
+        #{deliveryTime,jdbcType=VARCHAR},
+      </if>
+      <if test="cusName != null" >
+        #{cusName,jdbcType=VARCHAR},
+      </if>
+      <if test="contact != null" >
+        #{contact,jdbcType=VARCHAR},
+      </if>
+      <if test="telphone != null" >
+        #{telphone,jdbcType=VARCHAR},
+      </if>
+      <if test="remark != null" >
+        #{remark,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.Orders" >
+    update ss_orders
+    <set >
+      <if test="proName != null" >
+        pro_name = #{proName,jdbcType=VARCHAR},
+      </if>
+      <if test="dSteel != null" >
+        d_steel = #{dSteel,jdbcType=VARCHAR},
+      </if>
+      <if test="dSpec != null" >
+        d_spec = #{dSpec,jdbcType=VARCHAR},
+      </if>
+      <if test="dStandards != null" >
+        d_standards = #{dStandards,jdbcType=VARCHAR},
+      </if>
+      <if test="buyWeight != null" >
+        buy_weight = #{buyWeight,jdbcType=VARCHAR},
+      </if>
+      <if test="deliveryTime != null" >
+        delivery_time = #{deliveryTime,jdbcType=VARCHAR},
+      </if>
+      <if test="cusName != null" >
+        cusName = #{cusName,jdbcType=VARCHAR},
+      </if>
+      <if test="contact != null" >
+        contact = #{contact,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="telphone != null" >
+        telphone = #{telphone,jdbcType=VARCHAR},
+      </if>
+      <if test="remark != null" >
+        remark = #{remark,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="createdate != null" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.Orders" >
+    update ss_orders
+    set pro_name = #{proName,jdbcType=VARCHAR},
+      d_steel = #{OrdersName,jdbcType=VARCHAR},
+      d_spec = #{type,jdbcType=VARCHAR},
+      d_standards = #{address,jdbcType=VARCHAR},
+      buy_weight = #{legalPerson,jdbcType=VARCHAR},
+      delivery_time = #{fund,jdbcType=VARCHAR},
+      cusName = #{cusName,jdbcType=VARCHAR},
+      contact = #{contact,jdbcType=VARCHAR},
+      telphone = #{telphone,jdbcType=VARCHAR},
+      remark = #{remark,jdbcType=VARCHAR},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	select * from ss_orders o
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by o.createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    select * from ss_orders o
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by o.createdate desc
+  </select>
+</mapper>

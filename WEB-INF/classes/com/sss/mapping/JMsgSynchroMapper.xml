@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IJMsgSynchroDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.JMsgSynchro" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="userId" property="userId" jdbcType="INTEGER" />
+    <result column="fileCreatedate" property="fileCreatedate" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+  </resultMap>
+  <select id="selectList" resultMap="BaseResultMap" >
+    select * from ss_jmsgsynchro
+    order by createdate desc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select * from ss_jmsgsynchro
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="getLastEntityByUid" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select * from ss_jmsgsynchro
+    where userId = #{userId,jdbcType=INTEGER}
+    order by fileCreatedate desc
+    limit 0,1
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_jmsgsynchro
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.JMsgSynchro" >
+    insert into ss_jmsgsynchro (id, userId, fileCreatedate, 
+      createdate)
+    values (#{id,jdbcType=INTEGER}, #{userId,jdbcType=INTEGER}, #{fileCreatedate,jdbcType=VARCHAR}, 
+      #{createdate,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.JMsgSynchro" >
+    insert into ss_jmsgsynchro
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="userId != null" >
+        userId,
+      </if>
+      <if test="fileCreatedate != null" >
+        fileCreatedate,
+      </if>
+        createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="userId != null" >
+        #{userId,jdbcType=INTEGER},
+      </if>
+      <if test="fileCreatedate != null" >
+        #{fileCreatedate,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.JMsgSynchro" >
+    update ss_jmsgsynchro
+    <set >
+      <if test="userId != null" >
+        userId = #{userId,jdbcType=INTEGER},
+      </if>
+      <if test="fileCreatedate != null" >
+        fileCreatedate = #{fileCreatedate,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate != null" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.JMsgSynchro" >
+    update ss_jmsgsynchro
+    set userId = #{userId,jdbcType=INTEGER},
+      fileCreatedate = #{fileCreatedate,jdbcType=VARCHAR},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

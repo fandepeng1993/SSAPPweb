@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IVoteRecordDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.VoteRecord" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+   
+    <association property="user" javaType="com.sss.pojo.User">
+		<id column="cdu_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="cdu_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="pu_position_name" property="position.positionName" jdbcType="VARCHAR" />
+	    <result column="cdu_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="cdu_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="cdu_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="cdu_user_status" property="status" jdbcType="VARCHAR" />
+	</association>	
+	
+   <association property="item" javaType="com.sss.pojo.VoteQuestionItem">
+	    <id column="id" jdbcType="INTEGER" property="id" />
+	    <result column="questionId" jdbcType="INTEGER" property="questionId" />
+	    <result column="optionName" jdbcType="VARCHAR" property="optionName" />
+	    <result column="createdate" jdbcType="VARCHAR" property="createdate" />
+	</association>
+  </resultMap>
+  	<sql id="associateQuery">
+	select 
+		v.*,
+		q.questionName AS q_questionName,
+		q.isMultiselect AS q_isMultiselect,
+		i.optionName AS i_optionName,
+		r.id AS itemId
+	FROM
+		ss_vote v 
+	LEFT JOIN
+		ss_votequestion q
+	ON
+		v.id = q.voteId
+	LEFT JOIN
+		ss_votequesitem i
+	ON
+		q.id = i.questionId
+	LEFT JOIN
+		ss_voterecord r
+	ON
+		i.id = r.itemId
+	where r.userId =75 and v.id =11
+	</sql>
+  <sql id="Base_Column_List" >
+    id, userId, itemId, createdate
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from ss_voterecord
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_voterecord
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.VoteRecord" >
+    insert into ss_voterecord (id, userId, itemId, 
+      createdate)
+    values (#{id,jdbcType=INTEGER}, #{user.userId,jdbcType=INTEGER}, #{item.id,jdbcType=INTEGER}, 
+     now())
+  </insert>
+    <insert id="insertEntitys" parameterType="java.util.List">
+	insert into ss_voterecord (id, userId, itemId, createdate)
+	values
+	<foreach collection="list" item="item" index="index" separator=",">
+		(null, #{item.user.userId,jdbcType=INTEGER}, #{item.item.id,jdbcType=VARCHAR},now())
+	</foreach>
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.VoteRecord" >
+    insert into ss_voterecord
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="user !=null and user.userId != null" >
+        userId,
+      </if>
+      <if test="item !=null and item.id != null" >
+        itemId,
+      </if>
+        createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="user !=null and user.userId != null" >
+        #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="item !=null and item.id != nulll" >
+        #{item.id,jdbcType=INTEGER},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.VoteRecord" >
+    update ss_voterecord
+    <set >
+      <if test="user !=null and user.userId != null" >
+        userId = #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="item !=null and item.id != nulll" >
+        itemId = #{item.id,jdbcType=INTEGER},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.VoteRecord" >
+    update ss_voterecord
+    set userId = #{user.userId,jdbcType=INTEGER},
+      itemId = #{item.id,jdbcType=INTEGER},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+  </select>
+</mapper>

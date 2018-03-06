@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IShareCusDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.ShareCus" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="authorizer" property="authorizer" jdbcType="INTEGER" />
+    <result column="authorizedPerson" property="authorizedPerson" jdbcType="INTEGER" />
+    <result column="cusId" property="cusId" jdbcType="INTEGER" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+  </resultMap>
+  <select id="selectList" resultMap="BaseResultMap" >
+    select * from ss_sharecus
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select * from ss_sharecus
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectByCusId" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select * from ss_sharecus
+    where cusId = #{cusId,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_sharecus
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByCusId" parameterType="java.lang.Integer" >
+    delete from ss_sharecus
+    where cusId = #{cusId,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.ShareCus" >
+    insert into ss_sharecus (id, authorizer, authorizedPerson, 
+      cusId, createdate)
+    values (#{id,jdbcType=INTEGER}, #{authorizer,jdbcType=INTEGER}, #{authorizedPerson,jdbcType=INTEGER}, 
+      #{cusId,jdbcType=INTEGER}, #{createdate,jdbcType=VARCHAR})
+  </insert>
+  
+  <insert id="insertEntitys" >
+    insert into ss_sharecus (id, authorizer, authorizedPerson, 
+      cusId, createdate)
+    values 
+    <foreach collection="list" item="item" index="index" separator=",">
+		(null, #{item.authorizer,jdbcType=INTEGER}, #{item.authorizedPerson,jdbcType=INTEGER},
+		#{item.cusId,jdbcType=INTEGER}, now()
+		)
+	</foreach>
+  </insert>
+  
+  <insert id="insertSelective" parameterType="com.sss.pojo.ShareCus" >
+    insert into ss_sharecus
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="authorizer != null" >
+        authorizer,
+      </if>
+      <if test="authorizedPerson != null" >
+        authorizedPerson,
+      </if>
+      <if test="cusId != null" >
+        cusId,
+      </if>
+      	createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="authorizer != null" >
+        #{authorizer,jdbcType=INTEGER},
+      </if>
+      <if test="authorizedPerson != null" >
+        #{authorizedPerson,jdbcType=INTEGER},
+      </if>
+      <if test="cusId != null" >
+        #{cusId,jdbcType=INTEGER},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.ShareCus" >
+    update ss_sharecus
+    <set >
+      <if test="authorizer != null" >
+        authorizer = #{authorizer,jdbcType=INTEGER},
+      </if>
+      <if test="authorizedPerson != null" >
+        authorizedPerson = #{authorizedPerson,jdbcType=INTEGER},
+      </if>
+      <if test="cusId != null" >
+        cusId = #{cusId,jdbcType=INTEGER},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.ShareCus" >
+    update ss_sharecus
+    set authorizer = #{authorizer,jdbcType=INTEGER},
+      authorizedPerson = #{authorizedPerson,jdbcType=INTEGER},
+      cusId = #{cusId,jdbcType=INTEGER},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	select * from ss_sharecus
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    select * from ss_sharecus
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+  </select>
+</mapper>

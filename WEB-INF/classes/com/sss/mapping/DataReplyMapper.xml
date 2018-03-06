@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IDataReplyDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.DataReply" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="dataId" property="dataId" jdbcType="INTEGER" />
+    <result column="title" property="title" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    <result column="isLeaf" property="isLeaf" jdbcType="INTEGER" />
+    <result column="content" property="content" jdbcType="LONGVARCHAR" />
+    
+    <association property="user" javaType="com.sss.pojo.User">
+		<id column="du_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="du_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="du_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="du_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="du_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="du_user_status" property="status" jdbcType="VARCHAR" />
+	    <result column="du_user_email" property="email" jdbcType="VARCHAR" />
+	    <result column="du_user_birthDate" property="birthdate" jdbcType="VARCHAR" />
+	    <result column="du_user_entryDate" property="entrydate" jdbcType="VARCHAR" />
+	    <result column="du_user_lastlogindate" property="lastlogindate" jdbcType="VARCHAR" />
+	    <result column="du_user_telephone" property="telephone" jdbcType="VARCHAR" />
+	    <result column="du_user_address" property="address" jdbcType="VARCHAR" />
+	    <result column="du_user_eduBackground" property="edubackground" jdbcType="VARCHAR" />
+	    <result column="du_user_major" property="major" jdbcType="VARCHAR" />
+	    <result column="du_user_school" property="school" jdbcType="VARCHAR" />
+	    <result column="du_user_photoUrl" property="photoUrl" jdbcType="VARCHAR" />
+	</association>
+	<association property="parentReply" javaType="com.sss.pojo.DataReply">
+		<id column="dd_reply_id" property="id" jdbcType="INTEGER" />
+	    <result column="dd_reply_dataId" property="dataId" jdbcType="INTEGER" />
+	    <result column="dd_reply_title" property="title" jdbcType="VARCHAR" />
+	    <result column="dd_reply_createdate" property="createdate" jdbcType="VARCHAR" />
+	    <result column="dd_reply_isLeaf" property="isLeaf" jdbcType="INTEGER" />
+	    <result column="dd_reply_content" property="content" jdbcType="LONGVARCHAR" />
+	    <association property="user" javaType="com.sss.pojo.User">
+			<id column="ddu_user_id" property="userId" jdbcType="INTEGER" />
+		    <result column="ddu_user_name" property="userName" jdbcType="VARCHAR" />
+		</association>
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		d.*,
+  		u.user_id as du_user_id,
+  		u.user_name as du_user_name,
+  		u.user_no as du_user_no,
+  		u.position_id as du_position_id,
+  		u.sex as du_user_sex,
+  		u.status as du_user_status,
+  		u.email as du_user_email,
+  		u.birthdate as du_user_birthDate,
+  		u.entrydate as du_user_entryDate,
+  		u.lastlogindate as du_user_lastlogindate,
+  		u.telephone as du_user_telephone,
+  		u.address as du_user_address,
+  		u.edubackground as du_user_eduBackground,
+  		u.major as du_user_major,
+  		u.school as du_user_school,
+  		u.photoUrl as du_user_photoUrl,
+  		dd.id as dd_reply_id,
+  		dd.dataId as dd_reply_dataId,
+  		dd.title as dd_reply_title,
+  		dd.createdate as dd_reply_createdate,
+  		dd.isLeaf as dd_reply_isLeaf,
+  		dd.content as dd_reply_content,
+  		uu.user_id as ddu_user_id,
+  		uu.user_name as ddu_user_name
+    from 
+    	ss_datareply d
+   	left join
+   		ss_user u
+   	on
+   		d.userId = u.user_id
+   	left join
+   		ss_datareply dd
+   	on
+   		dd.id = d.pid
+   	left join 
+   		ss_user uu
+   	on
+   		dd.userId = uu.user_id
+  </sql>
+  
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by d.createdate desc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where d.id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selByDataId" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where d.dataId = #{dataId,jdbcType=INTEGER} order by d.createdate desc
+  </select>
+  <select id="selectListByPid" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where d.pid = #{pid,jdbcType=INTEGER} order by d.createdate desc
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_datareply
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.DataReply" >
+    insert into ss_datareply (id, pid, dataId, 
+      userId, title, createdate, 
+      isLeaf, content)
+    values (#{id,jdbcType=INTEGER}, #{parentReply.id,jdbcType=INTEGER}, #{dataId,jdbcType=INTEGER}, 
+      #{user.userId,jdbcType=INTEGER}, #{title,jdbcType=VARCHAR}, #{createdate,jdbcType=VARCHAR}, 
+      #{isLeaf,jdbcType=INTEGER}, #{content,jdbcType=LONGVARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.DataReply" >
+    <selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+    </selectKey>
+    insert into ss_datareply
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="parentReply != null and parentReply.id != null" >
+        pid,
+      </if>
+      <if test="dataId != null" >
+        dataId,
+      </if>
+      <if test="user.userId != null" >
+        userId,
+      </if>
+      <if test="title != null" >
+        title,
+      </if>
+      <if test="content != null" >
+        content,
+      </if>
+      createdate, isLeaf
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="parentReply != null and parentReply.id != null" >
+        #{parentReply.id,jdbcType=INTEGER},
+      </if>
+      <if test="dataId != null" >
+        #{dataId,jdbcType=INTEGER},
+      </if>
+      <if test="user.userId != null" >
+        #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="title != null" >
+        #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null" >
+        #{content,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+      <if test="isLeaf == null" >
+        1,
+      </if>
+      <if test="isLeaf != null" >
+        #{isLeaf,jdbcType=INTEGER},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.DataReply" >
+    update ss_datareply
+    <set >
+      <if test="parentReply != null and parentReply.id != null" >
+        pid = #{parentReply.id,jdbcType=INTEGER},
+      </if>
+      <if test="dataId != null" >
+        dataId = #{dataId,jdbcType=INTEGER},
+      </if>
+      <if test="user != null and user.userId != null" >
+        userId = #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="title != null" >
+        title = #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+      <if test="isLeaf != null" >
+        isLeaf = #{isLeaf,jdbcType=INTEGER},
+      </if>
+      <if test="content != null" >
+        content = #{content,jdbcType=LONGVARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKeyWithBLOBs" parameterType="com.sss.pojo.DataReply" >
+    update ss_datareply
+    set pid = #{parentReply.id,jdbcType=INTEGER},
+      dataId = #{dataId,jdbcType=INTEGER},
+      userId = #{user.userId,jdbcType=INTEGER},
+      title = #{title,jdbcType=VARCHAR},
+      createdate = #{createdate,jdbcType=VARCHAR},
+      isLeaf = #{isLeaf,jdbcType=INTEGER},
+      content = #{content,jdbcType=LONGVARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.DataReply" >
+    update ss_datareply
+    set pid = #{parentReply.id,jdbcType=INTEGER},
+      dataId = #{dataId,jdbcType=INTEGER},
+      userId = #{user.userId,jdbcType=INTEGER},
+      title = #{title,jdbcType=VARCHAR},
+      createdate = #{createdate,jdbcType=VARCHAR},
+      isLeaf = #{isLeaf,jdbcType=INTEGER}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by d.createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by d.createdate desc
+  </select>
+</mapper>

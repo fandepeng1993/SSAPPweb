@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>查看制度</title>
+<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+<style>
+#updateWeekForm ul li:hover {
+	background: skyblue;
+	color: white;
+}
+</style>
+
+<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+<script type="text/javascript" src="../../js/checkUser.js"></script>
+<script type="text/javascript" src="../../js/UserUtil.js"></script>
+<script type="text/javascript" src="../../js/UserCommon.js"></script>
+<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+<script type="text/javascript">
+	//var currentUserId = Request["userId"];
+	//用于展现表单的menuCode
+	var menuCode;
+	var weekMets;
+	var selPri;
+	$(document).ready(function() {
+		menuCode = Request["menuCode"];
+		selPri = Request["selPri"];
+		var monthWeek = Request["monthWeek"];
+		setTimeout(function() {
+			getWeekMet(monthWeek);
+		}, 100);
+	});
+
+	//根据ss_form表取出数据构建form表单
+	function initForm() {
+		$.ajax({
+			url : "../../formAdmin/formsByMenuCode/" + menuCode,
+			datatype : "json",
+			type : "get",
+			data : {},
+			success : function(data, status, xhr) {
+				element = eval("(" + data + ")");
+				new UserCommon().createForm("updateWeekForm", element, 4);
+				new UserCommon().fillForm("updateWeekForm", weekMets[0]);
+				var arr = weekMets[0].monthWeek.split("|");
+				$("#yearId").val(arr[0] + "年" + arr[1] + "月");
+				$("#week").val(arr[2]);
+				var str = "<div class=\"panel-group\" id=\"accordion\" role=\"tablist\"" +
+				"aria-multiselectable=\"true\" style=\"margin-top:50px\">";
+				for (var i = 0; i < weekMets.length; i++) {
+					str=str+'<div class="panel panel-default"><div class="panel-heading" role="tab" id="headingOne'+i+'">'+
+							'<h4 class="panel-title">'+
+							'<a role="button" data-toggle="collapse" style="display:inline-block;width:20%;text-align:center;font-weight:bold;'+
+							'data-parent="#accordion" href="#collapseOne'+i+'"'+
+							'aria-expanded="false" aria-controls="collapseOne'+i+'" class="collapsed">'+
+							'议题 #'+(i+1)+'</a><i style="font-style:normal">提议人：'+weekMets[i].creator.userName+'</i>&nbsp;&nbsp;&nbsp;&nbsp;<time>提议时间：'+weekMets[i].createdate.substring(0,19)+'</time>'+
+							'</h4></div><div id="collapseOne'+i+'"  class="panel-collapse collapse"'+
+							'role="tabpanel" aria-labelledby="headingOne'+i+'">'+
+							'<div class="panel-body">'+weekMets[i].title+'</div></div></div>'
+				}
+				$("#titleId").parent().parent().parent().parent().parent().append(str + "</div>");
+				$("#titleId").parent().parent().parent().empty();
+				 
+				/*  $("#titleId").parent().parent().parent().empty();  */
+				 /* $("#accordion").append(str); */
+
+				//初始化层的大小
+				initLayerSize();
+			}
+		});
+	}
+
+	function getWeekMet(monthWeek) {
+		$.ajax({
+			url : "../../weekMeetingAdmin/selByUIdAndWeek/" + currentUserId
+					+ "," + monthWeek,
+			datatype : "json",
+			type : "get",
+			data : {},
+			success : function(data, status, xhr) {
+				weekMets = eval("(" + data + ")");
+				initForm();
+			}
+		});
+	}
+</script>
+</head>
+<body>
+	<div class="edit">
+		<div class="edit-content">
+			<div class="edit-in">
+				<form id="updateWeekForm">
+				</form>
+			</div>
+			<div class="edit-bottom">
+				<button type="button" class="btn btn-xs edit-close btn-primary"
+					onclick="new UserCommon().layer_close();">
+					<i class="glyphicon glyphicon-remove"></i>&nbsp;关闭
+				</button>
+			</div>
+		</div>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert"
+				aria-hidden="true">&times;</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span> <span></span>
+			<div>
+				<img src="../../images/sanjiao.png" width="10">
+			</div>
+		</div>
+	</div>
+</body>
+</html>

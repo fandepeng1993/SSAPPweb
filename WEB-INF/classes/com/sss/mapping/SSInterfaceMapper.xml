@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.ISSInterfaceDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.SSInterface" >
+    <id column="interface_id" property="interfaceId" jdbcType="INTEGER" />
+    <result column="interface_name" property="interfaceName" jdbcType="VARCHAR" />
+    <result column="url" property="url" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+  </resultMap>
+  <resultMap id="ResultMapWithBLOBs" type="com.sss.pojo.SSInterface" extends="BaseResultMap" >
+    <result column="note" property="note" jdbcType="LONGVARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    interface_id, interface_name, url, createdate
+  </sql>
+  <sql id="Blob_Column_List" >
+    note
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="ResultMapWithBLOBs" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    ,
+    <include refid="Blob_Column_List" />
+    from ss_interface
+    where interface_id = #{interfaceId,jdbcType=INTEGER}
+  </select>
+  <select id="selectList"  resultMap="ResultMapWithBLOBs"  >
+ 	select 
+    <include refid="Base_Column_List" />
+    ,
+    <include refid="Blob_Column_List" />
+  	from ss_interface
+  </select>
+  <select id="selectListByKey"  resultMap="ResultMapWithBLOBs" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    ,
+    <include refid="Blob_Column_List" />
+    from ss_interface
+    where interface_name like "%"#{keyWords,jdbcType=VARCHAR}"%"
+  </select> 
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_interface
+    where interface_id = #{interfaceId,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.SSInterface" >
+    insert into ss_interface (interface_id, interface_name, url, 
+      createdate, note)
+    values (#{interfaceId,jdbcType=INTEGER}, #{interfaceName,jdbcType=VARCHAR}, #{url,jdbcType=VARCHAR}, 
+      #{createdate,jdbcType=VARCHAR}, #{note,jdbcType=LONGVARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.SSInterface" >
+    insert into ss_interface
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="interfaceId != null" >
+        interface_id,
+      </if>
+      <if test="interfaceName != null" >
+        interface_name,
+      </if>
+      <if test="url != null" >
+        url,
+      </if>
+      <if test="note != null" >
+        note,
+      </if>
+      	createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="interfaceId != null" >
+        #{interfaceId,jdbcType=INTEGER},
+      </if>
+      <if test="interfaceName != null" >
+        #{interfaceName,jdbcType=VARCHAR},
+      </if>
+      <if test="url != null" >
+        #{url,jdbcType=VARCHAR},
+      </if>
+      <if test="note != null" >
+        #{note,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.SSInterface" >
+    update ss_interface
+    <set >
+      <if test="interfaceName != null" >
+        interface_name = #{interfaceName,jdbcType=VARCHAR},
+      </if>
+      <if test="url != null" >
+        url = #{url,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+      <if test="note != null" >
+        note = #{note,jdbcType=LONGVARCHAR},
+      </if>
+    </set>
+    where interface_id = #{interfaceId,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKeyWithBLOBs" parameterType="com.sss.pojo.SSInterface" >
+    update ss_interface
+    set interface_name = #{interfaceName,jdbcType=VARCHAR},
+      url = #{url,jdbcType=VARCHAR},
+      createdate = #{createdate,jdbcType=VARCHAR},
+      note = #{note,jdbcType=LONGVARCHAR}
+    where interface_id = #{interfaceId,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.SSInterface" >
+    update ss_interface
+    set interface_name = #{interfaceName,jdbcType=VARCHAR},
+      url = #{url,jdbcType=VARCHAR},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where interface_id = #{interfaceId,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	select * from ss_interface
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    select * from ss_interface
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+  </select>
+</mapper>

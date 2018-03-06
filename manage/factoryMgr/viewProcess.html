@@ -1,0 +1,426 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- saved from url=(0152)http://192.168.21.254:3040/WorkFlow/ProduceM_Route_WorkFlow.aspx?WorkFlowType=workcard&ProduceM_BillNo=1704-958&ProduceM_Type=0&P_Type=0&a=1493278591379 -->
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>流程图</title>
+<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+<link rel="stylesheet" type="text/css" href="../../js/GooFlowjs/default.css">
+<link rel="stylesheet" type="text/css" href="../../js/GooFlowjs/GooFlow2.css">
+<script type="text/javascript" src="../../js/GooFlowjs/GooFunc.js"></script>
+<script type="text/javascript" src="../../js/GooFlowjs/json2.js"></script>
+<script type="text/javascript" src="../../js/GooFlowjs/GooFlow.js"></script>
+<script type="text/javascript" src="../../js/GooFlowjs/GooFlow_color.js"></script>
+<script type="text/javascript" src="../../js/UserUtil.js"></script>
+<script type="text/javascript" src="../../js/UserCommon.js"></script>
+<script type="text/javascript">
+		$(document).ready(function (){
+			initLayerSize(true);
+		});
+		var billNoParamVal = Request["billNo"];
+		//alert(billNoParamVal);
+		var isHaveDialog;//是否有跳出框
+		var workFlowData;//流程图数据
+		var demo;
+		var rowType;
+		var P_TypeValue;
+		$(function () {
+			P_TypeValue = 0;
+			rowType = 0;
+			var workFlowType = "workcard";
+			var property = {
+				width: 870,
+				height: 500,
+				toolBtns: ["start round", "end round", "node"],
+				haveHead: rowType == 0 ? false : true,
+				headBtns: ["undo", "redo"],//如果haveHead=true，则定义HEAD区的按钮
+				haveTool: rowType == 0 ? false : true,
+				haveGroup: false,
+				useOperStack: true
+			};
+			var remark = {
+				undo: "撤销",
+				redo: "重做",
+				cursor: "选择指针",
+				direct: "结点连线",
+				start: "入口结点",
+				end: "结束结点",
+				node: "工序结点"
+			};
+
+			demo = $.createGooFlow($("#demo"), property);
+			demo.setNodeRemarks(remark);
+			demo.onItemDel = function (id, type) {
+				if (confirm("确定要删除该单元吗?")) {
+					this.blurItem();
+					return true;
+				} else {
+					return false;
+				}
+			}
+
+			$.ajax({
+				type: "get",
+				url: "../../viewWmsProAdmin/getListByBillNo",
+				dataType: "json",
+				data: { billNo: billNoParamVal }, /* 注意参数的格式和名称 */
+				success: function (result) {
+					
+					workFlowData = result;
+					var data = data_convertGooFlow();
+					demo.loadData(data);
+				},
+				error: function (XMLHttpRequest, textStatus, errorThrown) {
+					$.ligerDialog.error('数据获取失败！');
+				}
+			})
+
+			//demo.loadDataAjax({
+			//    type: 'get',
+			//    url: demoUrl,
+			//    data: { Action: 'getWorkFLow', ProduceM_BillNo: getparastr("ProduceM_BillNo"), rnd: Math.random() }, /* 注意参数的格式和名称 */
+			//    success: function (result) {
+
+			//    }
+			//});
+			demo.onItemAdd = function(id,type,json) {
+				if(type=="line")
+				{
+					if (demo.$nodeData[json.from].nodeState > 0) {
+						return false;
+					}
+					if (demo.$nodeData[json.to].nodeState > 0) {
+						return false;
+					}
+				}
+				return true;
+			}
+			demo.onLinePointMove = function (id, newStart, newEnd) {
+				if (demo.$nodeData[demo.$lineData[id].from].nodeState > 0) {
+					return false;
+				}
+				if (demo.$nodeData[demo.$lineData[id].to].nodeState > 0) {
+					return false;
+				}
+				if (demo.$nodeData[newStart].nodeState > 0) {
+					return false;
+				}
+				if (demo.$nodeData[newEnd].nodeState > 0) {
+					return false;
+				}
+				return true;
+			};
+			demo.onTextAreadbClick = function (id, This) {
+				if (demo.$nodeData[id].nodeState > 0) {
+					return false;
+				}
+				$.ligerDialog.open({
+					title: '选择工序', width: 600, height: 350, url: '../Process/GetWorkingProcedure.aspx?P_Type=' + P_TypeValue + "&D_Spec=" + demo.$nodeData[id].ProduceM_Spec, buttons: [
+						{ text: '确定', onclick: f_selectWorkingProcedureOK },
+						{ text: '取消', onclick: f_selectWorkingProcedureCancel }
+					]
+				});
+				isHaveDialog = true;
+				return false;
+			};
+		});
+
+		function data_convertGooFlow() {
+			var data = [];
+			data.title = "1";
+			data.nodes = [];
+			data.lines = [];
+			data.areas = [];
+			data.initNum = workFlowData.length + 1;
+			if (rowType == 0) {  
+				getDefaultFlow(data);
+			}
+			else {
+				getFlow(data);
+			}
+			return data;
+		}
+
+        //直行流程图
+        function getDefaultFlow(data) {
+			var i = 0;
+			var j = 0;
+			var z = workFlowData.length;
+			var moveType = 2;
+			for (var row=0; row < workFlowData.length; row++) {
+				if (moveType == 2) {
+					if (i == 0) {
+						moveType = 0;
+					}
+					else if (i == 5) {
+						moveType = 1;
+					}
+				}
+				else if (moveType == 0) {
+					if (i == 5) {
+						moveType = 2;
+					}
+				}
+				else if (moveType == 1) {
+					if (i == 0) {
+						moveType = 2;
+					}
+				}
+				
+				var nodeName = "demo_node_" + workFlowData[row].producemOrder;
+				var nodedata = {};
+				nodedata.name = workFlowData[row].producemName;
+				nodedata.index = workFlowData[row].producemRouteno;
+				nodedata.order = workFlowData[row].producemOrder;
+				nodedata.value = workFlowData[row].producemNo;
+				nodedata.left = (10 + 145 * i);
+				nodedata.top = (40 + 72 * j);
+				nodedata.type = workFlowData[row].producemType;
+				nodedata.width = 100;
+				nodedata.nodeState = workFlowData[row].producemState;
+				nodedata.height = 35;
+				data.nodes[nodeName] = nodedata;
+				var lineName = "demo_line_" + z;
+				var lineData = {};
+				lineData.from = "demo_node_" + workFlowData[row].producemOrder;
+				lineData.to = "demo_node_" + (workFlowData[row].producemOrder + 1);
+				lineData.name = workFlowData[row].producemOrder;
+				lineData.order = z;
+
+				lineData.type = 'sl';
+				data.lines[lineName] = lineData;
+
+				if (moveType == 0)    //右移
+				{
+					i++;
+				}
+				else if (moveType == 1)   //左移
+				{
+					i--;
+				}
+				else if (moveType == 2)  //下移
+				{
+					j++;
+				}
+				z++;
+			}
+		}
+        //并行流程图
+        function getFlow(data) {
+			for (var i = 0; i < workFlowData.length; i++) {
+				if (workFlowData[i].ProduceM_ValueType == 'node') {
+					var nodeName = "demo_node_" + workFlowData[i].producemOrder;
+					var nodedata = {};
+					nodedata.name = workFlowData[i].producemName;
+					nodedata.index = workFlowData[i].producemRouteno;
+					nodedata.order = workFlowData[i].producemOrder;
+					nodedata.value = workFlowData[i].producemNo;
+					nodedata.left = workFlowData[i].producemLeft;
+					nodedata.top = workFlowData[i].producemTop;
+					nodedata.type = workFlowData[i].producemType;
+					nodedata.width = workFlowData[i].producemWidth;
+					nodedata.nodeState = workFlowData[i].producemState;
+					nodedata.height = workFlowData[i].producemHeight;
+					nodedata.ProduceM_Remark = workFlowData[i].producemRemark;
+					nodedata.ProduceM_readyHour = workFlowData[i].producemReadyhour;
+					nodedata.ProduceM_Price = workFlowData[i].producemPrice;
+					nodedata.ProduceM_Spec = workFlowData[i].producemSpec;
+					nodedata.ProduceM_State = workFlowData[i].producemState;
+					nodedata.ProduceM_workingHour = workFlowData[i].producemWorkinghour;
+					nodedata.ProduceM_EndDate = workFlowData[i].producemEnddate;
+					nodedata.ProduceM_CPrice = workFlowData[i].producemCprice;
+					nodedata.ProduceM_BeginDate = workFlowData[i].producemBegindate;
+					nodedata.ProduceM_Number = workFlowData[i].producemNumber;
+					nodedata.ProduceM_Expand = workFlowData[i].producemExpand;
+					nodedata.ProduceM_Merger = workFlowData[i].producemMerger;
+					//nodedata.ProduceM_MergerName = workFlowData[i].ProduceM_MergerName;
+					nodedata.ProduceM_MergerValue = workFlowData[i].producemMergervalue;
+					nodedata.ProduceM_Weight = workFlowData[i].producemWeight;
+					nodedata.ProduceM_OutSideState = workFlowData[i].producemOutsidestate;
+					nodedata.ProduceM_StartTime = workFlowData[i].producemStarttime;
+					nodedata.ProduceM_EndTime = workFlowData[i].producemEndtime;
+					nodedata.ProduceM_UserNames = workFlowData[i].producemUsernames;
+					if (workFlowData[i].producemWeights) {
+						nodedata.ProduceM_Weights = workFlowData[i].producemWeights;
+					}
+					nodedata.ProduceM_LineId = workFlowData[i].producemLineid;
+					nodedata.ProduceM_EquipmentId = workFlowData[i].producemEquipmentid;
+					nodedata.ProduceM_Warehouse = workFlowData[i].producemWarehouse;
+					
+					if (workFlowData[i].producemModel) {
+						nodedata.ProduceM_Model = workFlowData[i].producemModel;
+					}
+					if (workFlowData[i].producemMold) {
+						nodedata.ProduceM_Mold = workFlowData[i].producemMold;
+					}
+					nodedata.P_Type = workFlowData[i].P_Type;
+					data.nodes[nodeName] = nodedata;
+				}
+				else if (workFlowData[i].producemValuetype == 'line') {
+					var lineName = "demo_line_" + workFlowData[i].producemOrder;
+					var lineData = {};
+					lineData.from = workFlowData[i].producemFrom;
+					lineData.to = workFlowData[i].producemTo;
+					lineData.name = workFlowData[i].producemName;
+					lineData.order = workFlowData[i].producemOrder;
+					if (workFlowData[i].ProduceM_Type != 'sl') {
+						lineData.M = workFlowData[i].producemMiddle;
+					}
+					lineData.type = workFlowData[i].producemType;
+					data.lines[lineName] = lineData;
+				}
+			}
+		}
+        function f_selectWorkingProcedureOK(item, dialog) {
+            var data = dialog.frame.f_select();
+            if (!data) {
+                alert('请选择行!');
+                return;
+            }
+            var id = demo.$focus;
+            demo.$nodeData[id].value = data.producemNo;
+            demo.$nodeData[id].ProduceM_Merger = data.ProduceM_Merger;
+            demo.$nodeData[id].ProduceM_MergerName = data.ProduceM_MergerName;
+            demo.$nodeData[id].ProduceM_Expand = 1;
+            demo.$nodeData[id].P_Type = data.P_Type;
+            demo.$nodeData[id].ProduceM_Spec = dialog.frame.f_getSpec();
+            demo.setName(id, data.ProduceM_Name, "node");
+            dialog.close();
+            isHaveDialog = false;
+        }
+        function f_selectWorkingProcedureCancel(item, dialog) {
+            dialog.close();
+            isHaveDialog = false;
+        }
+        function f_postdata() {
+            var data = flow_toData();
+            return JSON.stringify(data);
+        }
+
+        //流程图转成网格数据
+        function flow_toData() {
+            var data = [];
+            for (var node in demo.$nodeData) {
+                var nodeData = {};
+                for (var prop in demo.$nodeData[node]) {
+                    if (prop.indexOf('ProduceM') == 0) {
+                        nodeData[prop] = demo.$nodeData[node][prop];
+                    }
+                }
+                nodeData.ConnectInCount = demo.$nodeData[node].ConnectInCount;
+                nodeData.ConnectOutCount = demo.$nodeData[node].ConnectOutCount;
+                nodeData.P_Type = demo.$nodeData[node].P_Type;
+                nodeData.ProduceM_Name = demo.$nodeData[node].name;
+                nodeData.ProduceM_ValueType = 'node';
+                nodeData.ProduceM_Order = demo.$nodeData[node].order;
+                nodeData.ProduceM_No = demo.$nodeData[node].value;
+                nodeData.ProduceM_Left = demo.$nodeData[node].left;
+                nodeData.ProduceM_Top = demo.$nodeData[node].top;
+                nodeData.ProduceM_Type = demo.$nodeData[node].type;
+                nodeData.ProduceM_Width = demo.$nodeData[node].width;
+                nodeData.ProduceM_Height = demo.$nodeData[node].height;
+                if (nodeData.ProduceM_Type == 'node') {
+                    nodeData.ProduceM_RouteNo = demo.$nodeData[node].index;
+                }
+                else {
+                    nodeData.ProduceM_RouteNo = demo.$nodeCount;
+                }
+
+                data.push(nodeData);
+            }
+            function compact(v1, v2) {
+
+                if (v1.ProduceM_RouteNo < v2.ProduceM_RouteNo) {
+                    return -1;
+                }
+                else if (v1.ProduceM_RouteNo > v2.ProduceM_RouteNo) {
+                    return 1;
+                }
+                else {
+                    return 0;
+                }
+            }
+            data.sort(compact);
+            for (var line in demo.$lineData) {
+                var lineData = {};
+                lineData.ProduceM_From = demo.$lineData[line].from;
+                lineData.ProduceM_ValueType = 'line';
+                lineData.ProduceM_To = demo.$lineData[line].to;
+                lineData.ProduceM_Name = demo.$lineData[line].name;
+                lineData.ProduceM_Order = demo.$lineData[line].order;
+                lineData.ProduceM_Type = demo.$lineData[line].type;
+                if (lineData.ProduceM_Type != 'sl') {
+                    lineData.ProduceM_Middle = demo.$lineData[line].M;
+                }
+                data.push(lineData);
+            }
+            return data;
+        }
+        function f_getTemplateNo() {
+            return getparastr("ProduceM_BillNo");
+        }
+        function f_save() {
+            if (isHaveDialog) {
+                alert("请先关闭跳出框");
+                return false;
+            }
+            var bStartFlag, bEndFlag
+            for (var i in demo.$nodeData) {
+                if (demo.$nodeData[i].type == "start round") {
+                    bStartFlag = true;
+                    if (demo.$nodeData[i].ConnectOutCount < 1) {
+                        alert("开始节点没有后继工序.");
+                        return false;
+                    }
+                }
+                else if (demo.$nodeData[i].type == "end round") {
+                    bEndFlag = true;
+                    if (demo.$nodeData[i].ConnectInCount < 1) {
+                        alert("结束节点没有前置工序.");
+                        return false;
+                    }
+                }
+                else {
+                    if (demo.$nodeData[i].value == '') {
+                        alert(demo.$nodeData[i].value + "节点没有选择工序.");
+                        return false;
+                    }
+                    if (demo.$nodeData[i].ConnectInCount < 1) {
+                        alert(demo.$nodeData[i].name + "工序没有前置工序.");
+                        return false;
+                    }
+                    if (demo.$nodeData[i].ConnectOutCount < 1) {
+                        alert(demo.$nodeData[i].name + "工序没有后继工序.");
+                        return false;
+                    }
+                    if (!demo.$nodeData[i].ProduceM_Spec) {
+                        alert(demo.$nodeData[i].name + "工序没有设置规格.");
+                        return false;
+                    }
+                    else {
+                        if (demo.$nodeData[i].ProduceM_Spec.indexOf("x") <= 0) {
+                            alert(demo.$nodeData[i].name + "工序规格出错.");
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            if (!bStartFlag) {
+                alert("您没有创建开始节点.");
+                return false;
+            }
+            else if (!bEndFlag) {
+                alert("您没有创建结束节点.");
+                return false;
+            }
+            if (demo.$nodeData.length <= 2) {
+                alert("不能没有工序");
+                return false;
+            }
+            return "Action=save";
+        }
+</script>
+</head>
+<body style="background:#EEEEEE">
+	<div id="demo" style="height:300px;"></div>
+</body>
+</html>

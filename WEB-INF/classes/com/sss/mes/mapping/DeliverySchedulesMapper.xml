@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.mes.dao.IDeliverySchedulesDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.mes.pojo.DeliverySchedules" >
+    <id column="D_Id" property="dId" jdbcType="INTEGER" />
+    <result column="D_No" property="dNo" jdbcType="VARCHAR" />
+    <result column="D_Source" property="dSource" jdbcType="VARCHAR" />
+    <result column="D_CustomerNo" property="dCustomerno" jdbcType="VARCHAR" />
+    <result column="D_ContractNo" property="dContractno" jdbcType="VARCHAR" />
+    <result column="DeliveryDate" property="deliverydate" jdbcType="VARCHAR" />
+    <result column="OrderDate" property="orderdate" jdbcType="VARCHAR" />
+    <result column="Package_Requirements" property="packageRequirements" jdbcType="VARCHAR" />
+    <result column="Settlement" property="settlement" jdbcType="VARCHAR" />
+    <result column="D_State" property="dState" jdbcType="INTEGER" />
+    <result column="D_Create" property="dCreate" jdbcType="VARCHAR" />
+    <result column="D_CreateDate" property="dCreatedate" jdbcType="VARCHAR" />
+    <result column="D_Audting" property="dAudting" jdbcType="VARCHAR" />
+    <result column="D_AudtingDate" property="dAudtingdate" jdbcType="VARCHAR" />
+    <result column="D_Urgency" property="dUrgency" jdbcType="INTEGER" />
+    <result column="DeptID" property="deptid" jdbcType="INTEGER" />
+    <result column="UserCode" property="usercode" jdbcType="VARCHAR" />
+    <result column="D_ClientName" property="dClientName" jdbcType="VARCHAR" />
+  </resultMap>
+  <resultMap id="SaleStatisticMap" type="com.sss.mes.pojo.SaleStatistic" >
+    <id column="userName" property="userName" jdbcType="INTEGER" />
+    <result column="totalWeight" property="totalWeight" jdbcType="DECIMAL" />
+    <result column="Jan" property="Jan" jdbcType="DECIMAL" />
+    <result column="Feb" property="Feb" jdbcType="DECIMAL" />
+    <result column="Mar" property="Mar" jdbcType="DECIMAL" />
+    <result column="Apr" property="Apr" jdbcType="DECIMAL" />
+    <result column="May" property="May" jdbcType="DECIMAL" />
+    <result column="Jun" property="Jun" jdbcType="DECIMAL" />
+    <result column="Jul" property="Jul" jdbcType="DECIMAL" />
+    <result column="Aug" property="Aug" jdbcType="DECIMAL" />
+    <result column="Sep" property="Sep" jdbcType="DECIMAL" />
+    <result column="Oct" property="Oct" jdbcType="DECIMAL" />
+    <result column="Nov" property="Nov" jdbcType="DECIMAL" />
+    <result column="Dece" property="Dece" jdbcType="DECIMAL" />
+  </resultMap>
+  <select id="selectListLazy" resultMap="BaseResultMap" >
+    SELECT  
+		ds.D_ContractNo, 
+		pc.D_ClientName, 
+		ds.DeliveryDate,
+		ds.UserCode,
+		ds.D_State,
+		ds.D_Source
+	FROM delivery_schedules ds
+	JOIN producem_customer pc
+	ON 
+		ds.D_CustomerNo = pc.D_ClientNo
+	GROUP BY D_ContractNo
+	order by ds.DeliveryDate desc
+	limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER};
+  </select>
+  <select id="selectList" resultMap="BaseResultMap" >
+    SELECT  
+		ds.D_ContractNo, 
+		pc.D_ClientName, 
+		ds.DeliveryDate,
+		ds.UserCode,
+		ds.D_State,
+		ds.D_Source
+	FROM delivery_schedules ds
+	JOIN producem_customer pc
+	ON 
+		ds.D_CustomerNo = pc.D_ClientNo
+	GROUP BY D_ContractNo
+	order by ds.DeliveryDate desc;
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select * from delivery_schedules
+    where D_Id = #{dId,jdbcType=INTEGER}
+  </select>
+  <select id="getDSchedulesFromUName" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    SELECT  
+		ds.D_ContractNo, 
+		pc.D_ClientName, 
+		ds.DeliveryDate,
+		ds.UserCode,
+		ds.D_State,
+		ds.D_Source
+	FROM delivery_schedules ds
+	JOIN producem_customer pc
+	ON 
+		ds.D_CustomerNo = pc.D_ClientNo
+	WHERE ds.UserCode = #{userName,jdbcType=VARCHAR}
+		GROUP BY D_ContractNo
+	order by ds.DeliveryDate desc;
+  </select>
+  <select id="selectByContractNo" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    SELECT  
+		ds.D_ContractNo, 
+		pc.D_ClientName, 
+		ds.DeliveryDate,
+		ds.UserCode,
+		ds.D_State,
+		ds.D_Source
+	FROM delivery_schedules ds
+	JOIN producem_customer pc
+	ON 
+		ds.D_CustomerNo = pc.D_ClientNo
+	WHERE ds.D_ContractNo = #{contractNo,jdbcType=VARCHAR}
+	order by ds.DeliveryDate desc;
+  </select>
+  <select id="getDSchedulesFromUNameLazy" resultMap="BaseResultMap" >
+    SELECT  
+		ds.D_ContractNo, 
+		pc.D_ClientName, 
+		ds.DeliveryDate,
+		ds.UserCode,
+		ds.D_State,
+		ds.D_Source
+	FROM delivery_schedules ds
+	JOIN producem_customer pc
+	ON 
+		ds.D_CustomerNo = pc.D_ClientNo
+	WHERE ds.UserCode = #{userName,jdbcType=VARCHAR}
+		GROUP BY D_ContractNo
+	order by ds.DeliveryDate desc
+	limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER};
+  </select>
+  <select id="selectByContractNoLazy" resultMap="BaseResultMap" >
+    SELECT  
+		ds.D_ContractNo, 
+		pc.D_ClientName, 
+		ds.DeliveryDate,
+		ds.UserCode,
+		ds.D_State,
+		ds.D_Source
+	FROM delivery_schedules ds
+	JOIN producem_customer pc
+	ON 
+		ds.D_CustomerNo = pc.D_ClientNo
+	WHERE ds.D_ContractNo = #{contractNo,jdbcType=VARCHAR}
+	order by ds.DeliveryDate desc
+	limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER};
+  </select>
+  <sql id="saleStatisticQuery">
+  	call Pro_SaleStatistic(#{year,jdbcType=INTEGER});
+  </sql>
+  <select id="selectSaleStalist" resultMap="SaleStatisticMap" >
+    <include refid="saleStatisticQuery"/>
+  </select>
+  <!-- <select id="selectSaleStaByName" resultMap="SaleStatisticMap" parameterType="java.lang.String">
+    <include refid="saleStatisticQuery"/>
+    where tt.UserCode = #{userName,jdbcType=VARCHAR}
+  </select>
+  <select id="selectSaleStaByNames" resultMap="SaleStatisticMap" >
+    <include refid="saleStatisticQuery"/>
+    where tt.UserCode in
+    <foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>  
+  </select> -->
+  <select id="selectContractNosByUserCode" parameterType="java.lang.String" resultType="java.lang.String" >
+  	select D_ContractNo from delivery_schedules 
+		where UserCode = #{userCode,jdbcType=VARCHAR}
+  </select>
+</mapper>

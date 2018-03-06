@@ -1,0 +1,408 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IProjectDAO">
+	<resultMap id="BaseResultMap" type="com.sss.pojo.Project">
+		<id column="id" property="id" jdbcType="INTEGER" />
+		<result column="project_name" property="projectName" jdbcType="VARCHAR" />
+		<result column="area" property="area" jdbcType="VARCHAR" />
+		<result column="details" property="details" jdbcType="VARCHAR" />
+		<result column="address" property="address" jdbcType="VARCHAR" />
+		<result column="purchasInfo" property="purchasInfo" jdbcType="VARCHAR" />
+		<result column="limit_date" property="limitDate" jdbcType="VARCHAR" />
+		<result column="remain_days" property="remainDays" jdbcType="VARCHAR" />
+        <result column="investment" property="investment" jdbcType="VARCHAR" />
+        <result column="project_stage" property="projectStage" jdbcType="VARCHAR" />
+        <result column="project_duration" property="projectDuration" jdbcType="VARCHAR" />
+        <result column="createdate" property="createDate" jdbcType="VARCHAR" />
+        <result column="updatedate" property="updateDate" jdbcType="VARCHAR" />
+        <result column="type" property="type" jdbcType="VARCHAR" />
+
+		<association property="creator" javaType="com.sss.pojo.User">
+				<id column="cu_user_id" property="userId" jdbcType="INTEGER" />
+			    <result column="cu_position_id" property="position.positionId" jdbcType="INTEGER" />
+			    <result column="cu_user_no" property="userNo" jdbcType="VARCHAR" />
+			    <result column="cu_user_name" property="userName" jdbcType="VARCHAR" />
+		</association>
+		<association property="salesman" javaType="com.sss.pojo.User">
+			<id column="su_user_id" property="userId" jdbcType="INTEGER" />
+			<result column="su_position_id" property="position.positionId" jdbcType="INTEGER" />
+			<result column="su_user_no" property="userNo" jdbcType="VARCHAR" />
+			<result column="su_user_name" property="userName" jdbcType="VARCHAR" />
+			<result column="su_user_sex" property="sex" jdbcType="VARCHAR" />
+			<result column="su_user_status" property="status" jdbcType="VARCHAR" />
+		</association>
+		<association property="assignman" javaType="com.sss.pojo.User">
+			<id column="au_user_id" property="userId" jdbcType="INTEGER" />
+			<result column="au_position_id" property="position.positionId" jdbcType="INTEGER" />
+			<result column="au_user_no" property="userNo" jdbcType="VARCHAR" />
+			<result column="au_user_name" property="userName" jdbcType="VARCHAR" />
+			<result column="au_user_sex" property="sex" jdbcType="VARCHAR" />
+			<result column="au_user_status" property="status" jdbcType="VARCHAR" />
+		</association>
+	</resultMap>
+	<sql id="associateQuery">
+		select p.*,
+			u.user_id as cu_user_id,
+			u.user_name as cu_user_name,
+			u.user_no as cu_user_no,
+			u.position_id as cu_position_id,
+			u1.user_id as su_user_id,
+	  		u1.user_name as su_user_name,
+	  		u1.user_no as su_user_no,
+	  		u1.position_id as su_position_id,
+	  		u1.sex as su_user_sex,
+	  		u1.status as su_user_status,
+	  		u2.user_id as au_user_id,
+	  		u2.user_name as au_user_name,
+	  		u2.user_no as au_user_no,
+	  		u2.position_id as au_position_id,
+	  		u2.sex as au_user_sex,
+	  		u2.status as au_user_status
+		from
+			ss_project p
+		left join
+	   		ss_user u
+    	on
+   			p.creator = u.user_id
+   	    left join
+   			ss_user u1
+    	on
+   			p.salesman = u1.user_id
+ 		left join
+   			ss_user u2
+   	    on
+   			p.assignman = u2.user_id
+	</sql>
+	<select id="selectList" resultMap="BaseResultMap">
+		<include refid="associateQuery" />
+		order by p.createdate desc
+	</select>
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+		<include refid="associateQuery" />
+		where id = #{id,jdbcType=INTEGER} 
+	</select>
+	<select id="selByPName" resultMap="BaseResultMap" parameterType="java.lang.String">
+		<include refid="associateQuery" />
+		where p.project_name like "%"#{keyWords,jdbcType=VARCHAR}"%"
+		order by p.createdate desc
+	</select>
+	<select id="selectByProName" resultMap="BaseResultMap" parameterType="java.lang.String" >
+		<include refid="associateQuery" />
+		where p.project_name = #{projectName,jdbcType=VARCHAR}
+	</select>
+	<select id="getProesByCreators" resultMap="BaseResultMap" >
+		<include refid="associateQuery" />
+		where p.creator in 
+		<foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+			#{item}  
+		</foreach>  
+	   	order by p.createdate desc
+	</select>
+	<select id="getProesByUIds" resultMap="BaseResultMap" >
+		<include refid="associateQuery" />
+		where p.salesman in 
+		<foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+			#{item}  
+		</foreach>  
+		order by p.createdate desc
+	</select>
+	<select id="getProesCountByUIds" resultType="java.lang.Integer" >
+		select count(*) from ss_project
+		where salesman in 
+		<foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+			#{item}  
+		</foreach>  
+	</select>
+	<select id="getProesByUIdsLazy" resultMap="BaseResultMap" >
+		<include refid="associateQuery" />
+		where p.salesman in 
+		<foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+			#{item}  
+		</foreach>  
+		order by p.createdate desc
+		limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+	</select>
+	<select id="selByUIdAndKey2" resultMap="BaseResultMap">
+		<include refid="associateQuery" />
+		where p.salesman = #{userId,jdbcType=INTEGER} and p.project_name like "%"#{keywords,jdbcType=VARCHAR}"%" order by p.createdate desc
+	</select>
+	<select id="selByCreatorIdAndKey2" resultMap="BaseResultMap">
+		<include refid="associateQuery" />
+		where p.creator = #{userId,jdbcType=INTEGER} and p.project_name like "%"#{keywords,jdbcType=VARCHAR}"%" order by p.createdate desc
+	</select>
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+		delete from ss_project
+		where id = #{id,jdbcType=INTEGER}
+	</delete>
+	<insert id="insert" parameterType="com.sss.pojo.Project">
+    insert into ss_project (id, project_name, area, 
+      details, address, purchasInfo, 
+      creator, assignman, salesman, 
+      investment, project_stage, project_duration, 
+      createdate,updatedate, limit_date, remain_days,type
+      )
+    values (#{id,jdbcType=INTEGER}, #{projectName,jdbcType=VARCHAR}, #{area,jdbcType=VARCHAR}, 
+      #{details,jdbcType=VARCHAR}, #{address,jdbcType=VARCHAR}, #{purchasInfo,jdbcType=VARCHAR}, 
+      #{creator.userId,jdbcType=INTEGER}, #{assignman.userId,jdbcType=INTEGER}, #{salesman.userId,jdbcType=INTEGER}, 
+      #{investment,jdbcType=VARCHAR}, #{projectStage,jdbcType=VARCHAR}, #{projectDuration,jdbcType=VARCHAR}, 
+      #{createDate,jdbcType=VARCHAR},#{updateDate,jdbcType=VARCHAR}, #{limitDate,jdbcType=VARCHAR}, #{remainDays,jdbcType=VARCHAR},#{type,jdbcType=VARCHAR}
+      )
+	</insert>
+	<insert id="insertSelective" parameterType="com.sss.pojo.Project" >
+	<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+    </selectKey>
+    insert into ss_project
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="projectName != null" >
+        project_name,
+      </if>
+      <if test="area != null" >
+        area,
+      </if>
+      <if test="details != null" >
+        details,
+      </if>
+      <if test="address != null" >
+        address,
+      </if>
+      <if test="purchasInfo != null" >
+        purchasInfo,
+      </if>
+      <if test="creator != null and creator.userId != null" >
+        creator,
+      </if>
+      <if test="assignman != null and assignman.userId != null" >
+        assignman,
+      </if>
+      <if test="salesman != null and salesman.userId != null" >
+        salesman,
+      </if>
+      <if test="investment != null" >
+        investment,
+      </if>
+      <if test="projectStage != null" >
+        project_stage,
+      </if>
+      <if test="projectDuration != null" >
+        project_duration,
+      </if>
+      <if test="limitDate != null" >
+        limit_date,
+      </if>
+      <if test="remainDays != null" >
+        remain_days,
+      </if>
+      <if test="type != null" >
+        type,
+      </if>
+        createdate,
+        updatedate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="projectName != null" >
+        #{projectName,jdbcType=VARCHAR},
+      </if>
+      <if test="area != null" >
+        #{area,jdbcType=VARCHAR},
+      </if>
+      <if test="details != null" >
+        #{details,jdbcType=VARCHAR},
+      </if>
+      <if test="address != null" >
+        #{address,jdbcType=VARCHAR},
+      </if>
+      <if test="purchasInfo != null" >
+        #{purchasInfo,jdbcType=VARCHAR},
+      </if>
+      <if test="creator != null and creator.userId != null" >
+        #{creator.userId,jdbcType=INTEGER},
+      </if>
+      <if test="assignman != null and assignman.userId != null" >
+        #{assignman.userId,jdbcType=INTEGER},
+      </if>
+      <if test="salesman != null and salesman.userId != null" >
+        #{salesman.userId,jdbcType=INTEGER},
+      </if>
+      <if test="investment != null" >
+        #{investment,jdbcType=VARCHAR},
+      </if>
+      <if test="projectStage != null" >
+        #{projectStage,jdbcType=VARCHAR},
+      </if>
+      <if test="projectDuration != null" >
+        #{projectDuration,jdbcType=VARCHAR},
+      </if>
+      <if test="limitDate != null" >
+        #{limitDate,jdbcType=VARCHAR},
+      </if>
+      <if test="remainDays != null" >
+        #{remainDays,jdbcType=VARCHAR},
+      </if>
+      <if test="type != null" >
+      	#{type,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate == null or createDate == ''" >
+        now(),
+      </if>
+      <if test="createDate != null and createDate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+        now(),
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.Project" >
+    update ss_project
+    <set >
+      <if test="projectName != null" >
+        project_name = #{projectName,jdbcType=VARCHAR},
+      </if>
+      <if test="area != null" >
+        area = #{area,jdbcType=VARCHAR},
+      </if>
+      <if test="details != null" >
+        details = #{details,jdbcType=VARCHAR},
+      </if>
+      <if test="address != null" >
+        address = #{address,jdbcType=VARCHAR},
+      </if>
+      <if test="purchasInfo != null" >
+        purchasInfo = #{purchasInfo,jdbcType=VARCHAR},
+      </if>
+      <if test="creator != null and creator.userId != 0">
+        creator = #{creator.userId,jdbcType=INTEGER},
+      </if>
+      <if test="assignman != null and assignman.userId != 0" >
+        assignman = #{assignman.userId,jdbcType=INTEGER},
+      </if>
+      <if test="salesman != null and salesman.userId != 0">
+        salesman = #{salesman.userId,jdbcType=INTEGER},
+      </if>
+      <if test="investment != null" >
+        investment = #{investment,jdbcType=VARCHAR},
+      </if>
+      <if test="projectStage != null" >
+        project_stage = #{projectStage,jdbcType=VARCHAR},
+      </if>
+      <if test="projectDuration != null" >
+        project_duration = #{projectDuration,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null and createDate != ''" >
+        createdate = #{createDate,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null and updateDate != ''" >
+        updatedate = #{updateDate,jdbcType=VARCHAR},
+      </if>
+      <if test="limitDate != null" >
+        limit_date = #{limitDate,jdbcType=VARCHAR},
+      </if>
+      <if test="remainDays != null" >
+        remain_days = #{remainDays,jdbcType=VARCHAR},
+      </if>
+      <if test="type != null" >
+        type = #{type,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.Project" >
+    update ss_project
+    set project_name = #{projectName,jdbcType=VARCHAR},
+      area = #{area,jdbcType=VARCHAR},
+      details = #{details,jdbcType=VARCHAR},
+      address = #{address,jdbcType=VARCHAR},
+      purchasInfo = #{purchasInfo,jdbcType=VARCHAR},
+      creator = #{creator.userId,jdbcType=INTEGER},
+      assignman = #{assignman.userId,jdbcType=INTEGER},
+      salesman = #{salesman.userId,jdbcType=INTEGER},
+      investment = #{investment,jdbcType=VARCHAR},
+      project_stage = #{projectStage,jdbcType=VARCHAR},
+      project_duration = #{projectDuration,jdbcType=VARCHAR},
+      createdate = #{createDate,jdbcType=VARCHAR},
+      updatedate = #{updateDate,jdbcType=VARCHAR},
+      limit_date = #{limitDate,jdbcType=VARCHAR},
+      remain_days = #{remainDays,jdbcType=VARCHAR},
+      type = #{type,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="searchByDTO"  resultMap="BaseResultMap" parameterType="com.sss.pojo.dto.SearchProjectDTO" >
+	<include refid="associateQuery" />
+	where 
+	  <if test="projectName != null and projectName != ''" >
+	      p.project_name like "%"#{projectName,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="projectName == null or projectName == ''" >
+	      p.project_name like "%%" 
+	  </if>
+	  <if test="addresses != null" >
+	      <foreach collection="addresses" item="item" index="index"  open="AND (" separator="OR" close=")" >  
+		 	p.address LIKE CONCAT('%',#{item},'%')
+		  </foreach>  
+	  </if>
+	  <if test="areas != null" >
+	      AND p.area in
+	      <foreach item="item" index="index" collection="areas" open="(" separator="," close=")">  
+		  	#{item}  
+		  </foreach>  
+	  </if>
+	  <if test="salesmanIds != null" >
+	      AND p.salesman in
+	      <foreach item="item" index="index" collection="salesmanIds" open="(" separator="," close=")">  
+		  	#{item}  
+		  </foreach>  
+	  </if>
+	  <if test="creatorIds != null" >
+	      AND p.creator in
+	      <foreach item="item" index="index" collection="creatorIds" open="(" separator="," close=")">  
+		  	#{item}  
+		  </foreach>  
+	  </if>
+	  <if test="projectStage != null and projectStage != ''" >
+	      AND p.project_stage = #{projectStage}
+	  </if>
+	  <if test="type != null and type != ''" >
+	      AND p.type = #{type}
+	  </if>
+	  <if test="fromdate != null and fromdate != ''" >
+	      AND p.createdate &gt;= #{fromdate,jdbcType=VARCHAR}
+	  </if>
+	  <if test="enddate != null and enddate != ''" >
+	      AND p.createdate &lt;= #{enddate,jdbcType=VARCHAR}
+	  </if>
+	order by p.createdate desc
+  </select>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by p.createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by p.createdate desc
+  </select>
+</mapper>

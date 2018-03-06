@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>考核数据管理</title>
+<link rel="stylesheet" type="text/css"
+	href="../../css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+<link rel="stylesheet" href="../../css/Date/mobiscroll.custom-3.0.0.min.css">
+<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+<script type="text/javascript" src="../../js/Date/mobiscroll.custom-3.0.0.min.js"></script>
+<script type="text/javascript" src="../../js/Date/datePicker.js"></script>
+<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+<script type="text/javascript" src="../../js/checkUser.js"></script>
+<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+<!-- <script type="text/javascript" src="../../js/laydate/laydate.js"></script> -->
+<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+<script type="text/javascript" src="../../js/UserUtil.js"></script>
+<script type="text/javascript" src="../../js/UserCommon.js"></script>
+<style type="text/css">
+.pkq{height:23px;width:40px;background:#F5F5F5;text-align:center;}
+tr th{text-align: center;}
+td{height:30px!important;text-align: center;line-height:30px!important;}
+#showdata1 th{
+width: 6%;
+}
+#showdata th{
+width:1%;}
+</style>
+<script type="text/javascript">
+/* function initCalendar() {
+	laydate({
+	    elem: '#fromdate', //目标元素。由于laydate.js封装了一个轻量级的选择器引擎，因此elem还允许你传入class、tag但必须按照这种方式 '#id .class'
+	    event: 'focus', //响应事件。如果没有传入event，则按照默认的click
+	    format: 'YYYY-MM'
+	});
+} */
+	//当前页面所属菜单的menuCode
+	var menuCode;
+	
+	var checkState;
+	//根据权限渲染页面
+
+	$(document).ready(function() {
+		yearMonth("fromdate");
+		//initCalendar();
+		menuCode = Request["menuCode"];
+		$.ajax({
+			url : "../../sessionAdmin/getPri",
+			datatype : "json",
+			type : "get",
+			data : {},
+			success : function(data, status, xhr) {
+				var pathname = window.location.pathname;
+				var url = pathname.substring(pathname.indexOf("/", 1) + 1, pathname.length);
+				$.each(eval("(" + data + ")"), function(index, item) {
+					if (item.menuUrl == url) {
+						if (item.menuName == "查看所有") {
+		      					selPri = 1;
+		      					initTable("../../checkDataAdmin/getcheckDatas");
+		      					//lookShow();
+		      				} else if(item.menuName == "查看直属下级") {
+		      					selPri = 2;
+		      					initTable("../../checkDataAdmin/datasByUserPri/" + currentUserId + "," + selPri);
+		      					//lookShow();
+		      				} else if(item.menuName == "查看所有下级") {
+		      					selPri = 3;
+		      					initTable("../../checkDataAdmin/datasByUserPri/" + currentUserId + "," + selPri);
+		      					//lookShow();
+		      				} else if(item.menuName == "查看自己") {
+		      					selPri = 4;
+		      					initTable("../../checkDataAdmin/datasByUserPri/" + currentUserId + "," + selPri);
+		      					//lookShow();
+							} else if (item.menuName == "财务部查看") {
+								fillCaiwudept();
+								showDatas();
+								
+							} else if (item.menuName == "销售部查看") {
+								$("#showdata").css({"display":"block"});
+								$('#fillSelect .zsy').hide();
+								$('#fillSelect .edit-p').hide();
+								$('#mustshow').show();
+								selPri = 1;
+		      					initTable("../../checkDataAdmin/getcheckDatas");
+							} else if (item.menuName == "其他部门查看") {
+								initTable("../../checkDataAdmin/getcheckDatas");
+								showDatas();
+							}
+						}
+					});
+				}
+			});
+		});
+</script>
+<script type="text/javascript">
+	var checkdatas = null;
+	var editableTableUtil = null;
+	function initTable(url) {
+		$.ajax({
+			url : url,
+			datatype : "json",
+			type : "get",
+			data : {},
+			success : function(data, status, xhr) {
+				fillSelectdept();
+				//showDatas();
+				$("#checkTable").empty();
+				checkdatas = data;
+				totalRecords = checkdatas.length;
+				//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+				if(totalRecords % pageSize != 0) {
+					totalPages = Math.floor(totalRecords / pageSize) + 1;
+				} else {
+					totalPages = totalRecords / pageSize;
+				}
+				//根据totalPages初始化页码插件
+				$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+				$("#Pagination").pagination(totalPages);
+				/* $.each(checkdatas, function(index, item) {
+					new UserCommon().fillTable("checkTable", item, index);
+				});*/
+			}
+		});
+	} 
+	
+	var pageSize = 10;
+	var pageNo = 1;//当前的页码
+	var totalRecords = 0;
+	var totalPages = 0;
+	
+	
+	function showDatas(){
+		$("#showdata1").css({"display":"block"});
+		var sumtr="<tr class=\"dleiqiu\" id=\"total\">" + "<td colspan=\"5\">合计(元)</td>"+
+          +"<td></td>"+"<td class=\"sumBa\"></td>"+"<td class=\"sumAc\"></td>"+
+          "</tr>";
+         $("#checkTable1").append(sumtr);
+	}
+	
+	function fillCaiwudept(){
+		var str = "<option value=\"-1\">请选择</option>";
+		$.ajax({
+	    	  url: "../../deptAdmin/depts" ,
+		      datatype: "text",
+		      type: "get",
+		      data: {},
+		      success: function (data, status, xhr) {
+		    	   $("#dept").empty();
+		    	   depts = data;
+		    	   var str = "<option value=\"-1\">请选择</option>";
+					$.each(eval("(" + data + ")"), function(index, item) {
+						str = str + "<option value=\"" + item.deptId + "\">" + item.deptName + "</option>"
+					});
+					$("#dept").html(str);
+		      }
+		}); 
+	}
+	
+	
+	function fillSelectdept(){
+		var str = "<option value=\"-1\">请选择</option>";
+		$.ajax({
+		      //url:"../../deptAdmin/getAllDeptsByUserId/"+ currentUserId,
+		      url:"../../deptAdmin/getAllDeptsByUserId/"+ 44,
+		      datatype: "text",
+		      type: "get",
+		      data: {},
+		      success: function (data, status, xhr) {
+		    	   $("#dept").empty();
+		    	   depts = data;
+		    	   var str = "<option value=\"-1\">请选择</option>";
+					$.each(eval("(" + data + ")"), function(index, item) {
+						str = str + "<option value=\"" + item.deptId + "\">" + item.deptName + "</option>"
+					});
+					$("#dept").html(str);
+					//new UserCommon().fillForm("exportExcelForm",device);
+		      }
+		}); 
+	}
+	
+ 	function fillUser() {
+		var id = $("#dept").val();
+		$.ajax({
+			url: "../../userAdmin/users/" + id,
+			datatype: "json",
+			type: "get",
+			data: {},
+			success: function (data, status, xhr) {
+				$("#user").empty();
+				str = "<option value=\"-1\">请选择</option>";
+				$.each(data, function(index, item) {
+					str = str + "<option value=\"" + item.userId + "\">" + item.userName + "</option>";
+				});
+				$("#user").append(str);
+				
+			} 
+		});
+	} 
+	
+	//日期部门考核人填充表格
+	function fillKpiTable(){
+		var formObj = $("#fillSelect");
+		var msg = "不能为空！";
+		if(new UserCommon().show("edit-promit", formObj, msg)) {
+			var kpiId = $("#user").val();
+			$.ajax({
+				url: "../../checkDataAdmin/getcheckDatasByUser/" + kpiId + "," + $("#fromdate").val(),
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					
+					newDatas = data;
+					$("#showdata").empty();
+					$("#showdata1").css({"display":"block"});
+					$("#checkTable1").empty();
+					if(data.length>0){
+					checkState = data[0].state;
+					showState(checkState);
+					}else{
+						$("#state").css({"display":"none"});
+						$("#back").css({"display":"none"});
+					}
+					//$("#showdata1").css({"display":"block"});
+					$.each(newDatas, function(index, item) {
+						new UserCommon().fillTable("checkTable1", item, index);
+					});
+					editableTableUtil = new EditableTableUtil("checkTable1", 2, 6, 1, updateFunDepts, createJsonFunDepts);    
+					editableTableUtil.addEventForTd();
+					var sumtr="<tr class=\"dleiqiu\" id=\"total\">" + "<td colspan=\"5\">合计(元)</td>"+
+			          +"<td></td>"+"<td class=\"sumBa\"></td>"+"<td class=\"sumAc\"></td>"+
+			          "</tr>";
+			         $("#checkTable1").append(sumtr);
+					 arr = newDatas;
+					 var sumBas=0,sumAcs=0 ;
+					 for(var k=0; k<arr.length; k++) {
+						 sumBas += arr[k].baseSalary; 
+						 sumAcs += arr[k].actualSalary;
+					 	}
+					 $("#checkTable1 .sumBa").text(sumBas); 
+			         $("#checkTable1 .sumAc").text(sumAcs);
+			        
+				}
+			});
+		}
+	}
+	
+	function showState(checkState){
+		if(checkState == 1){
+			$("#state").text("审核").css({"display":"inline-block",background:'skyblue'}).removeAttr("disabled");
+			} else if (checkState == 2){
+				$("#state").text("部门已审").css({"display":"inline-block",background:'#FF0080'}).removeAttr("disabled");
+				$("#back").css({"display":"inline-block"});
+			} else if (checkState == 3){
+				$("#state").text("人事已审").css({"display":"inline-block",background:'#9F4D95'}).removeAttr("disabled","disabled");
+				$("#back").css({"display":"inline-block"});
+			} else if (checkState == 4){
+				$("#state").text("财务已审").css({"display":"inline-block",background:'#8600FF'}).removeAttr("onclick").attr("disabled","disabled");
+				$("#back").css({"display":"inline-block"});
+			}
+	}
+	//修改审核状态
+	function updateState(){
+		var kpiId = $("#user").val();
+		var stateUse = checkState+1;
+	 	$.ajax({
+		      url: "../../checkDataAdmin/updateState/" + kpiId + "," + $("#fromdate").val() + "," +stateUse,
+		      datatype: "text",
+		      type: "put",
+		      data: {},
+		      success: function (data) {
+		    	  var json = eval("(" + data + ")");
+		    	  if(json.status == 1) {
+		    		  new UserCommon().check("success",json.msg,null,"success");
+		    		  if(checkState == 1){
+		    		  $("#state").text("部门已审").css({background:'#FF0080'}).attr("disabled","true");
+		    		  } else if(checkState == 2) {
+		    		  $("#state").text("人事已审").css({background:'#9F4D95'}).attr("disabled","true");
+		    		  } else if(checkState == 3) {
+		    		  $("#state").text("财务已审").css({background:'#8600FF'}).attr("disabled","true");
+		    		  }
+		    		  
+		    	  } else {
+		    		  new UserCommon().check("success",json.msg,null,"fail");
+		    	  }
+		      }
+		});
+	}
+	
+	var updateFunDepts = function(inputObj, eventType){
+		var newText = inputObj.val(); 
+		var objTD = inputObj.parent();
+		var json = createJsonFunDepts(inputObj);
+	
+		if(!isNaN(newText) && newText!='') {
+			$.ajax({
+				url: "../../checkDataAdmin/checkData",
+				datatype: "json",
+				type: "put",
+				data:json,
+				success: function (data) {
+					objTD.html(newText); 
+					updateTotalValue(objTD);
+					if(eventType != "blur") {
+						editableTableUtil.jumpToNextTD(objTD);
+					}
+				}
+			});
+		} else {
+		  	alert("请输入有效值");
+		  	setTimeout(function () { 
+		  		inputObj.trigger("focus").trigger("select");
+			   },50);   
+		} 
+	}
+	
+	var createJsonFunDepts = function(inputObj) {
+		var idStr = inputObj.parent().parent().attr("id");
+		var id = idStr.substring(2,5);
+		var kpi = inputObj.parent().attr("kpi");
+		var value = inputObj.val();
+		var jsonObj = { 
+				"id": id
+		};	 
+		eval("jsonObj." + kpi + " = " + value);
+		return JSON.stringify(jsonObj);
+	}
+	
+	function updateTotalValue(objTD){
+		//列索引
+		var tdIndex = objTD.parent().find("td").index(objTD[0]);
+		var size = $("#checkTable1 tr").size();
+		var valtd = 0;
+		$("#checkTable1 tr").find("td:eq(" + tdIndex + ")").each(function(index, element){
+			if(index < size-1){
+				if($(element).text()!=null && $(element).text()!=""){
+					valtd += parseFloat($(element).text());
+				}
+			}
+		});
+		if(tdIndex==5 || tdIndex==6){
+			$("#checkTable1 tr:eq(" + (size - 1) + ")").find("td:eq(" + (tdIndex-4) + ")").text(valtd);
+		}
+	}
+	
+	function getcheckDataByKey() {
+		var keyWords = $("#keyWords").val();
+		$.ajax({
+			url : "../../checkDataAdmin/getMapByKey?keyWords="+ encodeURI(keyWords),
+			datatype : "json",
+			type : "get",
+			data : {},
+			success : function(data, status, xhr) {
+				$("#checkTable").empty();
+				checkdatas = data;
+				totalRecords = checkdatas.length;
+				//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+				if (totalRecords % pageSize != 0) {
+					totalPages = Math.floor(totalRecords / pageSize) + 1;
+				} else {
+					totalPages = totalRecords / pageSize;
+				}
+				$("#sumPage").html(
+						"共<strong class=\"allPage\">" + totalPages
+								+ "</strong>页");
+				$("#Pagination").pagination(totalPages);
+			}
+		});
+	}
+
+	function circleInfos() {
+		$("#checkTable").empty();
+		$.each(checkdatas, function(index, item) {
+			if (index >= ((pageNo - 1) * pageSize) && index < (pageNo * pageSize)) {
+				new UserCommon().fillTable("checkTable", item, index);
+			} else if (index > (pageNo * pageSize)) {
+				return;
+			}
+		});
+		editableTableUtil = new EditableTableUtil("checkTable", 4, 15, 0, updateFun, createJsonFun);    
+		editableTableUtil.addEventForTd();
+		//为checkbox添加监听事件
+		new UserCommon().checkboxListener();
+	}
+
+	/*管理员-角色-添加*/
+	function admin_role_add(title, url, w) {
+		new UserCommon().layer_show(title, url, w);
+	}
+
+	function exportExcel() {
+		admin_role_add('<strong>excel导出</strong>',"exportExcel.html",'560');
+	}
+	
+	var updateFun = function(inputObj, eventType){
+		var newText = inputObj.val(); 
+		var objTD = inputObj.parent();
+		var json = createJsonFun(inputObj);
+		
+		if(!isNaN(newText) && newText!='') {
+			$.ajax({
+				url: "../../checkDataAdmin/updateStrong",
+				datatype: "json",
+				type: "post",
+				data:json,
+				success: function (data) {
+					objTD.html(newText); 
+					//_this.updateTotalValue(objTD);
+					if(eventType != "blur") {
+						editableTableUtil.jumpToNextTD(objTD);
+					}
+				}
+			});
+		} else {
+		  	alert("请输入有效值");
+		  	setTimeout(function () { 
+		  		inputObj.trigger("focus").trigger("select");
+			   },50);   
+		} 
+	}
+	
+	var createJsonFun = function(inputObj) {
+		var idStr = inputObj.parent().parent().attr("id");
+		var kpi = inputObj.parent().attr("kpi");
+		var dateUse = inputObj.parent().parent().children("td[kpi='cd_date']").text();
+		var userName = inputObj.parent().parent().children("td[kpi='ucd_uesrName']").text();
+		var nameUse = kpi.split("_")[0];
+		var name;
+		if(nameUse == "cd") name = "订单量";
+		if(nameUse == "cd1") name = "吨钢利润";
+		if(nameUse == "cd2") name = "回款";
+		if(nameUse == "cd3") name = "出库量";
+		var kpiUse = kpi.split("_")[1];
+		var value = inputObj.val();
+		var jsonObj = { 
+				"name": name,
+				"user": {"userName": userName},
+				"date": dateUse
+		};		
+		eval("jsonObj." + kpiUse + " = " + value);
+		return JSON.stringify(jsonObj);
+	}
+	
+	
+</script>
+</head>
+<body>
+	<form id="fillSelect">
+		<div class="bt-div" style="height: 46px;overflow: hidden;">
+		<div id="mustshow" style="display:none; float: left;margin-top:10px;margin-left:35px">	
+			<span class="bt-div-title" id="keySpan" style="display:inline-block">考核人:</span> 
+			<input type="text" id="keyWords" class="bt-div-input" style="display:inline-block" isEmpty="true">
+			<button type="button" class="btn btn-default bt-div-bt" id="search-g"
+			onclick="getcheckDataByKey()" style="display:inline-block">
+			<span class="glyphicon glyphicon-search color-zn"></span> 搜索
+			</button> 
+		</div>
+		<div class="zsy" style="width:auto">
+		  <div class="zsy-common">
+		    <div class="zsy-common-left">
+		       <label>
+		        <span style="color:red;font-size:18px">*</span>考核日期：
+		       </label>
+		    </div>
+		    <div class="zsy-common-right">
+		      <input onchange="fillKpiTable()" class="input-text laydate-icon" type="text" id="fromdate" name="fromdate" label="考核日期" errormsg="不能为空！" isempty="false" >
+		    </div>
+		  </div>
+		</div>
+		<div class="edit-p" style="display: inline-block;width:auto;margin-left: 3%;" >
+			<div class="yhtj-tb-div" style="font-size: 13px;font-weight: bold;">
+			<span style="color:red;font-size:18px">*</span>选择部门：</div> 
+			<select label="部门" isEmpty="false" errorMsg="不能为空！" id="dept" onchange="fillUser()"
+				style="width: 120px;height: 24px;line-height: 24px;font-size: 13px;float: left;
+			    margin-top: 1px;padding: 0px 4px;margin-left:2px;border: 1px solid #C6C6C6;">
+			</select>
+			</div>
+			<div class="edit-p" style="display: inline-block;width:auto;margin-left: 2%;" >
+			<div class="yhtj-tb-div" style="font-size: 13px;font-weight: bold;">
+			<span style="color:red;font-size:18px">*</span>选择考核人：</div> 
+			<select label="考核人" isEmpty="false" errorMsg="不能为空！" id="user" onchange="fillKpiTable()"
+				style="width: 120px;height: 24px;line-height: 24px;font-size: 13px;float: left;
+			    margin-top: 1px;padding: 0px 4px;margin-left:2px;border: 1px solid #C6C6C6;">
+			</select>
+			</div>
+			<div onclick="exportExcel()" class="btn btn-success btn-xs" style="vertical-align: top;margin-top: 13px;margin-left: 25px;">导出excel</div>
+			<div class="btn btn-success btn-xs" onclick="javascript:window.print();"style="vertical-align: top;margin-top: 13px;margin-left:5px;width:60px;height:22.5px;border:0px;">
+			<img src="../../images/dayin.png" width="18" style="padding-right:3px;margin-top:-2px;">打印</div>
+<!-- 			<input type="button" onclick="updateState()" value="审核" id="state" class="btn btn-success btn-xs" style="vertical-align: top;margin-top: 13px;margin-left: 25px; display:none"/>
+ -->		<div onclick="updateState()" id="state" class="btn btn-success btn-xs" style="vertical-align: top;margin-top: 13px;margin-left: 25px; display:none">审核</div>
+ 			<div onclick="back()" id="back" class="btn btn-success btn-xs" style="vertical-align: top;margin-top: 13px;margin-left: 25px;display:none">退回</div>
+			<div class="bt-div-in">
+			</div>
+		</div>
+	</form>
+	<div class="bt-div-two-table">
+		<div class="table-responsive">
+		<form id ="alldatas">
+				<table align="center" class="table table-striped table-bordered" id="showdata" style="display:none"> 
+				<thead>
+					<tr fieldType="controlCB" fieldName="cd_id" class="table-first-tr">
+						<th fieldType="num" fieldName="">序号</th>
+						<th fieldType="kpi" fieldName="ucd_uesrName">考核人</th>
+						<th fieldType="kpi" fieldName="pcd_positionName">职位</th>
+						<th fieldType="kpi" fieldName="cd_date">考核日期</th>
+						<th fieldType="kpi" fieldName="cd_column1">订单指标</th>
+						<th fieldType="kpi" fieldName="cd_column2">实际量</th>
+						<th fieldType="kpi" fieldName="cd_column3">考核工资</th>
+						<th fieldType="kpi" fieldName="cd1_column1">利润指标</th>
+						<th fieldType="kpi" fieldName="cd1_column2">实际量</th>
+						<th fieldType="kpi" fieldName="cd1_column3">考核工资</th>
+						<th fieldType="kpi" fieldName="cd2_column1">回款指标</th>
+						<th fieldType="kpi" fieldName="cd2_column2">实际量</th>
+						<th fieldType="kpi" fieldName="cd2_column3">考核工资</th>
+						<th fieldType="kpi" fieldName="cd3_column1">出库指标</th>
+						<th fieldType="kpi" fieldName="cd3_column2">实际量</th>
+						<th fieldType="kpi" fieldName="cd3_column3">考核工资</th>
+					</tr>
+				</thead>
+				<tbody id="checkTable">
+				</tbody>
+			</table>
+			</form>
+		</div>
+		<div>
+		<table align="center" class="table table-striped table-bordered" id="showdata1" style="display:none">
+			<thead>
+				<form id="all">
+					<tr fieldType="controlCB" fieldName="id" class="table-first-tr">
+						<th fieldType="num" fieldName="" style="width:3%;">序号</th> 
+						<th fieldType="month" fieldName="date">考核月</th>
+						<th fieldType="kpi" fieldName="name">考核项</th>
+						<th fieldType="kpi" fieldName="column1">目标值</th>
+						<th fieldType="kpi" fieldName="column2">实际值</th>
+						<th fieldType="kpi" fieldName="baseSalary">考核薪资</th>
+						<th fieldType="kpi" fieldName="actualSalary">应得薪资</th>
+<!-- 						<th fieldType="kpi" fieldName="state">审核</th>
+ -->					</tr>
+				</form>
+			</thead>
+			<tbody id = "checkTable1">
+			</tbody>
+			<!-- 服务器返回信息弹出 -->
+			<div class="edit-success" id="success">
+				<div class="alert alert-success alert-dismissable">
+					<button type="button" class="close" data-dismiss="alert"
+						aria-hidden="true">&times;</button>
+					<span></span>
+				</div>
+			</div>
+		</table>
+		</div>
+		<div class="pages">
+			<div id="Pagination"></div>
+			<div class="searchPage">
+				<span class="page-sum" id="sumPage"></span> <span class="page-go">跳转<input
+					type="text">页
+				</span> <a href="javascript:;" class="page-btn">GO</a>
+			</div>
+		</div>
+	</div>
+	
+		<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span>
+			<span></span>
+			<div><img src="../../images/sanjiao.png" width="10"></div>
+		</div>
+	</div>
+</body>
+</html>

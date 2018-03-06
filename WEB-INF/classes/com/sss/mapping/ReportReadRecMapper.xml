@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IReportReadRecDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.ReportReadRec" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="reportId" property="reportId" jdbcType="INTEGER" />
+    <result column="category" property="category" jdbcType="INTEGER" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    
+    <association property="user" javaType="com.sss.pojo.User">
+		<id column="ru_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="ru_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="ru_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="ru_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="ru_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="ru_user_status" property="status" jdbcType="VARCHAR" />
+	    <result column="ru_user_email" property="email" jdbcType="VARCHAR" />
+	    <result column="ru_user_telephone" property="telephone" jdbcType="VARCHAR" />
+	    <result column="ru_user_address" property="address" jdbcType="VARCHAR" />
+	    <result column="ru_user_photoUrl" property="photoUrl" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		r.*,
+  		u.user_id as ru_user_id,
+  		u.user_name as ru_user_name,
+  		u.user_no as ru_user_no,
+  		u.position_id as ru_position_id,
+  		u.sex as ru_user_sex,
+  		u.status as ru_user_status,
+  		u.email as ru_user_email,
+  		u.telephone as ru_user_telephone,
+  		u.address as ru_user_address,
+  		u.photoUrl as ru_user_photoUrl
+    from 
+    	ss_reportReadRec r
+   	left join
+   		ss_user u
+   	on
+   		r.userId = u.user_id
+  </sql>
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by r.createdate desc
+  </select>
+  <select id="selByReportIdAndCate"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> 
+    where r.reportId = #{reportId,jdbcType=INTEGER}
+    	and r.category = #{category,jdbcType=INTEGER}
+    order by r.createdate desc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where r.id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectByReportAndUser" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where r.reportId = #{reportId,jdbcType=INTEGER}
+    	and r.category = #{category,jdbcType=INTEGER}
+    	and r.userId = #{userId,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_reportreadrec
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.ReportReadRec" >
+    insert into ss_reportreadrec (id, userId, reportId, 
+      category, createdate)
+    values (#{id,jdbcType=INTEGER}, #{user.userId,jdbcType=INTEGER}, #{reportId,jdbcType=INTEGER}, 
+      #{category,jdbcType=INTEGER}, #{createdate,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.ReportReadRec" >
+    insert into ss_reportreadrec
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="user != null and user.userId != null" >
+        userId,
+      </if>
+      <if test="reportId != null" >
+        reportId,
+      </if>
+      <if test="category != null" >
+        category,
+      </if>
+      	createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="user != null and user.userId != null" >
+        #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="reportId != null" >
+        #{reportId,jdbcType=INTEGER},
+      </if>
+      <if test="category != null" >
+        #{category,jdbcType=INTEGER},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.ReportReadRec" >
+    update ss_reportreadrec
+    <set >
+      <if test="user != null and user.userId != null" >
+        userId = #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="reportId != null" >
+        reportId = #{reportId,jdbcType=INTEGER},
+      </if>
+      <if test="category != null" >
+        category = #{category,jdbcType=INTEGER},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.ReportReadRec" >
+    update ss_reportreadrec
+    set userId = #{user.userId,jdbcType=INTEGER},
+      reportId = #{reportId,jdbcType=INTEGER},
+      category = #{category,jdbcType=INTEGER},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by r.createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by r.createdate desc
+  </select>
+</mapper>

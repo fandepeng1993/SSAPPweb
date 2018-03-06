@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>接口管理</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+	<link href="../../css/font-awesome.min.css" rel="stylesheet">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		//当前页面所属菜单的menuCode
+	    var menuCode;
+		//根据权限渲染页面
+		$(document).ready(function(){ 
+			menuCode = Request["menuCode"];
+			$.ajax({
+			      url: "../../sessionAdmin/getPri",
+			      datatype: "json",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+			    	  var pathname = window.location.pathname;
+			    	  var url = pathname.substring(pathname.indexOf("/", 1) + 1, pathname.length);
+			    	  $.each(eval("(" + data + ")"), function(index, item) {
+			      			if(item.menuUrl == url) {
+			      				if(item.menuName == "查看") {
+			      					initTable();
+			      					$("#search-g").show();
+			      					$("#keySpan").show();
+			      					$("#keyWords").show();
+			      					$("#checkTool").show();
+			      				} else if(item.menuName == "增加") {
+			      					$("#add-g").show();
+			      				} else if(item.menuName == "修改") {
+			      					$("#update-g").show();
+			      				} else if(item.menuName == "删除") {
+			      					$("#delete-g").show();
+			      				}
+			      			}
+			    	  });
+			      } 
+			});
+		});
+	</script>
+	<script type="text/javascript">
+		var ints = null;
+		
+		function initTable() {
+			$.ajax({
+				url: "../../ssIntAdmin/interfaces",
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					$("#intTable").empty();
+					ints = data;
+					if(typeof ints == 'string'){
+						ints = eval("(" + ints + ")");
+					}
+					totalRecords = ints.length;
+					
+					//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+					if(totalRecords % pageSize != 0) {
+						totalPages = Math.floor(totalRecords / pageSize) + 1;
+					} else {
+						totalPages = totalRecords / pageSize;
+					}
+					//根据totalPages初始化页码插件
+					$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+					$("#Pagination").pagination(totalPages);
+					
+					/* $.each(eval("(" + data + ")"), function(index, item) {
+						if(index < pageSize) {
+							addUserInfo(index, item);
+						} else if(index > pageSize) {
+							return;
+						}
+					}); */
+				} 
+			});
+		}
+		
+		var pageSize = 10;
+		var pageNo = 1;//当前的页码
+		var totalRecords = 0;
+		var totalPages = 0;
+		
+		
+		function circleInfos() {
+			 $("#intTable").empty();
+			 $.each(ints, function(index, item) {
+				 if(index >= ((pageNo-1)*pageSize) && index < (pageNo*pageSize)) {
+					 addIntInfo(index, item);
+				 } else if(index > (pageNo*pageSize)) {
+					 return;
+				 }
+		      });
+			//为checkbox添加监听事件
+				new UserCommon().checkboxListener();
+		}
+		/**
+		 * 填充查看所有接口的列表
+		 */
+		function addIntInfo(index, item) {
+			var str = "";
+			if(index%2 == 0){
+				str = str + "<tr class=\"light checkboxTr\" style=\"font-size:12px;\" id=\"Tr" + item.interfaceId + "\" onclick=\"fillThisCB('" + item.interfaceId + "')\">";
+			}else{
+				str = str + "<tr class=\"active checkboxTr\" style=\"font-size:12px;\" id=\"Tr" + item.interfaceId + "\" onclick=\"fillThisCB('" + item.interfaceId + "')\">";
+			}
+		
+			str = str +		"<td><input type=\"checkbox\" name=\"selectFlag\" id=\"CB" + item.interfaceId + "\" value=" + item.interfaceId + " onclick=\"fillThisCB('" + item.interfaceId + "')\" class=\"check\"></td>" +
+							"<td>" + (index+1) + "</td>" + 
+						    "<td>" + item.interfaceName + "</td>" + 
+						    "<td>" + item.url + "</td>";
+		    if(item.createdate != null) {
+		       	str = str + "<td>" + item.createdate.substring(0, item.createdate.length-2) + "</td>";
+			}
+			str = str + "<td><button class=\"btn btn-xs\" name=\"add-g2\"  onclick=\"fillDataDetail(" + item.interfaceId + ")\">查看</button></td>" + 
+						"</tr>"; 
+			$("#intTable").append(str);
+			//重新添加事件
+			$('button[name=add-g1]').click(function(){
+		        $('.list2-input').show();
+		         $('.input2-bg').show();
+		    });
+		}
+		/**
+		 * 根据dataId填充单个数据详细信息查看表单
+		 */
+		function fillDataDetail(id) {
+			$.each(ints, function(index, item) {
+				if(item.interfaceId == id) {
+					admin_role_add('<strong>接口查看</strong>',"viewInt.html?menuCode=" + menuCode + "&interfaceId=" + item.interfaceId,'850');
+				}
+		    });
+		}
+		
+		/**
+		 * 选择修改后填充相关信息
+		 */
+		function fillUpdateForm() {
+			var but = $("input[name='selectFlag']");
+			var selIntId;
+			var num = 0;
+			for(var i=0; i<but.length; i++) {
+				if(but[i].checked) { 
+					if(num == 0) {
+						selIntId = but[i].value;
+					}
+					num += 1;
+					//alert(but[i].value);
+				}
+			} 
+			if(num == 1) {
+				$.each(ints, function(index, item) {
+					if(item.interfaceId == selIntId) {
+						admin_role_add('<strong>接口修改</strong>','editInt.html?interfaceId=' + item.interfaceId + "&menuCode=" + menuCode,'850');
+					}
+			    });
+			} else {
+				new UserCommon().check("success","请选择一个接口！",null,"warning");
+			}
+		}
+		
+		function deleteInts() {
+			var str = "";
+			$("input[name='selectFlag']").each(function(){
+				if($(this).is(':checked')) str += $(this).val() + ",";
+			});
+			if(str != null && str.trim() != "") {
+				str = str.substring(0, str.length-1);
+				layer.confirm('要删除么？',function(index){
+					$.ajax({
+					      url: "../../ssIntAdmin/interface/" + str,
+					      datatype: "text",
+					      type: "delete",
+					      data: {},
+					      success: function (data) {
+					    	  var json = eval("(" + data + ")");
+					    	  if(json.status == 1) {
+					    		  new UserCommon().check("success",json.msg,null,"success");
+					    	 	  initTable();
+					    	 	  layer.close(index);
+					    	  } else {
+					    		  new UserCommon().check("success",json.msg,null,"fail");
+					    	  }
+					      }
+					});
+				});
+			} else {
+				new UserCommon().check("success","请选择要删除的接口！",null,"warning");
+			}
+		}
+		
+		function getIntByKey() {
+			var keyWords = $("#keyWords").val();
+			$.ajax({
+				url: "../../ssIntAdmin/getIntsByKey?keyWords=" + encodeURI(keyWords),
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					$("#intTable").empty();
+					ints = data;
+					if(typeof ints == 'string'){
+						ints = eval("(" + ints + ")");
+					}
+					totalRecords = ints.length;
+					
+					//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+					if(totalRecords % pageSize != 0) {
+						totalPages = Math.floor(totalRecords / pageSize) + 1;
+					} else {
+						totalPages = totalRecords / pageSize;
+					}
+					
+					$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+					$("#Pagination").pagination(totalPages);
+				} 
+			});
+		} 
+		
+		/*管理员-角色-添加*/
+		function admin_role_add(title,url,w){
+			new UserCommon().layer_show(title,url,w);
+		}
+		function addInt() {
+			admin_role_add('<strong>接口添加</strong>',"addInt.html?menuCode=" + menuCode,'850');
+		}
+		
+		function advancedSearch(dto) {
+			$.ajax({
+				url: "../../ssIntAdmin/selectByAdvancedSearch" ,
+				datatype: "json",
+				type: "post",
+				data: JSON.stringify(dto),
+				success: function (data, status, xhr) {
+					$("#intTable").empty();
+					ints = data;
+					totalRecords = data.length;
+					//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+					if(totalRecords % pageSize != 0) {
+						totalPages = Math.floor(totalRecords / pageSize) + 1;
+					} else {
+						totalPages = totalRecords / pageSize;
+					}
+					
+					$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+					$("#Pagination").pagination(totalPages);
+				} 
+			});
+		}
+	</script>
+</head>
+<body>
+	<div class="bt-div">
+		<div class="bt-div-in">
+			<button type="button" class="btn btn-default btn-xs bt-one" id="add-g" onclick="addInt()">
+				<span class="glyphicon glyphicon-plus color-add"></span> 添加
+			</button>
+			<button type="button" class="btn btn-default btn-xs bt-two" id="update-g" onclick="fillUpdateForm()">
+				<span class="glyphicon glyphicon-edit color-edit"></span> 修改
+			</button>
+			<button type="button" class="btn btn-default btn-xs bt-three" id="delete-g" onclick="deleteInts()">
+				<span class="glyphicon glyphicon-trash color-del"></span> 删除
+			</button>
+			<span class="bt-div-title" id="keySpan">接口名称:</span>
+			<input type="text" id="keyWords" class="bt-div-input">
+			<button type="button" class="btn btn-default bt-div-bt" id="search-g" onclick="getIntByKey()">
+				<span class="glyphicon glyphicon-search color-zn"></span> 搜索
+			</button>
+			<button type="button" class="btn btn-default bt-div-bt" style="display:inline-block;" onclick="slideRight()">
+				<span class="glyphicon glyphicon-filter color-zn"></span> 高级筛选
+			</button>
+			<button type="button" class="btn btn-default btn-xs hid" id="checkTool" onclick="window.open('http://www.atool.org/httptest.php');">
+				<span class="glyphicon glyphicon-pencil color-lb"></span> 在线接口调试工具
+			</button>
+		</div>
+	</div>
+	<div class="bt-div-two-table">
+		<div class="table-responsive centerTable" >
+			<table class="table table-data-bottom text-center tableHidden">
+				<thead>
+					<tr class="table-first-tr">
+						<th fieldType="checkbox">
+							<input type="checkbox" name="ifAll" onClick="checkAll()" class="all">
+						</th>
+						<th fieldType="num">序号</th>
+						<th>接口名称</th>
+						<th>接口url</th>
+						<th>创建时间</th>
+						<th fieldType="processModelOper">操作</th>
+					</tr>
+				</thead>
+				<tbody id="intTable">
+				</tbody>
+			</table> 
+		</div>
+		<div class="pages">
+	        <div id="Pagination"></div>
+	        <div class="searchPage">
+	          <span class="page-sum" id="sumPage"></span>
+	          <span class="page-go">跳转<input type="text">页</span>
+	          <a href="javascript:;" class="page-btn">GO</a>
+	        </div>
+	    </div>
+    </div>
+    <!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<div class="search-background" id="background" onclick="hidebg()"></div>
+</body>
+</html>

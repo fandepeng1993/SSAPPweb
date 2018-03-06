@@ -1,0 +1,35 @@
+<ion-view title="重置密码">
+	<ion-nav-buttons side="right">
+        <a class="button button-clear" ng-click="doSomething()" style="font-size:13px;" href="#">
+            登录
+        </a>
+    </ion-nav-buttons>
+    <ion-content overflow-scroll="false" scrollbar-y="false">
+    	<div class="list list-inset" style="margin:0px;margin-top:0px;">
+			<label class="item item-input" style="border-right:0px;border-left:0px;font-size:20px;"><!-- 加入item-select -->
+				<i class="icon ion-lock-combination placeholder-icon"></i>
+				<input type="text" placeholder="请输入新密码" style="font-size:13px;padding-left:10px;font-family:微软雅黑;">
+				<!-- 假如加入选项
+				<select>
+					<option selected="">+86</option>
+					<option >+7</option>
+					<option>+1</option>
+				</select> -->
+				<!-- <a href="#/country" class="button button-clear" style="color:#808080;letter-spacing:1px;width:110px;">
+        			+86 <i class="ion-chevron-right" style="color:#ccc"></i>
+      			</a> -->
+			</label>
+        </div>
+        <div class="list list-inset" style="margin:0px;">
+			<label class="item item-input" style="border-right:0px;border-left:0px;font-size:20px;">
+				<i class="icon ion-lock-combination placeholder-icon"></i>
+				<input type="text" placeholder="请确认新密码" style="font-size:13px;padding-left:10px;font-family:微软雅黑;">
+				<!-- <div side="right" style="width:110px;color:#eabd81;height:25px;border-left:1px solid #d6d6d6;padding-left:11px;font-family:微软雅黑;">
+					9 6 5 8
+				</div> -->
+			</label>
+			<p style="padding-left:16px;padding-top:5px;color:#c9c9c9;font-size:11px;">请确保两次密码输入相同，否则重置无效。</p>
+			<a class="button" style="width:90%;margin-top:40px;margin-left:5%;text-align:center;border-radius:5px;background:#009fe6;color:#fff;font-family:微软雅黑;" href="#/login">完成</a>
+        </div>
+    </ion-content>
+</ion-view>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>新增销售机会</title>
+	
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.cookie.js"></script>
+	<!-- angularjs自动化表单部分 -->
+	<script type="text/javascript" src="../../js/loadAngularResource.js"></script>
+	<script src="../../js/json/CityJson.js" type="text/javascript"></script>
+    <script src="../../js/json/ProJson.js" type="text/javascript"></script>
+    <script src="../../js/json/DistrictJson.js" type="text/javascript"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.autocomplete.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/underscore.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		function initCalendar() {
+			laydate({
+			    elem: '#exceptedtime', //目标元素。由于laydate.js封装了一个轻量级的选择器引擎，因此elem还允许你传入class、tag但必须按照这种方式 '#id .class'
+			    event: 'focus' //响应事件。如果没有传入event，则按照默认的click
+			});
+		}
+		//var currentUserId = Request["userId"];
+		//用于展现表单的menuCode
+		var menuCode;
+		var selPri;
+		var element;
+		$(document).ready(function(){
+			menuCode = Request["menuCode"];
+			selPri = Request["selPri"];
+			initForm();
+		});
+		
+		//根据ss_form表取出数据构建form表单
+		function initForm() {
+			$.ajax({
+				url: "../../formAdmin/formsByMenuCode/" + menuCode,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					element = eval("(" + data + ")");
+					
+					if(!useAngularForm) {
+						$("#createSubmitForm").remove();
+						
+						new UserCommon().createForm("addSalechanForm", element, 4);
+						$("#createdate").parent().parent().hide();
+						//初始化层的大小
+						initLayerSize();
+						//$("#projectName").change(function () {
+						//	changeProject();
+						//});
+						initCalendar();
+						getCustomerName();
+					}
+				} 
+			});
+		}
+		
+		//自动化创建表单之后需要调用的函数
+		function afterCreateCustomForm() {
+			$("#createdate").parentsUntil("li").parent().hide();
+			getCustomerName();
+		}
+		
+		var allData;
+		/**
+		 *	添加弹出框填写完成之后保存调用的函数
+		 */
+		function save() {
+			$.each(allData, function (index, item) {
+				if(item.customerName == $("#customerName").val()) {
+					$("#customerId").val(item.id);
+				}
+			});
+			if($("#customerId").val() == "") {
+				new UserCommon().check("success","请填写正确的客户姓名！",null,"fail");
+				return;
+			}
+			$("#userId").val(currentUserId);
+			
+			var formObj = $("#addSalechanForm");
+			var msg = "不能为空！";
+			if(new UserCommon().show("edit-promit", formObj, msg)) {
+			 	var formObjJson = $("#addSalechanForm").serializeNestedObject();
+			 	$.ajax({
+					url: "../../salechanAdmin/salechan",
+					datatype: "text",
+					type: "post",
+					data: JSON.stringify(formObjJson),
+					success: function (data) {
+						var json = eval("(" + data + ")");
+						if(json.status == 1) {
+							new UserCommon().check("success","添加成功！",null,"success");
+							setTimeout(function (){
+								window.parent.initTable(window.parent.ajaxUrl);
+								new UserCommon().layer_close();
+								//window.parent.location.href = "salechanMgr.html?menuCode=" + menuCode;
+							}, 1000);
+						} else {
+							new UserCommon().check("success",json.msg,null,"fail");
+						}
+					}
+				});
+			}
+		}
+		
+		function getCustomerName() {
+			$.ajax({
+				url: "../../cusAdmin/cusesByUserPri/" + currentUserId + "," + selPri,
+				datatype: "text",
+				type: "get",
+				data: {},
+				success: function (data) {
+					var json = eval("(" + data + ")");
+					allData = json;
+					var str = "";
+					$.each(json, function(index, item) {
+						str = str + "<option value=\"" + item.customerName + "\">" + item.customerName + "</option>"; 
+					});
+					$("#customerName").html(str);
+					//$("#customerName").val(item.customerName);
+					/* $("#select").val(visit.customer.customerName); */
+				}
+			});
+		}
+	</script>
+</head>
+<body>
+	<div class="edit">
+		<div class="edit-content">
+			<div class="edit-in">
+				<form id="addSalechanForm">
+					<div id="createSubmitForm" ng-app="app" ng-controller="creatSubmitFormCtrl" class="previewText">
+						<div style="border:1px solid #d9d9d9;">
+							<div gridster='gridsterOpts' ng-style="{width:((gridsterOpts.columns)*200)+1+'px'}">
+								<ul>
+									<li gridster-item="item" ng-repeat="item in sercoundItems" ng-style="{zIndex:100-item.row}">
+										<my-directivelist>
+										</my-directivelist>
+									</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+			<div class="edit-bottom">
+				<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();"><i class="glyphicon glyphicon-remove"></i>&nbsp;关闭</button>
+				<button type="button" class="btn btn-xs edit-save btn-primary" onclick="save()"><i class="glyphicon glyphicon-ok"></i>&nbsp;保存</button>
+			</div>
+		</div>	
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span>
+			<span></span>
+			<div><img src="../../images/sanjiao.png" width="10"></div>
+		</div>
+	</div>
+</body>
+</html>

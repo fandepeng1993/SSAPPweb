@@ -1,0 +1,701 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.mes.dao.IViewWmsProductDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.mes.pojo.ViewWmsProduct" >
+    <!-- <result column="D_ID" property="dId" jdbcType="INTEGER" /> -->
+    <result column="WarehouseCode" property="warehousecode" jdbcType="VARCHAR" />
+    <result column="Bin" property="bin" jdbcType="VARCHAR" />
+    <!-- <result column="Pro_No" property="proNo" jdbcType="VARCHAR" /> -->
+    <result column="Pro_Name" property="proName" jdbcType="VARCHAR" />
+    <!-- <result column="D_Type" property="dType" jdbcType="VARCHAR" /> -->
+    <result column="D_Steel" property="dSteel" jdbcType="VARCHAR" />
+    <result column="D_Spec" property="dSpec" jdbcType="VARCHAR" />
+    <!-- <result column="D_FurnaceNo" property="dFurnaceno" jdbcType="VARCHAR" />
+    <result column="D_Unit" property="dUnit" jdbcType="VARCHAR" /> -->
+    <result column="D_Quantity" property="dQuantity" jdbcType="INTEGER" />
+    <result column="D_Weight" property="dWeight" jdbcType="DECIMAL" />
+    <result column="D_Standards" property="dStandards" jdbcType="VARCHAR" />
+    <result column="DeliveryDate" property="deliveryDate" jdbcType="VARCHAR" />
+    <result column="difDay" property="difDay" jdbcType="VARCHAR" />
+    <result column="ContractNo" property="contractNo" jdbcType="VARCHAR" />
+    <!-- <result column="D_Numbers" property="dNumbers" jdbcType="DECIMAL" />
+    <result column="R_Quantity" property="rQuantity" jdbcType="INTEGER" />
+    <result column="R_Weight" property="rWeight" jdbcType="DECIMAL" />
+    <result column="R_Numbers" property="rNumbers" jdbcType="DECIMAL" />
+    <result column="M_Quantity" property="mQuantity" jdbcType="INTEGER" />
+    <result column="M_Weight" property="mWeight" jdbcType="DECIMAL" />
+    <result column="M_Numbers" property="mNumbers" jdbcType="DECIMAL" />
+    <result column="S_Quantity" property="sQuantity" jdbcType="INTEGER" />
+    <result column="S_Weight" property="sWeight" jdbcType="DECIMAL" />
+    <result column="S_Numbers" property="sNumbers" jdbcType="DECIMAL" />
+    <result column="D_Create" property="dCreate" jdbcType="VARCHAR" />
+    <result column="D_CreateDate" property="dCreatedate" jdbcType="VARCHAR" />
+    <result column="D_Update" property="dUpdate" jdbcType="VARCHAR" />
+    <result column="D_UpdateDate" property="dUpdatedate" jdbcType="VARCHAR" />
+    <result column="D_Standards" property="dStandards" jdbcType="VARCHAR" />
+    <result column="BinName" property="binname" jdbcType="VARCHAR" />
+    <result column="WarehouseName" property="warehousename" jdbcType="VARCHAR" />
+    <result column="I_Quantity" property="iQuantity" jdbcType="INTEGER" />
+    <result column="I_Weight" property="iWeight" jdbcType="DECIMAL" />
+    <result column="I_Numbers" property="iNumbers" jdbcType="DECIMAL" />
+    <result column="F_Quantity" property="fQuantity" jdbcType="INTEGER" />
+    <result column="F_Weight" property="fWeight" jdbcType="DECIMAL" />
+    <result column="F_Numbers" property="fNumbers" jdbcType="DECIMAL" /> -->
+  </resultMap>
+  <resultMap id="BaseResultMap1" type="com.sss.mes.pojo.ViewMyWorkflow" >
+    <result column="CardNo" property="cardNo" jdbcType="VARCHAR" />
+    <result column="ContractNo" property="contractNo" jdbcType="VARCHAR" />
+    <result column="D_Standards" property="dStandards" jdbcType="VARCHAR" />
+    <result column="D_Steel" property="dSteel" jdbcType="VARCHAR" />
+    <result column="D_FurnaceNo" property="dFurnaceNo" jdbcType="VARCHAR" />
+    <result column="ProduceM_Name" property="produceMName" jdbcType="VARCHAR" />
+    <result column="ProduceM_Spec" property="produceMSpec" jdbcType="VARCHAR" />
+    <result column="D_Spec1" property="dSpec1" jdbcType="VARCHAR" />
+    <result column="D_Spec2" property="dSpec2" jdbcType="VARCHAR" />
+    <result column="D_Quantity" property="dQuantity" jdbcType="INTEGER" />
+    <result column="ProduceM_Number" property="produceMNumber" jdbcType="INTEGER" />
+    <result column="ProduceM_Weight" property="produceMWeight" jdbcType="DECIMAL" />
+    <result column="D_Number" property="dNumber" jdbcType="VARCHAR" />
+    <result column="FeedingDate" property="feedingDate" jdbcType="VARCHAR" />
+    <result column="DeliveryDate" property="deliveryDate" jdbcType="VARCHAR" />
+    <result column="ProduceM_EndTime" property="produceMEndTime" jdbcType="VARCHAR" />
+    <result column="difDay" property="difDay" jdbcType="VARCHAR" />
+    <!-- <result column="Pro_Name" property="proName" jdbcType="VARCHAR" />
+    <result column="D_Weight" property="dWeight" jdbcType="VARCHAR" />
+    <result column="D_Weights" property="dWeights" jdbcType="DECIMAL" />
+    <result column="D_TotalWeight" property="dTotalWeight" jdbcType="DECIMAL" /> -->
+  </resultMap>
+  <!-- billNo查流程图 -->
+  <resultMap id="BaseResultMap2" type="com.sss.mes.pojo.ProduceMWorkCardWorkFlow" >
+    <result column="ProduceM_Id" property="producemId" jdbcType="INTEGER" />
+    <result column="ProduceM_Order" property="producemOrder" jdbcType="INTEGER" />
+    <result column="ProduceM_RouteNo" property="producemRouteno" jdbcType="INTEGER" />
+    <result column="ProduceM_No" property="producemNo" jdbcType="VARCHAR" />
+    <result column="ProduceM_Name" property="producemName" jdbcType="VARCHAR" />
+    <result column="ProduceM_BillNo" property="producemBillno" jdbcType="VARCHAR" />
+    <result column="ProduceM_ValueType" property="producemValuetype" jdbcType="VARCHAR" />
+    <result column="ProduceM_Type" property="producemType" jdbcType="VARCHAR" />
+    <result column="ConnectOutCount" property="connectoutcount" jdbcType="INTEGER" />
+    <result column="ConnectInCount" property="connectincount" jdbcType="INTEGER" />
+    <result column="ProduceM_Left" property="producemLeft" jdbcType="DECIMAL" />
+    <result column="ProduceM_Top" property="producemTop" jdbcType="DECIMAL" />
+    <result column="ProduceM_Width" property="producemWidth" jdbcType="INTEGER" />
+    <result column="ProduceM_Height" property="producemHeight" jdbcType="INTEGER" />
+    <result column="ProduceM_From" property="producemFrom" jdbcType="VARCHAR" />
+    <result column="ProduceM_To" property="producemTo" jdbcType="VARCHAR" />
+    <result column="ProduceM_Spec" property="producemSpec" jdbcType="VARCHAR" />
+    <result column="ProduceM_readyHour" property="producemReadyhour" jdbcType="VARCHAR" />
+    <result column="ProduceM_workingHour" property="producemWorkinghour" jdbcType="DECIMAL" />
+    <result column="ProduceM_Middle" property="producemMiddle" jdbcType="DECIMAL" />
+    <result column="ProduceM_Price" property="producemPrice" jdbcType="DECIMAL" />
+    <result column="ProduceM_CPrice" property="producemCprice" jdbcType="DECIMAL" />
+    <result column="ProduceM_Weight" property="producemWeight" jdbcType="DECIMAL" />
+    <result column="ProduceM_Weights" property="producemWeights" jdbcType="DECIMAL" />
+    <result column="ProduceM_BeginDate" property="producemBegindate" jdbcType="VARCHAR" />
+    <result column="ProduceM_EndDate" property="producemEnddate" jdbcType="VARCHAR" />
+    <result column="ProduceM_Number" property="producemNumber" jdbcType="INTEGER" />
+    <result column="ProduceM_State" property="producemState" jdbcType="INTEGER" />
+    <result column="ProduceM_Expand" property="producemExpand" jdbcType="INTEGER" />
+    <result column="ProduceM_Merger" property="producemMerger" jdbcType="VARCHAR" />
+    <result column="ProduceM_MergerValue" property="producemMergervalue" jdbcType="VARCHAR" />
+    <result column="ProduceM_LineId" property="producemLineid" jdbcType="INTEGER" />
+    <result column="ProduceM_EquipmentId" property="producemEquipmentid" jdbcType="INTEGER" />
+    <result column="ProduceM_Model" property="producemModel" jdbcType="VARCHAR" />
+    <result column="ProduceM_Mold" property="producemMold" jdbcType="VARCHAR" />
+    <result column="P_Type" property="pType" jdbcType="INTEGER" />
+    <result column="DeptID" property="deptid" jdbcType="INTEGER" />
+    <result column="ProduceM_OutSideState" property="producemOutsidestate" jdbcType="INTEGER" />
+    <result column="ProduceM_StartTime" property="producemStarttime" jdbcType="VARCHAR" />
+    <result column="ProduceM_EndTime" property="producemEndtime" jdbcType="VARCHAR" />
+    <result column="ProduceM_UserNames" property="producemUsernames" jdbcType="VARCHAR" />
+    <result column="ProduceM_Warehouse" property="producemWarehouse" jdbcType="INTEGER" />
+    <result column="IsShow" property="isshow" jdbcType="INTEGER" />
+  </resultMap>
+  <resultMap id="StatisticMap" type="com.sss.pojo.dto.WmsProDTO">
+  	<result column="WarehouseCode" property="warehouseCode" jdbcType="VARCHAR" />
+  	<result column="WarehouseName" property="warehouseName" jdbcType="VARCHAR" />
+  	<result column="totalIWeight" property="totalIWeight" jdbcType="DECIMAL" />
+    <result column="totalRWeight" property="totalRWeight" jdbcType="DECIMAL" />
+    <result column="totalDWeight" property="totalDWeight" jdbcType="DECIMAL" />
+  </resultMap>
+  <cache 
+  	eviction="FIFO" 
+  	flushInterval="900000" 
+	size="512" 
+	readOnly="true"/> 
+  <select id="getViewEntitys" resultMap="BaseResultMap" >
+    select Pro_Name,D_Steel,D_Spec,D_Quantity,D_Weight,Bin from view_wms_product
+  </select>
+  <select id="getVWPsByPageNoAndSize" resultMap="BaseResultMap" >
+    select Pro_Name,D_Steel,D_Spec,D_Quantity,D_Weight,Bin from view_wms_product
+    limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="getEntitysCount" resultType="java.lang.Integer" >
+    select count(*) from view_wms_product
+  </select>
+  <select id="getTotalWeight" resultType="java.math.BigDecimal" >
+    select sum(D_Weight) from view_wms_product
+  </select>
+  <select id="getTotalQuantity" resultType="java.math.BigDecimal" >
+    select sum(D_Quantity) from view_wms_product
+  </select>
+  <select id="statisticWMSProduct" resultMap="StatisticMap" >
+    select t.WarehouseCode, WarehouseName, totalIWeight, totalRWeight, totalDWeight  from 
+	(
+		select WarehouseCode, WarehouseName, sum(D_Weight) as totalDWeight from view_wms_product
+	    group by WarehouseCode
+	) t
+	left join 
+	(
+		select WarehouseCode, sum(I_Weight) as totalIWeight, sum(R_Weight) as totalRWeight from view_wms_product
+	    where D_createDate &gt;= #{fromdate,jdbcType=VARCHAR} and D_createDate &lt;= #{enddate,jdbcType=VARCHAR}
+	    group by WarehouseCode
+	) t1
+	on 
+		t.WarehouseCode = t1.WarehouseCode
+  </select>
+  <select id="statisticWMSProductByCode" resultMap="StatisticMap" >
+    select t.WarehouseCode, WarehouseName, totalIWeight, totalRWeight, totalDWeight  from 
+	(
+		select WarehouseCode, WarehouseName, sum(D_Weight) as totalDWeight from view_wms_product
+	    where WarehouseCode = #{code,jdbcType=VARCHAR}
+	) t
+	left join 
+	(
+		select WarehouseCode, sum(I_Weight) as totalIWeight, sum(R_Weight) as totalRWeight from view_wms_product
+	    where D_createDate &gt;= #{fromdate,jdbcType=VARCHAR} and D_createDate &lt;= #{enddate,jdbcType=VARCHAR}
+	    		and WarehouseCode = #{code,jdbcType=VARCHAR}
+	) t1
+	on 
+		t.WarehouseCode = t1.WarehouseCode
+  </select>
+  <select id="getVWPsByHouseCodeLazy" resultMap="BaseResultMap" >
+    select WarehouseCode,Pro_Name,D_Steel,D_Spec,D_Quantity,D_Weight,Bin from view_wms_product
+    where WarehouseCode = #{code,jdbcType=VARCHAR}
+    limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="getVWPsByHouseCode" resultMap="BaseResultMap" >
+    select WarehouseCode,Pro_Name,D_Steel,D_Spec,D_Quantity,D_Weight,Bin from view_wms_product
+    where WarehouseCode = #{code,jdbcType=VARCHAR}
+  </select>
+  <!-- view_wms_product接口 -->
+  <!-- <select id="getVWPsByDTOLazy" resultMap="BaseResultMap" >
+    select WarehouseCode,Pro_Name,D_Steel,D_Spec,D_Quantity,D_Weight,Bin,D_Standards from view_wms_product
+    where 1 = 1
+	  <if test="dto.proName != null and dto.proName != ''" >
+	      AND Pro_Name = #{dto.proName,jdbcType=VARCHAR} 
+	  </if>
+	  <if test="dto.dSpec != null and dto.dSpec != ''" >
+	      AND D_Spec = #{dto.dSpec,jdbcType=VARCHAR} 
+	  </if>
+	  <if test="dto.dSteel != null and dto.dSteel != ''" >
+	      AND D_Steel = #{dto.dSteel,jdbcType=VARCHAR} 
+	  </if>
+	  <if test="dto.dStandards != null and dto.dStandards != ''" >
+	      AND D_Standards = #{dto.dStandards,jdbcType=VARCHAR} 
+	  </if>
+      <if test="dto.warehouseCode != null and dto.warehouseCode != ''" >
+	      AND WarehouseCode = #{dto.warehouseCode,jdbcType=VARCHAR} 
+	  </if>
+	limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="countNumByDTO" resultType="java.lang.Integer" >
+    select count(*) from view_wms_product
+    where 1 = 1
+	  <if test="proName != null and proName != ''" >
+	      AND Pro_Name = #{proName,jdbcType=VARCHAR} 
+	  </if>
+	  <if test="dSpec != null and dSpec != ''" >
+	      AND D_Spec = #{dSpec,jdbcType=VARCHAR} 
+	  </if>
+	  <if test="dSteel != null and dSteel != ''" >
+	      AND D_Steel = #{dSteel,jdbcType=VARCHAR} 
+	  </if>
+	  <if test="dStandards != null and dStandards != ''" >
+	      AND D_Standards = #{dStandards,jdbcType=VARCHAR} 
+	  </if>
+      <if test="warehouseCode != null and warehouseCode != ''" >
+	      AND WarehouseCode = #{warehouseCode,jdbcType=VARCHAR} 
+	  </if>
+  </select>
+  <select id="getProNames" resultType="String">
+    select Pro_Name from view_wms_product
+	group by Pro_Name;
+  </select>
+  <select id="getDSteels" resultType="String">
+    select D_Steel from view_wms_product
+	group by D_Steel;
+  </select>
+  <select id="getDSpecs" resultType="String">
+    select D_Spec from view_wms_product
+	group by D_Spec;
+  </select>
+  <select id="getDStandards" resultType="String">
+    select D_Standards from view_wms_product
+	group by D_Standards;
+  </select> -->
+  <!-- view_wms_contract接口 -->
+  <!-- 成品精准查询 -->
+  <select id="getVWPsByDTOLazy" resultMap="BaseResultMap" >
+    select if(t.DeliveryDate is null, "交货期不详", datediff(NOW(), t.DeliveryDate)) AS difDay, 
+    	vwc.ContractNo, vwc.WarehouseCode, vwc.Pro_Name, vwc.D_Steel, vwc.D_Spec, vwc.D_Quantity, vwc.D_Weight, vwc.BinCode as Bin, vwc.D_Standards 
+    from view_wms_contract vwc
+    LEFT JOIN 
+		(select D_ContractNo, DeliveryDate from delivery_schedules group by D_ContractNo) t
+	on
+		substring_index(vwc.ContractNo,'-',2) = t.D_ContractNo
+    where vwc.WarehouseCode = 'SS31'
+		<if test="like != null and like != ''" >
+    	AND vwc.ContractNo like "%"#{like,jdbcType=VARCHAR}"%"
+    	</if>
+    	<if test="notLike != null and notLike != ''" >
+    	AND vwc.ContractNo not like "%"#{notLike,jdbcType=VARCHAR}"%"
+    	</if>
+		AND D_Weight != 0
+	  <if test="dto.proName != null and dto.proName != ''" >
+	      AND vwc.Pro_Name = #{dto.proName,jdbcType=VARCHAR} 
+	  </if>
+	  <if test="dto.dSpec != null and dto.dSpec != ''" >
+	      AND vwc.D_Spec = #{dto.dSpec,jdbcType=VARCHAR} 
+	  </if>
+	  <if test="dto.contractNo != null and dto.contractNo != ''" >
+	      AND vwc.ContractNo like "%"#{dto.contractNo,jdbcType=VARCHAR}"%"
+	  </if>
+	  <if test="dto.dSteel != null and dto.dSteel != ''" >
+	      AND vwc.D_Steel = #{dto.dSteel,jdbcType=VARCHAR} 
+	  </if>
+	  <if test="dto.dStandards != null and dto.dStandards != ''" >
+	      AND vwc.D_Standards = #{dto.dStandards,jdbcType=VARCHAR} 
+	  </if>
+      <!-- <if test="dto.warehouseCode != null and dto.warehouseCode != ''" >
+	      AND WarehouseCode = #{dto.warehouseCode,jdbcType=VARCHAR} 
+	  </if> -->
+	limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  
+  <select id="countNumByDTO" resultType="java.lang.Integer" >
+    select count(*) from view_wms_contract
+    where WarehouseCode = 'SS31'
+    	<if test="like != null and like != ''" >
+    	AND ContractNo like "%"#{like,jdbcType=VARCHAR}"%"
+    	</if>
+    	<if test="notLike != null and notLike != ''" >
+    	AND ContractNo not like "%"#{notLike,jdbcType=VARCHAR}"%"
+    	</if>
+		AND D_Weight != 0
+	  <if test="dto.proName != null and dto.proName != ''" >
+	      AND Pro_Name = #{dto.proName,jdbcType=VARCHAR} 
+	  </if>
+	  <if test="dto.dSpec != null and dto.dSpec != ''" >
+	      AND D_Spec = #{dto.dSpec,jdbcType=VARCHAR} 
+	  </if>
+	  <if test="dto.contractNo != null and dto.contractNo != ''" >
+	      AND ContractNo like "%"#{dto.contractNo,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="dto.dSteel != null and dto.dSteel != ''" >
+	      AND D_Steel = #{dto.dSteel,jdbcType=VARCHAR} 
+	  </if>
+	  <if test="dto.dStandards != null and dto.dStandards != ''" >
+	      AND D_Standards = #{dto.dStandards,jdbcType=VARCHAR} 
+	  </if>
+      <!-- <if test="warehouseCode != null and warehouseCode != ''" >
+	      AND WarehouseCode = #{warehouseCode,jdbcType=VARCHAR} 
+	  </if> -->
+  </select>
+  
+  <!-- 成品模糊查询 -->
+  <select id="getFormulaByStandard" resultType="java.util.Map">
+    select S_No as sNo,D_Up_Formula as upFormula, D_Under_Formula as underFormula from producem_standards_detail 
+	where S_No = #{dStandards,jdbcType=VARCHAR}
+		AND D_No="表检" 
+		AND D_Name=#{type,jdbcType=VARCHAR}
+  </select>
+  <select id="getFuzzyVWPsByDTOLazy" resultMap="BaseResultMap" >
+  	select t.* from 
+	(
+	select if(tt.DeliveryDate is null, "交货期不详", datediff(NOW(), tt.DeliveryDate)) AS difDay, 
+		vwc.ContractNo, vwc.WarehouseCode, vwc.Pro_Name, vwc.D_Steel, vwc.D_Spec, vwc.D_Quantity, vwc.D_Weight, vwc.BinCode as Bin, vwc.D_Standards,
+				SPLIT_STR(vwc.D_Spec, "x", 1) as num1, SPLIT_STR(vwc.D_Spec, "x", 2) as num2 
+	from view_wms_contract vwc
+	LEFT JOIN 
+		(select D_ContractNo, DeliveryDate from delivery_schedules group by D_ContractNo) tt
+	on
+		substring_index(vwc.ContractNo,'-',2) = tt.D_ContractNo
+	where vwc.WarehouseCode = 'SS31'
+			<!-- 区分是否是备货合同 -->
+			<if test="like != null and like != ''" >
+	    	AND vwc.ContractNo like "%"#{like,jdbcType=VARCHAR}"%"
+	    	</if>
+	    	<if test="notLike != null and notLike != ''" >
+	    	AND vwc.ContractNo not like "%"#{notLike,jdbcType=VARCHAR}"%"
+	    	</if>
+			AND vwc.D_Weight != 0
+	  <if test="dto.proName != null and dto.proName != ''" >
+	      AND vwc.Pro_Name = #{dto.proName,jdbcType=VARCHAR} 
+	  </if>
+	  <if test="dto.contractNo != null and dto.contractNo != ''" >
+	      AND vwc.ContractNo like "%"#{dto.contractNo,jdbcType=VARCHAR}"%"
+	  </if>
+	  <if test="dto.dSteel != null and dto.dSteel != ''" >
+	      AND vwc.D_Steel = #{dto.dSteel,jdbcType=VARCHAR} 
+	  </if>
+	  <if test="dto.dStandards != null and dto.dStandards != ''" >
+	      AND (vwc.D_Standards = #{dto.dStandards,jdbcType=VARCHAR} 
+	      		OR vwc.D_Standards is null 
+	      		OR vwc.D_Standards = "")
+	  </if>
+	) t
+	where num1 &gt;= #{dto.under_diameter,jdbcType=FLOAT}
+		and num1 &lt;= #{dto.up_diameter,jdbcType=FLOAT} 
+		and num2 &gt;= #{dto.under_thickness,jdbcType=FLOAT}
+		and num2 &lt;= #{dto.up_thickness,jdbcType=FLOAT} 
+	limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="countFuzzyNumByDTO" resultType="java.lang.Integer" >
+  	select count(*) from 
+	(
+	select WarehouseCode,Pro_Name,D_Steel,D_Spec,D_Quantity,D_Weight,BinCode as Bin,D_Standards,
+				SPLIT_STR(D_Spec, "x", 1) as num1, SPLIT_STR(D_Spec, "x", 2) as num2 from view_wms_contract
+	where WarehouseCode = 'SS31'
+			<if test="like != null and like != ''" >
+	    	AND ContractNo like "%"#{like,jdbcType=VARCHAR}"%"
+	    	</if>
+	    	<if test="notLike != null and notLike != ''" >
+	    	AND ContractNo not like "%"#{notLike,jdbcType=VARCHAR}"%"
+	    	</if> 
+			AND D_Weight != 0
+	  <if test="dto.proName != null and dto.proName != ''" >
+	      AND Pro_Name = #{dto.proName,jdbcType=VARCHAR} 
+	  </if>
+	  <if test="dto.contractNo != null and dto.contractNo != ''" >
+	      AND ContractNo like "%"#{dto.contractNo,jdbcType=VARCHAR}"%"
+	  </if>
+	  <if test="dto.dSteel != null and dto.dSteel != ''" >
+	      AND D_Steel = #{dto.dSteel,jdbcType=VARCHAR} 
+	  </if>
+	  <if test="dto.dStandards != null and dto.dStandards != ''" >
+	      AND (D_Standards = #{dto.dStandards,jdbcType=VARCHAR} 
+	      		OR D_Standards is null 
+	      		OR D_Standards = "")
+	  </if>
+	) t
+	where num1 &gt;= #{dto.under_diameter,jdbcType=FLOAT}
+		and num1 &lt;= #{dto.up_diameter,jdbcType=FLOAT} 
+		and num2 &gt;= #{dto.under_thickness,jdbcType=FLOAT}
+		and num2 &lt;= #{dto.up_thickness,jdbcType=FLOAT} 
+  </select>
+  
+  <!-- 在制品模糊查询 -->
+  <select id="getFuzzyVMWsByDTOLazy" resultMap="BaseResultMap1" >
+  	select t.* from 
+	(
+	select CardNo, ContractNo, D_Standards, D_Steel, D_FurnaceNo, ProduceM_Name, ProduceM_Spec, D_Spec1, D_Spec2, D_Quantity, ProduceM_Number, ProduceM_Weight, D_Number, FeedingDate, DeliveryDate, ProduceM_EndTime, datediff(NOW(), ProduceM_EndTime) AS difDay,
+				SPLIT_STR(ProduceM_Spec, "x", 1) as num1, SPLIT_STR(ProduceM_Spec, "x", 2) as num2 from view_my_workflow
+	where 1=1
+			<!-- 区分是否是备货合同 -->
+			<if test="like != null and like != ''" >
+	    	AND ContractNo like "%"#{like,jdbcType=VARCHAR}"%"
+	    	</if>
+	    	<if test="notLike != null and notLike != ''" >
+	    	AND ContractNo not like "%"#{notLike,jdbcType=VARCHAR}"%"
+	    	</if>
+			AND D_Weight != 0
+<!-- 	  <if test="dto.proName != null and dto.proName != ''" >
+	      AND Pro_Name = #{dto.proName,jdbcType=VARCHAR} 
+	  </if> -->
+	  <if test="dto.dSteel != null and dto.dSteel != ''" >
+	      AND D_Steel = #{dto.dSteel,jdbcType=VARCHAR} 
+	  </if>
+	  <if test="dto.contractNo != null and dto.contractNo != ''" >
+	      AND ContractNo like "%"#{dto.contractNo,jdbcType=VARCHAR}"%"
+	  </if>
+	  <if test="dto.dStandards != null and dto.dStandards != ''" >
+	      AND (D_Standards = #{dto.dStandards,jdbcType=VARCHAR} 
+	      		OR D_Standards is null 
+	      		OR D_Standards = "")
+	  </if>
+	) t
+	where num1 &gt;= #{dto.under_diameter,jdbcType=FLOAT}
+		and num1 &lt;= #{dto.up_diameter,jdbcType=FLOAT} 
+		and num2 &gt;= #{dto.under_thickness,jdbcType=FLOAT}
+		and num2 &lt;= #{dto.up_thickness,jdbcType=FLOAT} 
+	order by t.FeedingDate desc
+	limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="countFuzzyVMWNumByDTO" resultType="java.lang.Integer" >
+  	select count(*) from 
+	(
+	select Pro_Name,D_Steel,ProduceM_Spec,D_Quantity,D_Weight,D_Standards,
+				SPLIT_STR(ProduceM_Spec, "x", 1) as num1, SPLIT_STR(ProduceM_Spec, "x", 2) as num2 from view_my_workflow
+	where 1=1
+			<if test="like != null and like != ''" >
+	    	AND ContractNo like "%"#{like,jdbcType=VARCHAR}"%"
+	    	</if>
+	    	<if test="notLike != null and notLike != ''" >
+	    	AND ContractNo not like "%"#{notLike,jdbcType=VARCHAR}"%"
+	    	</if> 
+			AND D_Weight != 0
+<!-- 	  <if test="dto.proName != null and dto.proName != ''" >
+	      AND Pro_Name = #{dto.proName,jdbcType=VARCHAR} 
+	  </if> -->
+	  <if test="dto.dSteel != null and dto.dSteel != ''" >
+	      AND D_Steel = #{dto.dSteel,jdbcType=VARCHAR} 
+	  </if>
+	  <if test="dto.contractNo != null and dto.contractNo != ''" >
+	      AND ContractNo like "%"#{dto.contractNo,jdbcType=VARCHAR}"%"
+	  </if>
+	  <if test="dto.dStandards != null and dto.dStandards != ''" >
+	      AND (D_Standards = #{dto.dStandards,jdbcType=VARCHAR} 
+	      		OR D_Standards is null 
+	      		OR D_Standards = "")
+	  </if>
+	) t
+	where num1 &gt;= #{dto.under_diameter,jdbcType=FLOAT}
+		and num1 &lt;= #{dto.up_diameter,jdbcType=FLOAT} 
+		and num2 &gt;= #{dto.under_thickness,jdbcType=FLOAT}
+		and num2 &lt;= #{dto.up_thickness,jdbcType=FLOAT} 
+  </select>
+  
+  <!-- 在制品精确查询 -->
+  <select id="getVMWsByDTOLazy" resultMap="BaseResultMap1" >
+	select CardNo, ContractNo, D_Standards, D_Steel, D_FurnaceNo, ProduceM_Name, ProduceM_Spec, D_Spec1, D_Spec2, D_Quantity, ProduceM_Number, ProduceM_Weight, D_Number, FeedingDate, DeliveryDate, ProduceM_EndTime, datediff(NOW(), ProduceM_EndTime) AS difDay
+	from view_my_workflow
+	where 1=1
+			<!-- 区分是否是备货合同 -->
+			<if test="like != null and like != ''" >
+	    		AND ContractNo like "%"#{like,jdbcType=VARCHAR}"%"
+	    	</if>
+	    	<if test="notLike != null and notLike != ''" >
+	    		AND ContractNo not like "%"#{notLike,jdbcType=VARCHAR}"%"
+	    	</if>
+				AND D_Weight != 0
+<!-- 			<if test="dto.proName != null and dto.proName != ''" >
+			    AND Pro_Name = #{dto.proName,jdbcType=VARCHAR} 
+			</if> -->
+			<if test="dto.dSteel != null and dto.dSteel != ''" >
+			    AND D_Steel = #{dto.dSteel,jdbcType=VARCHAR} 
+			</if>
+			<if test="dto.contractNo != null and dto.contractNo != ''" >
+		      	AND ContractNo like "%"#{dto.contractNo,jdbcType=VARCHAR}"%"
+		  	</if>
+			<if test="dto.dStandards != null and dto.dStandards != ''" >
+			    AND D_Standards = #{dto.dStandards,jdbcType=VARCHAR} 
+			</if>
+			<if test="dto.dSpec != null and dto.dSpec != ''" >
+			    AND ProduceM_Spec = #{dto.dSpec,jdbcType=VARCHAR} 
+			</if>
+	order by FeedingDate desc
+	limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="countVMWNumByDTO" resultType="java.lang.Integer" >
+		select count(*)
+		from view_my_workflow
+		where 1=1
+		<if test="like != null and like != ''" >
+    		AND ContractNo like "%"#{like,jdbcType=VARCHAR}"%"
+    	</if>
+    	<if test="notLike != null and notLike != ''" >
+    		AND ContractNo not like "%"#{notLike,jdbcType=VARCHAR}"%"
+    	</if> 
+			AND D_Weight != 0
+<!-- 		<if test="dto.proName != null and dto.proName != ''" >
+		    AND Pro_Name = #{dto.proName,jdbcType=VARCHAR} 
+		</if> -->
+		<if test="dto.dSteel != null and dto.dSteel != ''" >
+		    AND D_Steel = #{dto.dSteel,jdbcType=VARCHAR} 
+		</if>
+		<if test="dto.contractNo != null and dto.contractNo != ''" >
+	      	AND ContractNo like "%"#{dto.contractNo,jdbcType=VARCHAR}"%"
+	  	</if>
+		<if test="dto.dStandards != null and dto.dStandards != ''" >
+		    AND D_Standards = #{dto.dStandards,jdbcType=VARCHAR} 
+		</if>
+		<if test="dto.dSpec != null and dto.dSpec != ''" >
+		    AND ProduceM_Spec = #{dto.dSpec,jdbcType=VARCHAR} 
+		</if>
+  </select>
+  <!-- 获取查询菜单可选择的字段值部分 -->
+  <select id="getProNames" resultType="String" parameterType="java.lang.String">
+	    select Pro_Name from view_wms_contract
+	    where WarehouseCode = 'SS31'
+    		AND Pro_Name is not null AND Pro_Name !=''
+    	<if test="like != null and like != ''" >
+    		AND ContractNo like "%"#{like,jdbcType=VARCHAR}"%"
+    	</if>
+    	<if test="notLike != null and notLike != ''" >
+    		AND ContractNo not like "%"#{notLike,jdbcType=VARCHAR}"%"
+    	</if>
+			AND D_Weight != 0
+		group by Pro_Name;
+  </select>
+  <select id="getDSteels" resultType="String" parameterType="java.lang.String">
+	    select D_Steel from view_wms_contract
+	    where WarehouseCode = 'SS31'
+    		AND D_Steel is not null AND D_Steel !=''
+    	<if test="like != null and like != ''" >
+    		AND ContractNo like "%"#{like,jdbcType=VARCHAR}"%"
+    	</if>
+    	<if test="notLike != null and notLike != ''" >
+    		AND ContractNo not like "%"#{notLike,jdbcType=VARCHAR}"%"
+    	</if>
+			AND D_Weight != 0
+		group by D_Steel;
+  </select>
+  <select id="getDSpecs" resultType="String" >
+	    select D_Spec from view_wms_contract
+	    where WarehouseCode = 'SS31'
+    		AND D_Spec is not null AND D_Spec !=''
+    	<if test="like != null and like != ''" >
+    		AND ContractNo like "%"#{like,jdbcType=VARCHAR}"%"
+    	</if>
+    	<if test="notLike != null and notLike != ''" >
+    		AND ContractNo not like "%"#{notLike,jdbcType=VARCHAR}"%"
+    	</if>
+			AND D_Weight != 0
+		group by D_Spec;
+  </select>
+  <select id="getDStandards" resultType="String" parameterType="java.lang.String">
+    <!-- select D_Standards from view_wms_contract
+    where WarehouseCode = 'SS31'
+    	AND D_Standards is not null AND D_Standards !=''
+    	<if test="like != null and like != ''" >
+    	AND ContractNo like "%"#{like,jdbcType=VARCHAR}"%"
+    	</if>
+    	<if test="notLike != null and notLike != ''" >
+    	AND ContractNo not like "%"#{notLike,jdbcType=VARCHAR}"%"
+    	</if>
+		AND D_Weight != 0
+	group by D_Standards; -->
+	select S_No As D_Standards from producem_standards
+  </select>
+  <select id="getVWMsByBillNo" resultMap="BaseResultMap2" parameterType="java.lang.String">
+	SELECT *FROM
+	ProduceM_WorkCard_WorkFlow
+	WHERE
+	ProduceM_BillNo = #{BillNo,jdbcType=VARCHAR}
+  </select>
+  <!-- 成品精确查询-->
+  <select id="statisticVWC" resultType="java.util.Map" >
+  	select sum(D_Weight) as totalWeight, sum(D_Quantity) as totalQuantity from view_wms_contract
+    where WarehouseCode = 'SS31'
+    	<if test="like != null and like != ''" >
+    	AND ContractNo like "%"#{like,jdbcType=VARCHAR}"%"
+    	</if>
+    	<if test="notLike != null and notLike != ''" >
+    	AND ContractNo not like "%"#{notLike,jdbcType=VARCHAR}"%"
+    	</if>
+		AND D_Weight != 0
+	  <if test="dto.proName != null and dto.proName != ''" >
+	      AND Pro_Name = #{dto.proName,jdbcType=VARCHAR} 
+	  </if>
+	  <if test="dto.dSpec != null and dto.dSpec != ''" >
+	      AND D_Spec = #{dto.dSpec,jdbcType=VARCHAR} 
+	  </if>
+	  <if test="dto.contractNo != null and dto.contractNo != ''" >
+		  AND ContractNo like "%"#{dto.contractNo,jdbcType=VARCHAR}"%"
+	  </if>
+	  <if test="dto.dSteel != null and dto.dSteel != ''" >
+	      AND D_Steel = #{dto.dSteel,jdbcType=VARCHAR} 
+	  </if>
+	  <if test="dto.dStandards != null and dto.dStandards != ''" >
+	      AND D_Standards = #{dto.dStandards,jdbcType=VARCHAR} 
+	  </if>
+  </select>
+  <!-- 成品模糊查询-->
+  <select id="statisticFuzzyVWC" resultType="java.util.Map">
+  	select sum(t.D_Weight) as totalWeight, sum(t.D_Quantity) as totalQuantity from 
+	(
+	select D_Quantity,D_Weight,
+				SPLIT_STR(D_Spec, "x", 1) as num1, SPLIT_STR(D_Spec, "x", 2) as num2 from view_wms_contract
+	where WarehouseCode = 'SS31'
+			<if test="like != null and like != ''" >
+	    	AND ContractNo like "%"#{like,jdbcType=VARCHAR}"%"
+	    	</if>
+	    	<if test="notLike != null and notLike != ''" >
+	    	AND ContractNo not like "%"#{notLike,jdbcType=VARCHAR}"%"
+	    	</if> 
+			AND D_Weight != 0
+	  <if test="dto.proName != null and dto.proName != ''" >
+	      AND Pro_Name = #{dto.proName,jdbcType=VARCHAR} 
+	  </if>
+	  <if test="dto.contractNo != null and dto.contractNo != ''" >
+		  AND ContractNo like "%"#{dto.contractNo,jdbcType=VARCHAR}"%"
+	  </if>
+	  <if test="dto.dSteel != null and dto.dSteel != ''" >
+	      AND D_Steel = #{dto.dSteel,jdbcType=VARCHAR} 
+	  </if>
+	  <if test="dto.dStandards != null and dto.dStandards != ''" >
+	      AND (D_Standards = #{dto.dStandards,jdbcType=VARCHAR} 
+	      		OR D_Standards is null 
+	      		OR D_Standards = "")
+	  </if>
+	) t
+	where num1 &gt;= #{dto.under_diameter,jdbcType=FLOAT}
+		and num1 &lt;= #{dto.up_diameter,jdbcType=FLOAT} 
+		and num2 &gt;= #{dto.under_thickness,jdbcType=FLOAT}
+		and num2 &lt;= #{dto.up_thickness,jdbcType=FLOAT} 
+  </select>
+  <!-- 在制品精确查询 -->
+  <select id="statisticVMW" resultType="java.util.Map">
+  	select sum(ProduceM_Weight) as totalWeight, sum(ProduceM_Number) as totalQuantity 
+	from view_my_workflow
+	where 1=1
+			<if test="like != null and like != ''" >
+	    	AND ContractNo like "%"#{like,jdbcType=VARCHAR}"%"
+	    	</if>
+	    	<if test="notLike != null and notLike != ''" >
+	    	AND ContractNo not like "%"#{notLike,jdbcType=VARCHAR}"%"
+	    	</if> 
+			AND D_Weight != 0
+			
+			<!-- <if test="dto.proName != null and dto.proName != ''" >
+			    AND Pro_Name = #{dto.proName,jdbcType=VARCHAR} 
+			</if> -->
+			<if test="dto.dSteel != null and dto.dSteel != ''" >
+			    AND D_Steel = #{dto.dSteel,jdbcType=VARCHAR} 
+			</if>
+			<if test="dto.contractNo != null and dto.contractNo != ''" >
+		 	 	AND ContractNo like "%"#{dto.contractNo,jdbcType=VARCHAR}"%"
+		  	</if>
+			<if test="dto.dStandards != null and dto.dStandards != ''" >
+			    AND D_Standards = #{dto.dStandards,jdbcType=VARCHAR} 
+			</if>
+			<if test="dto.dSpec != null and dto.dSpec != ''" >
+			    AND ProduceM_Spec = #{dto.dSpec,jdbcType=VARCHAR} 
+			</if>
+  </select>
+  <!-- 在制品模糊查询 -->
+  <select id="statisticFuzzyVMW" resultType="java.util.Map">
+  	select sum(t.ProduceM_Weight) as totalWeight, sum(t.ProduceM_Number) as totalQuantity from 
+	(
+	select ProduceM_Weight,ProduceM_Number,
+				SPLIT_STR(ProduceM_Spec, "x", 1) as num1, SPLIT_STR(ProduceM_Spec, "x", 2) as num2 from view_my_workflow
+	where 1=1
+			<if test="like != null and like != ''" >
+	    	AND ContractNo like "%"#{like,jdbcType=VARCHAR}"%"
+	    	</if>
+	    	<if test="notLike != null and notLike != ''" >
+	    	AND ContractNo not like "%"#{notLike,jdbcType=VARCHAR}"%"
+	    	</if> 
+			AND D_Weight != 0
+<!-- 	  <if test="dto.proName != null and dto.proName != ''" >
+	      AND Pro_Name = #{dto.proName,jdbcType=VARCHAR} 
+	  </if> -->
+	  <if test="dto.contractNo != null and dto.contractNo != ''" >
+ 	 	  AND ContractNo like "%"#{dto.contractNo,jdbcType=VARCHAR}"%"
+	  </if>
+	  <if test="dto.dSteel != null and dto.dSteel != ''" >
+	      AND D_Steel = #{dto.dSteel,jdbcType=VARCHAR} 
+	  </if>
+	  <if test="dto.dStandards != null and dto.dStandards != ''" >
+	      AND (D_Standards = #{dto.dStandards,jdbcType=VARCHAR} 
+	      		OR D_Standards is null 
+	      		OR D_Standards = "")
+	  </if>
+	) t
+	where num1 &gt;= #{dto.under_diameter,jdbcType=FLOAT}
+		and num1 &lt;= #{dto.up_diameter,jdbcType=FLOAT} 
+		and num2 &gt;= #{dto.under_thickness,jdbcType=FLOAT}
+		and num2 &lt;= #{dto.up_thickness,jdbcType=FLOAT} 
+  </select>
+</mapper>

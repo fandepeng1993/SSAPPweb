@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>ppt评审管理</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+	<link href="../../css/font-awesome.min.css" rel="stylesheet">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+
+	//设定查看的权限。1：查看所有；2：查看直属下级；3：查看所有下级；4：查看自己；
+	var selPri = -1;
+	//当前页面所属菜单的menuCode
+    var menuCode;
+	//根据权限渲染页面
+	$(document).ready(function() { 
+		menuCode = Request["menuCode"];
+		$.ajax({
+		      url: "../../sessionAdmin/getPri",
+		      datatype: "json",
+		      type: "get",
+		      data: {},
+		      success: function (data, status, xhr) {
+		    	  	var pathname = window.location.pathname;
+		    	  	var url = pathname.substring(pathname.indexOf("/", 1) + 1, pathname.length);
+		    	  	$.each(eval("(" + data + ")"), function(index, item) {
+		      			if(item.menuUrl == url) {
+		      				if(item.menuName == "查看") {
+		      					selPri = 1;
+		      					initTable("../../pptTopicAdmin/getPPTTopics");
+		      					lookShow();
+		      				} else if(item.menuName == "增加") {
+		      					$("#add-g").show();
+		      				} else if(item.menuName == "修改") {
+		      					$("#update-g").show();
+		      				} else if(item.menuName == "删除") {
+		      					$("#delete-g").show();
+		      				} else if(item.menuName == "包含评委") {
+		      					$("#contain").show();
+		      				}
+		      			}
+	    	  		});
+		      	} 
+			});
+		});
+	
+	/* 展示关键字查询和高级搜索的相关按钮  */
+	function lookShow() {
+		$("#search-g").show();
+		$("#keySpan").show();
+		$("#keyWords").show();
+		$("#checkTool").show();
+	}
+	
+	/* 初始化表单展示数据 */
+	var pptTopics = null;
+	var ajaxUrl = null;
+	function initTable(url) {
+		ajaxUrl = url;
+		$.ajax({
+			url: url,
+			datatype: "json",
+			type: "get",
+			data: {},
+			success: function (data, status, xhr) {
+				$("#voTable").empty();
+				//把从后台获取到的json字符串解析成json对象
+				pptTopics = $.parseJSON(data);
+				totalRecords = pptTopics.length;
+				//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+				if(totalRecords % pageSize != 0) {
+					totalPages = Math.floor(totalRecords / pageSize) + 1;
+				} else {
+					totalPages = totalRecords / pageSize;
+				}
+				//根据totalPages初始化页码插件
+				$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+				$("#Pagination").pagination(totalPages);
+			} 
+		});
+	}
+	
+	/* 遍历展示数据 */
+	var pageSize = 10;//当前页的容量
+	var pageNo = 1;//当前的页码
+	var totalRecords = 0;//获取数据的总条数
+	var totalPages = 0;//总页数
+	function circleInfos() {
+		 $("#voTable").empty();
+		 $.each(pptTopics, function(index, item) {
+			 if(index >= ((pageNo-1)*pageSize) && index < (pageNo*pageSize)) {
+				 new UserCommon().fillTable("voTable",item,index);
+			 } else if(index > (pageNo*pageSize)) {
+				 return;
+			 }
+			 //为checkbox添加监听事件
+			 new UserCommon().checkboxListener();
+	      });
+	}
+	
+	/* 根据搜索关键字获取相应ppt主题信息 */
+	function getPPTTopicsByKey() {
+		var keyWords = $("#keyWords").val();
+		$.ajax({
+			url : "../../pptTopicAdmin/getPPTTopicsByKey?keyWords="
+					+ encodeURI(keyWords),
+			datatype : "json",
+			type : "get",
+			data : {},
+			success : function(data, status, xhr) {
+				$("#voTable").empty();
+				//从后台返回的数据是List,直接就转换成JSON数组对象
+				pptTopics = data;
+				totalRecords = pptTopics.length;
+				if (totalRecords % pageSize != 0) {
+					totalPages = Math.floor(totalRecords / pageSize) + 1;
+				} else {
+					totalPages = totalRecords / pageSize;
+				}
+
+				$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+				$("#Pagination").pagination(totalPages);
+			}
+		});
+	}
+	
+	/* 添加ppt主题 */
+	function addPPTTopic() {
+		admin_role_add('<strong>ppt主题添加</strong>',"addPPTTopic.html?menuCode=" + menuCode,'660');
+	}
+	
+	/* 选择修改ppt主题后填充相关信息 */
+	function fillUpdatePPTTopic() {
+		var but = $("input[name='selectFlag']");
+		var topicId;
+		var num = 0;
+		for(var i = 0; i < but.length; i++) {
+			if(but[i].checked) { 
+				if(num == 0) {
+					topicId = but[i].value;
+				}
+				num += 1;
+			}
+		} 
+		if(num == 1) {
+			$.each(pptTopics, function(index, item) {
+				//遍历已获取到的pptTopics中的数据，跟select出来的数据进行匹配
+				if(item.topicId == topicId) {
+					admin_role_add('<strong>ppt主题修改</strong>',"editPPTTopic.html?menuCode=" + menuCode+ "&topicId=" + item.topicId,'660');
+				}
+		    });
+		} else {
+			new UserCommon().check("success","请选择一个问卷！",null,"warning");
+		}
+	}
+	
+	/* 删除ppt主题 */
+	function deletePPTTopics() {
+		var str = "";
+		$("input[name='selectFlag']").each(function(){
+			if($(this).is(':checked')) str += $(this).val() + ",";
+		});
+		if(str != null && str.trim() != "") {
+			str = str.substring(0, str.length-1);
+			layer.confirm('要删除么？',function(index){
+				$.ajax({
+				      url: "../../pptTopicAdmin/deletePPTTopics/" + str,
+				      datatype: "text",
+				      type: "delete",
+				      data: {},
+				      success: function (data) {
+				    	  var json = eval("(" + data + ")");
+				    	  if(json.status == 1) {
+				    		  new UserCommon().check("success",json.msg,null,"success");
+				    		  initTable(ajaxUrl);
+				    		  layer.close(index);
+				    	  } else {
+				    		  new UserCommon().check("fail",json.msg,null,"fail");
+				    	  }
+				      }
+				});
+			});
+		} else {
+			new UserCommon().check("success","请选择要删除的ppt主题！",null,"warning");
+		}
+	}
+	
+	/* 根据topicId查看当前主题下包含的评委 */
+	function containRater() {
+		var but = $("input[name='selectFlag']");
+		var num = 0;
+		var topicId;
+		for(var i=0; i<but.length; i++) {
+			if(but[i].checked) { 
+				if(num == 0) {
+					topicId = but[i].value;
+				}
+				num += 1;
+			}
+		}
+		if(num == 1) {
+			admin_role_add('<strong>查看包含评委</strong>',"containRater.html?topicId=" + topicId, iframeJson.width*0.8, iframeJson.height*0.9);
+		} else {
+			new UserCommon().check("success","请选中一个角色！",null,"warning");
+		}
+	}
+	
+	/* 查看详情 */
+	function fillDetail(topicId) {
+		admin_role_add('<strong>ppt主题详情查看</strong>',"viewPPTTopic.html?topicId=" + topicId,'660');
+	}
+	
+	/*管理员-角色-添加*/
+	function admin_role_add(title,url,w,h){
+		if(typeof(h) == "undefined") {
+			new UserCommon().layer_show(title,url,w);
+		} else {
+			new UserCommon().layer_showBySize(title,url,w,h);
+		}
+	}
+	
+	/* 监听事件 */
+	function keyDown(e) {
+		if(e.keyCode===13){
+			getPPTTopicsByKey();
+		}else{
+			return;
+		}
+	};
+	
+</script >
+</head>
+<body>
+	<div class="bt-div">
+		<div class="bt-div-in">
+			<button id="add-g" class="btn btn-default btn-xs bt-one"
+				onclick="addPPTTopic()">
+				<span class="glyphicon glyphicon-plus color-add"></span> 添加
+			</button>
+			<button id="update-g" class="btn btn-default btn-xs bt-two"
+				onclick="fillUpdatePPTTopic()">
+				<span class="glyphicon glyphicon-edit color-edit"></span> 修改
+			</button>
+			<button id="delete-g" class="btn btn-default btn-xs bt-three"
+				onclick="deletePPTTopics()">
+				<span class="glyphicon glyphicon-trash color-del"></span> 删除
+			</button>
+			<button type="button" class="btn btn-default btn-xs bt-big" id="contain" onclick="containRater()">
+				<span class="glyphicon glyphicon-user color-bh"></span> 包含评委
+			</button>
+			<span class="bt-div-title" id="keySpan">ppt主题:</span> 
+			<input class="bt-div-input" type="text" id="keyWords" onkeydown=keyDown(event)/>
+			<button class="btn btn-default bt-div-bt" id="search-g"
+				onclick="getPPTTopicsByKey()">
+				<span class="glyphicon glyphicon-search color-zn"></span> 搜索
+			</button>
+		</div>
+	</div>
+	<div class="bt-div-two-table">
+		<div class="table-responsive centerTable">
+			<table class="table table-data-bottom text-center tableHidden">
+				<thead>
+					<tr class="table-first-tr" fieldType="controlCB" fieldName="topicId">
+						<th fieldType="checkbox" fieldName="topicId" >
+							<input type="checkbox" name="ifAll" class="all">
+						</th>
+						
+						<th fieldType="num" >序号</th>
+						<th fieldType="text" fieldName="topicContent">ppt主题</th>
+						<th fieldType="text" fieldName="topicCreateMan">创建人</th>
+						<th fieldType="datetime" fieldName="topicCreateTime">创建时间</th>
+						<th fieldType="detailInfo" fieldName="topicId">内容</th>
+						<!-- 若fieldType的类型是text,datatime,num, 就直接将fieldName的值展示；若是fillTopic等onclick事件，就相当于把fieldName的值直接作为参数传给函数-->
+					</tr>
+				</thead>
+				<tbody id="voTable">
+				</tbody>
+			</table>
+		</div>
+		<!-- 分页 -->
+		<div class="pages">
+			<div id="Pagination"></div>
+			<div class="searchPage">
+				<span class="page-sum" id="sumPage"></span> <span class="page-go">跳转<input
+					type="text">页
+				</span> <a class="page-btn" href="javascript:;">GO</a>
+			</div>
+		</div>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert"
+				aria-hidden="true">&times;</button>
+			<span></span>
+		</div>
+	</div>
+	<div class="search-background" id="background" onclick="hidebg()"></div>
+</body>
+</html>

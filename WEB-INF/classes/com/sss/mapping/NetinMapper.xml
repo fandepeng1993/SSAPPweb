@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.INetinDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.Netin" >
+    <id column="netin_id" property="netinId" jdbcType="INTEGER" />
+    <result column="netin_no" property="netinNo" jdbcType="VARCHAR" />
+    <result column="netinUnit" property="netinUnit" jdbcType="VARCHAR" />
+    <result column="netinDate" property="netindate" jdbcType="VARCHAR" />
+    <result column="validDate" property="validdate" jdbcType="VARCHAR" />
+    <result column="photoUrls" property="photoUrls" jdbcType="VARCHAR" />
+    <association property="user" javaType="com.sss.pojo.User">
+		<id column="su_user_id" property="userId" jdbcType="INTEGER" />
+    	<result column="su_user_name" property="userName" jdbcType="VARCHAR" />
+    	<result column="su_user_photoUrl" property="photoUrl" jdbcType="VARCHAR" />
+	    <result column="su_telephone" property="telephone" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery" >
+	select n.*,
+		u.user_id as su_user_id,
+		u.user_name as su_user_name,
+		u.photoUrl as su_user_photoUrl,
+		u.telephone as su_telephone
+	from
+		ss_netin n
+	left join
+		ss_user u
+	on
+		n.applicantId = u.user_id
+  </sql>
+  <select id="selectList" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	order by n.netin_id desc
+  </select>
+  <select id="selectListCount" resultType="java.lang.Integer">
+	select count(*) from ss_netin
+  </select>
+  <select id="selNetinsLazy" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    order by n.netin_id desc
+    limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="selNetinsByKeyLazy" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where n.netinUnit like "%"#{keyWords,jdbcType=VARCHAR}"%"
+    order by n.netin_id desc
+    limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where n.netin_id = #{netinId,jdbcType=INTEGER}
+  </select>
+  <select id="selByNetinNo" resultMap="BaseResultMap" parameterType="java.lang.String">
+	<include refid="associateQuery" />
+	where n.netin_no like "%"#{keyWords,jdbcType=VARCHAR}"%" order by n.netin_id desc
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_netin
+    where netin_id = #{netinId,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.Netin" >
+    insert into ss_netin (netin_id, netin_no, netinUnit, 
+      applicantId, netinDate, validDate, 
+      photoUrls)
+    values (#{netinId,jdbcType=INTEGER}, #{netinNo,jdbcType=VARCHAR}, #{netinUnit,jdbcType=VARCHAR}, 
+      #{user.userId,jdbcType=INTEGER}, #{netindate,jdbcType=VARCHAR}, #{validdate,jdbcType=VARCHAR}, 
+      #{photoUrls,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.Netin" >
+    insert into ss_netin
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="netinId != null" >
+        netin_id,
+      </if>
+      <if test="netinNo != null" >
+        netin_no,
+      </if>
+      <if test="netinUnit != null" >
+        netinUnit,
+      </if>
+      <if test="user != null and user.userId != null and user.userId != ''" >
+        applicantId,
+      </if>
+      <if test="netindate != null" >
+        netinDate,
+      </if>
+      <if test="validdate != null" >
+        validDate,
+      </if>
+      <if test="photoUrls != null" >
+        photoUrls,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="netinId != null" >
+        #{netinId,jdbcType=INTEGER},
+      </if>
+      <if test="netinNo != null" >
+        #{netinNo,jdbcType=VARCHAR},
+      </if>
+      <if test="netinUnit != null" >
+        #{netinUnit,jdbcType=VARCHAR},
+      </if>
+      <if test="user != null and user.userId != null and user.userId != ''" >
+        #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="netindate != null" >
+        #{netindate,jdbcType=VARCHAR},
+      </if>
+      <if test="validdate != null" >
+        #{validdate,jdbcType=VARCHAR},
+      </if>
+      <if test="photoUrls != null" >
+        #{photoUrls,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.Netin" >
+    update ss_netin
+    <set >
+      <if test="netinNo != null" >
+        netin_no = #{netinNo,jdbcType=VARCHAR},
+      </if>
+      <if test="netinUnit != null" >
+        netinUnit = #{netinUnit,jdbcType=VARCHAR},
+      </if>
+      <if test="user != null and user.userId != null and user.userId != ''" >
+        applicantId = #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="netindate != null" >
+        netinDate = #{netindate,jdbcType=VARCHAR},
+      </if>
+      <if test="validdate != null" >
+        validDate = #{validdate,jdbcType=VARCHAR},
+      </if>
+      <if test="photoUrls != null" >
+        photoUrls = #{photoUrls,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where netin_id = #{netinId,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.Netin" >
+    update ss_netin
+    set netin_no = #{netinNo,jdbcType=VARCHAR},
+      netinUnit = #{netinUnit,jdbcType=VARCHAR},
+      applicantId = #{user.userId,jdbcType=INTEGER},
+      netinDate = #{netindate,jdbcType=VARCHAR},
+      validDate = #{validdate,jdbcType=VARCHAR},
+      photoUrls = #{photoUrls,jdbcType=VARCHAR}
+    where netin_id = #{netinId,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+  </select>
+</mapper>

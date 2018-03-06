@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IProductivePowerDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.ProductivePower" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <id column="supply_id" property="supplyId" jdbcType="INTEGER" />
+    <result column="machine_type" property="machineType" jdbcType="VARCHAR" />
+    <result column="measure" property="measure" jdbcType="VARCHAR" />
+    <result column="number" property="number" jdbcType="VARCHAR" />
+    <result column="createdate" property="createDate" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="associateQuery">
+   	SELECT 
+		*
+	FROM 
+		ss_productivepower 
+  </sql>
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by createdate desc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selProBysupId" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where supply_id = #{supId,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_productivepower
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.ProductivePower" >
+    insert into ss_productivepower (id, supply_id, machine_type, measure, 
+      number, createdate)
+    values (#{id,jdbcType=INTEGER}, #{supplyId,jdbcType=VARCHAR}, #{machineType,jdbcType=VARCHAR}, #{measure,jdbcType=VARCHAR}, 
+      #{number,jdbcType=VARCHAR}, #{createDate,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertEntitys" parameterType="java.util.List" >
+    insert into ss_productivepower (id, supply_id, machine_type, measure, 
+      number, createdate)
+    values
+    <foreach collection="list" item="item" index="index" separator=",">
+     (null, #{item.supplyId,jdbcType=VARCHAR}, #{item.machineType,jdbcType=VARCHAR}, #{item.measure,jdbcType=VARCHAR}, 
+      #{item.number,jdbcType=VARCHAR}, now())
+      </foreach>
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.ProductivePower" >
+  	<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+	</selectKey>
+    insert into ss_productivepower
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="machineType != null" >
+        machine_type,
+      </if>
+      <if test="measure != null" >
+        measure,
+      </if>
+      <if test="number != null" >
+        number,
+      </if>
+      <if test="supplyId != null" >
+        supply_id,
+      </if>
+        createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="machineType != null" >
+        #{machineType,jdbcType=VARCHAR},
+      </if>
+      <if test="measure != null" >
+        #{measure,jdbcType=VARCHAR},
+      </if>
+      <if test="number != null" >
+        #{number,jdbcType=VARCHAR},
+      </if>
+      <if test="supplyId != null" >
+        #{supplyId,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate == null or createDate == ''" >
+        now(),
+      </if>
+      <if test="createDate != null and createDate != ''" >
+        #{createDate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.ProductivePower" >
+    update ss_productivepower
+    <set >
+      <if test="machineType != null" >
+        machine_type = #{machineType,jdbcType=VARCHAR},
+      </if>
+      <if test="measure != null" >
+        measure = #{measure,jdbcType=VARCHAR},
+      </if>
+      <if test="number != null" >
+        number = #{number,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        createdate = #{createDate,jdbcType=VARCHAR},
+      </if>
+      <if test="supplyId != null" >
+        supply_id = #{supplyId,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.ProductivePower" >
+    update ss_productivepower
+    set machine_type = #{machineType,jdbcType=VARCHAR},
+      measure = #{measure,jdbcType=VARCHAR},
+      number = #{number,jdbcType=VARCHAR},
+      createdate = #{createDate,jdbcType=VARCHAR},
+      supply_id = #{supplyId,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  
+   <update id="updateList" parameterType="java.util.List" >
+    update ss_productivepower
+	<trim prefix="set" suffixOverrides=",">
+		<trim prefix="machineType = case" suffix="end,">
+		  <foreach collection="suList" item="item" index="index">
+			<if test="item.machineType != null">
+				when id=#{item.id} then #{item.machineType,jdbcType=VARCHAR}
+			</if>
+		  </foreach>
+		</trim>
+		<trim prefix="measure = case" suffix="end,">
+		  <foreach collection="suList" item="item" index="index">
+			<if test="item.measure != null">
+				when id=#{item.id} then #{item.measure,jdbcType=INTEGER}
+			</if>
+		  </foreach>
+		</trim>
+		<trim prefix="number = case" suffix="end,">
+		  <foreach collection="suList" item="item" index="index">
+			<if test="item.number != null">
+				when id=#{item.id} then #{item.number,jdbcType=INTEGER}
+			</if>
+		  </foreach>
+		</trim>
+      </trim>
+	where id in
+	  <foreach item="item" index="index" collection="suList" open="(" separator="," close=")">  
+		  #{item.id}  
+	  </foreach>   	
+  </update>
+  <delete id="deleteList" parameterType="java.lang.Integer" >
+    delete from ss_productivepower
+    where id in
+     <foreach item="item" index="index" collection="suList" open="(" separator="," close=")">  
+		  #{item.id}  
+	 </foreach> 
+  </delete>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by createdate desc
+  </select>
+</mapper>

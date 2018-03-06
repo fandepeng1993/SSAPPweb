@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.mes.dao.IChkPackageDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.mes.pojo.ChkPackage" >
+    <id column="D_Id" property="dId" jdbcType="INTEGER" />
+    <result column="D_ParentId" property="dParentid" jdbcType="INTEGER" />
+    <result column="D_Type" property="dType" jdbcType="VARCHAR" />
+    <result column="D_BarCode" property="dBarcode" jdbcType="VARCHAR" />
+    <result column="ContractNo" property="contractno" jdbcType="VARCHAR" />
+    <result column="D_Name" property="dName" jdbcType="VARCHAR" />
+    <result column="D_Steel" property="dSteel" jdbcType="VARCHAR" />
+    <result column="D_Spec" property="dSpec" jdbcType="VARCHAR" />
+    <result column="D_Quantity" property="dQuantity" jdbcType="INTEGER" />
+    <result column="D_Unit" property="dUnit" jdbcType="VARCHAR" />
+    <result column="D_Weight" property="dWeight" jdbcType="DECIMAL" />
+    <result column="D_Numbers" property="dNumbers" jdbcType="DECIMAL" />
+    <result column="D_Weights" property="dWeights" jdbcType="DECIMAL" />
+    <result column="D_percent" property="dPercent" jdbcType="INTEGER" />
+    <result column="D_verify" property="dVerify" jdbcType="VARCHAR" />
+    <result column="D_Check_type" property="dCheckType" jdbcType="VARCHAR" />
+    <result column="D_Standards" property="dStandards" jdbcType="VARCHAR" />
+    <result column="D_FurnaceNo" property="dFurnaceno" jdbcType="VARCHAR" />
+    <result column="D_HeatNo" property="dHeatno" jdbcType="VARCHAR" />
+    <result column="D_BoxNo" property="dBoxno" jdbcType="VARCHAR" />
+    <result column="R_Quantity" property="rQuantity" jdbcType="INTEGER" />
+    <result column="R_Unit" property="rUnit" jdbcType="VARCHAR" />
+    <result column="R_Weight" property="rWeight" jdbcType="DECIMAL" />
+    <result column="R_Numbers" property="rNumbers" jdbcType="DECIMAL" />
+    <result column="R_Weights" property="rWeights" jdbcType="DECIMAL" />
+    <result column="N_Quantity" property="nQuantity" jdbcType="INTEGER" />
+    <result column="N_Unit" property="nUnit" jdbcType="VARCHAR" />
+    <result column="N_Weight" property="nWeight" jdbcType="DECIMAL" />
+    <result column="N_Numbers" property="nNumbers" jdbcType="DECIMAL" />
+    <result column="N_Weights" property="nWeights" jdbcType="DECIMAL" />
+    <result column="D_StartTime" property="dStarttime" jdbcType="VARCHAR" />
+    <result column="D_EndTime" property="dEndtime" jdbcType="VARCHAR" />
+    <result column="D_WaitTime" property="dWaittime" jdbcType="INTEGER" />
+    <result column="D_CreateTime" property="dCreatetime" jdbcType="VARCHAR" />
+    <result column="D_Area" property="dArea" jdbcType="VARCHAR" />
+    <result column="D_Rang" property="dRang" jdbcType="VARCHAR" />
+    <result column="DeptID" property="deptid" jdbcType="INTEGER" />
+    <result column="D_Supply" property="dSupply" jdbcType="VARCHAR" />
+    <result column="D_HoldNo" property="dHoldno" jdbcType="VARCHAR" />
+    <result column="D_State" property="dState" jdbcType="INTEGER" />
+  </resultMap>
+  <cache 
+  	eviction="FIFO" 
+  	flushInterval="900000" 
+	size="512" 
+	readOnly="true"/> 
+  <select id="getViewEntitys" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select D_BarCode,ContractNo,D_BoxNo,D_Weight,D_Quantity,D_Numbers,D_StartTime,D_EndTime from chk_package 
+    where D_StartTime>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <select id="getChkpsByPageNoAndSize" resultMap="BaseResultMap" >
+    select D_BarCode,ContractNo,D_BoxNo,D_Weight,D_Quantity,D_Numbers,D_StartTime,D_EndTime from chk_package 
+    where D_StartTime>=#{startTime,jdbcType=VARCHAR} limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="getEntitysCount" resultType="java.lang.Integer" parameterType="java.lang.String" >
+    select count(*) from chk_package
+    where D_StartTime>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <select id="getTotalWeight" resultType="java.math.BigDecimal" parameterType="java.lang.String" >
+    select sum(D_Weight) from chk_package
+    where D_StartTime>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <select id="getTotalQuantity" resultType="java.math.BigDecimal" parameterType="java.lang.String" >
+    select sum(D_Quantity) from chk_package
+    where D_StartTime>=#{startTime,jdbcType=VARCHAR}
+  </select>
+</mapper>

@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IDataDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.Data" >
+    <id column="data_id" property="dataId" jdbcType="INTEGER" />
+    <result column="title" property="title" jdbcType="VARCHAR" />
+    <result column="category" property="category" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    
+    <association property="user" javaType="com.sss.pojo.User">
+		<id column="du_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="du_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="du_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="du_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="du_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="du_user_status" property="status" jdbcType="VARCHAR" />
+	    <result column="du_user_email" property="email" jdbcType="VARCHAR" />
+	    <result column="du_user_birthDate" property="birthdate" jdbcType="VARCHAR" />
+	    <result column="du_user_entryDate" property="entrydate" jdbcType="VARCHAR" />
+	    <result column="du_user_lastlogindate" property="lastlogindate" jdbcType="VARCHAR" />
+	    <result column="du_user_telephone" property="telephone" jdbcType="VARCHAR" />
+	    <result column="du_user_address" property="address" jdbcType="VARCHAR" />
+	    <result column="du_user_eduBackground" property="edubackground" jdbcType="VARCHAR" />
+	    <result column="du_user_major" property="major" jdbcType="VARCHAR" />
+	    <result column="du_user_school" property="school" jdbcType="VARCHAR" />
+	    <result column="du_user_photoUrl" property="photoUrl" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <resultMap id="ResultMapWithBLOBs" type="com.sss.pojo.Data" extends="BaseResultMap" >
+    <result column="content" property="content" jdbcType="LONGVARCHAR" />
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		d.*,
+  		u.user_id as du_user_id,
+  		u.user_name as du_user_name,
+  		u.user_no as du_user_no,
+  		u.position_id as du_position_id,
+  		u.sex as du_user_sex,
+  		u.status as du_user_status,
+  		u.email as du_user_email,
+  		u.birthdate as du_user_birthDate,
+  		u.entrydate as du_user_entryDate,
+  		u.lastlogindate as du_user_lastlogindate,
+  		u.telephone as du_user_telephone,
+  		u.address as du_user_address,
+  		u.edubackground as du_user_eduBackground,
+  		u.major as du_user_major,
+  		u.school as du_user_school,
+  		u.photoUrl as du_user_photoUrl
+    from 
+    	ss_data d
+   	left join
+   		ss_user u
+   	on
+   		d.user_id = u.user_id
+  </sql>
+  <!-- 返回一个list的写法 -->
+  <select id="selectList"  resultMap="ResultMapWithBLOBs"  >
+    <include refid="associateQuery" /> order by d.createdate desc
+  </select>
+  
+  <select id="selectByPrimaryKey" resultMap="ResultMapWithBLOBs" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where d.data_id = #{dataId,jdbcType=INTEGER} order by d.createdate desc
+  </select>
+  <select id="selectListByKey"  resultMap="ResultMapWithBLOBs" parameterType="java.lang.String" >
+    <include refid="associateQuery" />
+    where d.title like "%"#{keyWords,jdbcType=VARCHAR}"%" order by d.createdate desc
+  </select> 
+  <select id="selByUserId" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where d.user_id = #{userId,jdbcType=INTEGER} order by d.createdate desc
+  </select>
+  <select id="selByUserIdAndKey" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where d.user_id = #{userId,jdbcType=INTEGER} and d.title like "%"#{keyWords,jdbcType=VARCHAR}"%"
+  	order by d.createdate desc
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_data
+    where data_id = #{dataId,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.Data" >
+    insert into ss_data (data_id, user_id, title, 
+      category, createdate, content
+      )
+    values (#{dataId,jdbcType=INTEGER}, #{user.userId,jdbcType=INTEGER}, #{title,jdbcType=VARCHAR}, 
+      #{category,jdbcType=VARCHAR}, #{createdate,jdbcType=VARCHAR}, #{content,jdbcType=LONGVARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.Data" >
+    insert into ss_data
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="dataId != null" >
+        data_id,
+      </if>
+      <if test="user.userId != null" >
+        user_id,
+      </if>
+      <if test="title != null" >
+        title,
+      </if>
+      <if test="category != null" >
+        category,
+      </if>
+      <if test="content != null" >
+        content,
+      </if>
+      createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="dataId != null" >
+        #{dataId,jdbcType=INTEGER},
+      </if>
+      <if test="user.userId != null" >
+        #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="title != null" >
+        #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="category != null" >
+        #{category,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null" >
+        #{content,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.Data" >
+    update ss_data
+    <set >
+      <if test="user.userId != null" >
+        user_id = #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="title != null" >
+        title = #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="category != null" >
+        category = #{category,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null" >
+        content = #{content,jdbcType=LONGVARCHAR},
+      </if>
+    </set>
+    where data_id = #{dataId,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKeyWithBLOBs" parameterType="com.sss.pojo.Data" >
+    update ss_data
+    set user_id = #{user.userId,jdbcType=INTEGER},
+      title = #{title,jdbcType=VARCHAR},
+      category = #{category,jdbcType=VARCHAR},
+      createdate = #{createdate,jdbcType=VARCHAR},
+      content = #{content,jdbcType=LONGVARCHAR}
+    where data_id = #{dataId,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.Data" >
+    update ss_data
+    set user_id = #{user.userId,jdbcType=INTEGER},
+      title = #{title,jdbcType=VARCHAR},
+      category = #{category,jdbcType=VARCHAR},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where data_id = #{dataId,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by d.createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by d.createdate desc
+  </select>
+</mapper>

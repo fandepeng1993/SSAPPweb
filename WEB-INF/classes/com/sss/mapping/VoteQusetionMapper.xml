@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IVoteQuestionDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.VoteQuestion" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="questionName" property="questionName" jdbcType="VARCHAR" />
+    <result column="isMultiselect" property="isMultiselect" jdbcType="INTEGER" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    
+    <association property="vote" javaType="com.sss.pojo.Vote">
+		<id column="id" property="id" jdbcType="INTEGER" />
+		<result column="title" property="title" jdbcType="VARCHAR" />
+		<result column="enddate" property="enddate" jdbcType="VARCHAR" />
+		<result column="votePri" property="votePri" jdbcType="VARCHAR" />
+		<result column="createdate" property="createdate" jdbcType="VARCHAR" />		
+	</association>
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, voteId, questionName, isMultiselect, createdate
+  </sql>
+    <select id="selByvoteId" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from ss_votequestion
+    where voteId = #{voteId,jdbcType=INTEGER}
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from ss_votequestion
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_votequestion
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.VoteQuestion" >
+    insert into ss_votequestion (id, voteId, questionName, 
+      isMultiselect, createdate)
+    values (#{id,jdbcType=INTEGER}, #{vote.id,jdbcType=INTEGER}, #{questionName,jdbcType=VARCHAR}, 
+      #{isMultiselect,jdbcType=INTEGER},now())
+  </insert>
+  <insert id="insertEntitys" parameterType="java.util.List">
+	insert into ss_votequestion (id, voteId, questionName, 
+      isMultiselect, createdate)
+	values
+	<foreach collection="list" item="item" index="index" separator=",">
+		(null, #{item.vote.id,jdbcType=INTEGER}, #{item.questionName,jdbcType=VARCHAR}, 
+      #{item.isMultiselect,jdbcType=INTEGER},now())
+	</foreach>
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.VoteQuestion" >
+	<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+	</selectKey>
+    insert into ss_votequestion
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="vote != null and vote.id !=null" >
+        voteId,
+      </if>
+      <if test="questionName != null" >
+        questionName,
+      </if>
+      <if test="isMultiselect != null" >
+        isMultiselect,
+      </if>
+        createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="vote != null and vote.id != null" >
+        #{vote.id,jdbcType=INTEGER},
+      </if>
+      <if test="questionName != null" >
+        #{questionName,jdbcType=VARCHAR},
+      </if>
+      <if test="isMultiselect != null" >
+        #{isMultiselect,jdbcType=INTEGER},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.VoteQuestion" >
+    update ss_votequestion
+    <set >
+      <if test="vote != null and vote.id != null" >
+        voteId = #{vote.id,jdbcType=INTEGER},
+      </if>
+      <if test="questionName != null" >
+        questionName = #{questionName,jdbcType=VARCHAR},
+      </if>
+      <if test="isMultiselect != null" >
+        isMultiselect = #{isMultiselect,jdbcType=INTEGER},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.VoteQuestion" >
+    update ss_votequestion
+    set voteId = #{vote.id,jdbcType=INTEGER},
+      questionName = #{questionName,jdbcType=VARCHAR},
+      isMultiselect = #{isMultiselect,jdbcType=INTEGER},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  
+ <update id="updateList" parameterType="java.util.List" >
+    update ss_votequestion
+	<trim prefix="set" suffixOverrides=",">
+		<trim prefix="questionName = case" suffix="end,">
+		  <foreach collection="quList" item="item" index="index">
+			<if test="item.questionName != null">
+				when id=#{item.id} then #{item.questionName,jdbcType=VARCHAR}
+			</if>
+		  </foreach>
+		</trim>
+		<trim prefix="isMultiselect = case" suffix="end,">
+		  <foreach collection="quList" item="item" index="index">
+			<if test="item.isMultiselect != null">
+				when id=#{item.id} then #{item.isMultiselect,jdbcType=INTEGER}
+			</if>
+		  </foreach>
+		</trim>
+      </trim>
+	where id in
+	  <foreach item="item" index="index" collection="quList" open="(" separator="," close=")">  
+		  #{item.id}  
+	  </foreach>   	
+  </update>
+  <delete id="deleteList" parameterType="java.lang.Integer" >
+    delete from ss_votequestion
+    where id in
+     <foreach item="item" index="index" collection="quList" open="(" separator="," close=")">  
+		  #{item.id}  
+	 </foreach> 
+  </delete>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	select * form ss_votequestion
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    select * form ss_votequestion
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+  </select>
+</mapper>

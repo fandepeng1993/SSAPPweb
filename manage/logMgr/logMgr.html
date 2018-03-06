@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>日志管理</title>
+	<link href="../../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome.min.css" rel="stylesheet">
+    <link href="../../css/plugins/iCheck/custom.css" rel="stylesheet">
+	<link rel="stylesheet" href="../../css/plugins/sweetalert/sweetalert.css" type="text/css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css" type="text/css">
+	<link rel="stylesheet" href="../../css/user.common.css" type="text/css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+    
+		//根据权限渲染页面
+		var menuCode;
+		$(document).ready(function(){ 
+			$("#search").show();
+			menuCode = Request["menuCode"];
+			$.ajax({
+			      url: "../../sessionAdmin/getPri",
+			      datatype: "json",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+			    	  var pathname = window.location.pathname;
+			    	  var url = pathname.substring(pathname.indexOf("/", 1) + 1, pathname.length);
+			    	 
+			    	  $.each(eval("(" + data + ")"), function(index, item) {
+			      			if(item.menuUrl == url) {
+			      				if(item.menuName == "查看") {
+			      					initTable();
+			      					$("#searchTable").show();
+			      					$("#logTable").show();
+			      				}
+			      			}
+			    	  });
+			      } 
+			      
+			     
+			});
+		});
+
+		var logs = null;
+		
+		function initTable() {
+		 	$.ajax({
+				url: "../../logAdmin/logs",
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					$("#logTable").empty();
+					logs = data ;
+					totalRecords = data.length;
+					
+					//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+					if(totalRecords % pageSize != 0) {
+						totalPages = Math.floor(totalRecords / pageSize) + 1;
+					} else {
+						totalPages = totalRecords / pageSize;
+					}
+					
+					//根据totalPages初始化页码插件
+					$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+					$("#Pagination").pagination(totalPages);
+					/* $.each(eval("(" + data + ")"), function(index, item) {
+						if(index < pageSize) {
+							addLogInfo(index, item);
+						} else if(index > pageSize) {
+							return;
+						}
+					}); */
+				} 
+			});
+		 	//初始化菜单下拉菜单
+		 	$("#logMenu").empty();
+			var str = "<option value=\"-1\">请选择</option>";
+			$.ajax({
+			      url: "../../menuAdmin/getSubMenus",
+			      datatype: "text",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+						$.each(eval("(" + data + ")"), function(index, item) {
+							str = str + "<option value=\"" + item.menuId + "\">" + item.menuName + "</option>"
+						});
+						$("#logMenu").html(str);
+			      }
+			});
+		}
+		
+		var pageSize = 5;
+		var pageNo = 1;//当前的页码
+		var totalRecords = 0;
+		var totalPages = 0;
+		
+		function circleInfos() {
+			 $("#logTable").empty();
+			 $.each(logs, function(index, item) {
+				 if(index >= ((pageNo-1)*pageSize) && index < (pageNo*pageSize)) {
+					 addInfo(index, item);
+				 } else if(index > (pageNo*pageSize)) {
+					 return;
+				 }
+		      });
+		}
+		/**
+		 * 填充查看所有角色的列表
+		 */
+		function addInfo(index, item) {
+			var str = "";
+			if(index%2 == 0){
+				str = str + "<tr class=\"light\" style=\"font-size:12px;\">";
+			}else{
+				str = str + "<tr class=\"active\" style=\"font-size:12px;\">";
+			}
+			str = str +     "<td title='" + (index+1) + "'>" + (index+1) + "</td>" + 
+						    "<td title='" + item.logMenu + "'>" + item.logMenu + "</td>" + 
+						    "<td title='" + item.logOperate + "'>" + item.logOperate + "</td>" + 
+						    "<td title='" + item.user.userName + "'>" + item.user.userName + "</td>";
+		  	str = str + "<td title='" + item.createdate.substring(0, item.createdate.length-2) + "'>" + item.createdate.substring(0, item.createdate.length-2) + "</td>" +
+		  				"</tr>"; 
+			$("#logTable").append(str);
+			inittAble();
+			
+		}
+		
+		/**
+		 * 根据menuId填充操作类型下拉框
+		 */
+		function fillOperateSelect() {
+		 	$("#logOperate").empty();
+		 	var id = $("#logMenu").val();
+			//var str = "<option value=\"-1\">请选择</option>";
+			$.ajax({
+			      url: "../../menuAdmin/getMenuByPid/" + id,
+			      datatype: "text",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+		    	 	 	var str = "<option value=\"-1\">请选择</option>";
+						$.each(eval("(" + data + ")"), function(index, item) {
+							str = str + "<option value=\"" + item.menuId + "\">" + item.menuName + "</option>"
+						});
+						$("#logOperate").html(str);
+			      }
+			});
+		}
+		/**
+		 * 根据搜索条件搜索相关日志
+		 */
+		function searchLog() {
+			var formObj = $("#searchForm").serializeNestedObject();
+		 	$.ajax({
+			      url: "../../logAdmin/searchLog",
+			      datatype: "text",
+			      type: "post",
+			      data: JSON.stringify(formObj),
+			      success: function (data) {
+			    	  	$("#logTable").empty();
+						logs = eval("(" + data + ")");
+						totalRecords = logs.length;
+						
+						//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+						if(totalRecords % pageSize != 0) {
+							totalPages = Math.floor(totalRecords / pageSize) + 1;
+						} else {
+							totalPages = totalRecords / pageSize;
+						}
+						
+						$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+						$("#Pagination").pagination(totalPages);
+			      }
+			});
+		}
+		
+		function advancedSearch(dto) {
+			$.ajax({
+				url: "../../logAdmin/selectByAdvancedSearch" ,
+				datatype: "json",
+				type: "post",
+				data: JSON.stringify(dto),
+				success: function (data, status, xhr) {
+					$("#logTable").empty();
+					logs = data;
+					totalRecords = data.length;
+					//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+					if(totalRecords % pageSize != 0) {
+						totalPages = Math.floor(totalRecords / pageSize) + 1;
+					} else {
+						totalPages = totalRecords / pageSize;
+					}
+					
+					$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+					$("#Pagination").pagination(totalPages);
+				} 
+			});
+		}
+		
+		function inittAble(){
+			/*初始化 table tr点击事件*/
+			$('.centerTable .table tbody tr').click(function(){
+				$(this).addClass('onColor').siblings().removeClass('onColor');
+			})
+			
+			
+		}
+	</script>
+</head>
+<body>
+<div class="report-content">
+	<div class="bt-div">
+		<form id="searchForm">
+			<div class="bt-div-in" id="searchTable">
+		   		<label>菜单：</label><select name="logMenu" id="logMenu" onchange="fillOperateSelect()" class="bt-input-select"></select>
+		     	<label>类型：</label><select name="logOperate" id="logOperate" class="bt-input-select"><option value = "-1">请选择</option></select>         
+                <label>日期：</label><input id="hello" name="fromDate" class="laydate-icon bt-input-time">至<input id="hello1" name="endDate" class="laydate-icon bt-input-time">		      
+                <label>关键字：</label><input type="text" name="keyWords" class="edit-input">
+                
+                <!-- <button type="button" class="btn btn-xs bt-big" style="display: inline-block;" id="search" onclick="searchLog()">
+					<span class="glyphicon glyphicon-search color-zn"></span>
+					
+				</button> -->
+                
+				 <button type="button" class="btn btn-default btn-xs" style="display: inline-blo nck;" id="search" onclick="searchLog()">
+					<span class="glyphicon glyphicon-search color-zn"></span> 搜索
+					
+				</button> 
+				<!-- <button type="reset" class="btn btn-default btn-xs " onclick="slideRight()" >
+					
+					<span class="glyphicon glyphicon-search color-zn" style="color:#84b03d"></span> 高级搜索
+				</button> -->
+				<button type="button" class="btn btn-default btn-xs bt-big" style="display: inline-block;" onclick="slideRight()">
+					<span class="glyphicon glyphicon-filter color-zn"></span> 高级筛选
+				</button>
+				
+				
+			</div>
+	    </form>
+	</div>
+	<div class="table-responsive centerTable" >
+		<table class="table  text-center tableHidden" style="border-bottom:1px solid #d6d6d6">
+			<thead>
+				<tr style="background:#ededed;">
+					<th fieldType="num">序号</th>
+					<th>菜单</th>
+					<th>操作类型</th>
+					<th>操作人</th>
+					<th>操作时间</th>
+				</tr>
+			</thead>
+			<tbody id="logTable" style="display:none">
+		</tbody>
+		</table> 
+	</div>
+	<div class="pages">
+	   
+        <div id="Pagination"></div>
+        <div class="searchPage">
+          <span class="page-sum" id="sumPage"></span>
+          <span class="page-go">跳转<input type="text">页</span>
+          <a href="javascript:;" class="page-btn">GO</a>
+        </div>
+    </div>
+    <!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+</div>
+
+<script>
+	laydate({
+	    elem: '#hello', //目标元素。由于laydate.js封装了一个轻量级的选择器引擎，因此elem还允许你传入class、tag但必须按照这种方式 '#id .class'
+	    event: 'focus' //响应事件。如果没有传入event，则按照默认的click
+	});
+	laydate({
+	    elem: '#hello1', //目标元素。由于laydate.js封装了一个轻量级的选择器引擎，因此elem还允许你传入class、tag但必须按照这种方式 '#id .class'
+	    event: 'focus' //响应事件。如果没有传入event，则按照默认的click
+	});
+</script>
+<div class="search-background" id="background" onclick="hidebg()"></div>
+</body>
+</html>

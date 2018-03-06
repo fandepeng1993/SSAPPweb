@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.ITaskDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.Task" >
+    <id column="task_id" property="taskId" jdbcType="INTEGER" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    <result column="fromDate" property="fromdate" jdbcType="VARCHAR" />
+    <result column="endDate" property="enddate" jdbcType="VARCHAR" />
+    <result column="title" property="title" jdbcType="VARCHAR" />
+    <result column="content" property="content" jdbcType="VARCHAR" />
+    <result column="category" property="category" jdbcType="VARCHAR" />
+    <result column="status" property="status" jdbcType="INTEGER" />
+    
+    <association property="initiator" javaType="com.sss.pojo.User">
+		<id column="tu_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="tu_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="tu_position_name" property="position.positionName" jdbcType="INTEGER" />
+	    <result column="tu_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="tu_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="tu_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="tu_user_status" property="status" jdbcType="VARCHAR" />
+	    <result column="tu_user_email" property="email" jdbcType="VARCHAR" />
+	    <result column="tu_user_birthDate" property="birthdate" jdbcType="VARCHAR" />
+	    <result column="tu_user_entryDate" property="entrydate" jdbcType="VARCHAR" />
+	    <result column="tu_user_lastlogindate" property="lastlogindate" jdbcType="VARCHAR" />
+	    <result column="tu_user_telephone" property="telephone" jdbcType="VARCHAR" />
+	    <result column="tu_user_address" property="address" jdbcType="VARCHAR" />
+	    <result column="tu_user_eduBackground" property="edubackground" jdbcType="VARCHAR" />
+	    <result column="tu_user_major" property="major" jdbcType="VARCHAR" />
+	    <result column="tu_user_school" property="school" jdbcType="VARCHAR" />
+	    <result column="tu_user_photoUrl" property="photoUrl" jdbcType="VARCHAR" />
+	</association>
+	<association property="executor" javaType="com.sss.pojo.User">
+		<id column="tu_user_id1" property="userId" jdbcType="INTEGER" />
+	    <result column="tu_position_id1" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="tu_position_name1" property="position.positionName" jdbcType="INTEGER" />
+	    <result column="tu_user_no1" property="userNo" jdbcType="VARCHAR" />
+	    <result column="tu_user_name1" property="userName" jdbcType="VARCHAR" />
+	    <result column="tu_user_sex1" property="sex" jdbcType="VARCHAR" />
+	    <result column="tu_user_status1" property="status" jdbcType="VARCHAR" />
+	    <result column="tu_user_email1" property="email" jdbcType="VARCHAR" />
+	    <result column="tu_user_birthDate1" property="birthdate" jdbcType="VARCHAR" />
+	    <result column="tu_user_entryDate1" property="entrydate" jdbcType="VARCHAR" />
+	    <result column="tu_user_lastlogindate1" property="lastlogindate" jdbcType="VARCHAR" />
+	    <result column="tu_user_telephone1" property="telephone" jdbcType="VARCHAR" />
+	    <result column="tu_user_address1" property="address" jdbcType="VARCHAR" />
+	    <result column="tu_user_eduBackground1" property="edubackground" jdbcType="VARCHAR" />
+	    <result column="tu_user_major1" property="major" jdbcType="VARCHAR" />
+	    <result column="tu_user_school1" property="school" jdbcType="VARCHAR" />
+	    <result column="tu_user_photoUrl1" property="photoUrl" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		t.*,
+  		u.user_id as tu_user_id,
+  		u.user_name as tu_user_name,
+  		u.user_no as tu_user_no,
+  		u.position_id as tu_position_id,
+  		u.sex as tu_user_sex,
+  		u.status as tu_user_status,
+  		u.email as tu_user_email,
+  		u.birthdate as tu_user_birthDate,
+  		u.entrydate as tu_user_entryDate,
+  		u.lastlogindate as tu_user_lastlogindate,
+  		u.telephone as tu_user_telephone,
+  		u.address as tu_user_address,
+  		u.edubackground as tu_user_eduBackground,
+  		u.major as tu_user_major,
+  		u.school as tu_user_school,
+  		u.photoUrl as tu_user_photoUrl,
+  		u1.user_id as tu_user_id1,
+  		u1.user_name as tu_user_name1,
+  		u1.user_no as tu_user_no1,
+  		u1.position_id as tu_position_id1,
+  		u1.sex as tu_user_sex1,
+  		u1.status as tu_user_status1,
+  		u1.email as tu_user_email1,
+  		u1.birthdate as tu_user_birthDate1,
+  		u1.entrydate as tu_user_entryDate1,
+  		u1.lastlogindate as tu_user_lastlogindate1,
+  		u1.telephone as tu_user_telephone1,
+  		u1.address as tu_user_address1,
+  		u1.edubackground as tu_user_eduBackground1,
+  		u1.major as tu_user_major1,
+  		u1.school as tu_user_school1,
+  		u1.photoUrl as tu_user_photoUrl1,
+  		p.position_name as tu_position_name,
+  		p1.position_name as tu_position_name1
+    from 
+    	ss_task t
+   	left join
+   		ss_user u
+   	on
+   		t.initiatorId = u.user_id
+   	left join 
+   		ss_user u1
+   	on 
+   		t.executorId = u1.user_id
+   	left join
+   		ss_position p
+   	on
+   		u.position_id = p.position_id
+   	left join
+   		ss_position p1
+   	on
+   		u1.position_id = p1.position_id
+  </sql>
+  <!-- 返回一个list的写法 -->
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by t.createdate desc
+  </select>
+  <select id="selectListByInitId"  resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where t.initiatorId = #{userId,jdbcType=INTEGER} order by t.createdate desc
+  </select>
+  <select id="getTasksByExeId"  resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where t.executorId = #{userId,jdbcType=INTEGER} order by t.createdate desc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where t.task_id = #{taskId,jdbcType=INTEGER} order by t.createdate desc
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_task
+    where task_id = #{taskId,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.Task" >
+    insert into ss_task (task_id, initiatorId, executorId, 
+      createdate, fromDate, endDate, 
+      title, content, category, status
+      )
+    values (#{taskId,jdbcType=INTEGER}, #{initiator.userId,jdbcType=INTEGER}, #{executor.userId,jdbcType=INTEGER}, 
+      #{createdate,jdbcType=VARCHAR}, #{fromdate,jdbcType=VARCHAR}, #{enddate,jdbcType=VARCHAR}, 
+      #{title,jdbcType=VARCHAR}, #{content,jdbcType=VARCHAR}, #{category,jdbcType=VARCHAR},
+      #{status,jdbcType=INTEGER}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.Task" >
+    insert into ss_task
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="taskId != null" >
+        task_id,
+      </if>
+      <if test="initiator.userId != null" >
+        initiatorId,
+      </if>
+      <if test="executor.userId != null" >
+        executorId,
+      </if>
+      <if test="fromdate != null" >
+        fromDate,
+      </if>
+      <if test="enddate != null" >
+        endDate,
+      </if>
+      <if test="title != null" >
+        title,
+      </if>
+      <if test="content != null" >
+        content,
+      </if>
+      <if test="category != null" >
+        category,
+      </if>
+      <if test="status != null" >
+        status,
+      </if>
+      createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="taskId != null" >
+        #{taskId,jdbcType=INTEGER},
+      </if>
+      <if test="initiator.userId != null" >
+        #{initiator.userId,jdbcType=INTEGER},
+      </if>
+      <if test="executor.userId != null" >
+        #{executor.userId,jdbcType=INTEGER},
+      </if>
+      <if test="fromdate != null" >
+        #{fromdate,jdbcType=VARCHAR},
+      </if>
+      <if test="enddate != null" >
+        #{enddate,jdbcType=VARCHAR},
+      </if>
+      <if test="title != null" >
+        #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null" >
+        #{content,jdbcType=VARCHAR},
+      </if>
+      <if test="category != null" >
+        #{category,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null" >
+        #{status,jdbcType=INTEGER},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.Task" >
+    update ss_task
+    <set >
+      <if test="initiator.userId != null" >
+        initiatorId = #{initiator.userId,jdbcType=INTEGER},
+      </if>
+      <if test="executor.userId != null" >
+        executorId = #{executor.userId,jdbcType=INTEGER},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+      <if test="fromdate != null" >
+        fromDate = #{fromdate,jdbcType=VARCHAR},
+      </if>
+      <if test="enddate != null" >
+        endDate = #{enddate,jdbcType=VARCHAR},
+      </if>
+      <if test="title != null" >
+        title = #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null" >
+        content = #{content,jdbcType=VARCHAR},
+      </if>
+      <if test="category != null" >
+        category = #{category,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null" >
+        status = #{status,jdbcType=INTEGER},
+      </if>
+    </set>
+    where task_id = #{taskId,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.Task" >
+    update ss_task
+    set initiatorId = #{initiator.userId,jdbcType=INTEGER},
+      executorId = #{executor.userId,jdbcType=INTEGER},
+      createdate = #{createdate,jdbcType=VARCHAR},
+      fromDate = #{fromdate,jdbcType=VARCHAR},
+      endDate = #{enddate,jdbcType=VARCHAR},
+      title = #{title,jdbcType=VARCHAR},
+      content = #{content,jdbcType=VARCHAR},
+      category = #{category,jdbcType=VARCHAR},
+      status = #{status,jdbcType=INTEGER}
+    where task_id = #{taskId,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by t.createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by t.createdate desc
+  </select>
+</mapper>

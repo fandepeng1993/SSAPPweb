@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IPPTScoreDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.PPTScore">
+  	<!-- 将表中的列名与实体类中字段名进行映射，对于是外键的列名，property=牵涉到的类.字段名 -->
+	<id column="score_id" property="scoreId" jdbcType="INTEGER" />
+	<result column="score_item_id" property="scoreItemId" jdbcType="INTEGER"/>
+	<result column="score_value" property="scoreValue" jdbcType="INTEGER" />
+	<result column="score_rater_id" property="scoreRaterId" jdbcType="INTEGER" />
+	<result column="score_competitor_id" property="scoreCompetitorId" jdbcType="INTEGER" />
+	<result column="score_createTime" property="scoreCreateTime" jdbcType="VARCHAR" />
+	
+	<!-- association适用于一对一，或多对一 -->
+	<association property="pptItem" javaType="com.sss.pojo.PPTItem">
+		<id column="item_id" property="itemId" jdbcType="INTEGER"/>
+		<result column="item_name" property="itemName" jdbcType="VARCHAR"/>
+		<result column="item_project_id" property="itemProjectId" jdbcType="INTEGER"/>
+		<result column="item_createTime" property="itemCreateTime" jdbcType="VARCHAR"/>
+	</association>
+	
+	<!-- 对应ppt评委信息 -->
+	<association property="rater" javaType="com.sss.pojo.User">
+		<id column="user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="user_sex" property="sex" jdbcType="VARCHAR" />
+	</association>
+	
+	<!-- 对应ppt选手 -->
+	<association property="competitor" javaType="com.sss.pojo.User">
+		<id column="user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="user_sex" property="sex" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  
+  <!-- 查询 -->
+  <select id="selectList" resultMap="BaseResultMap">
+  	select 
+  		score_id,score_item_id,score_value,score_rater_id,score_competitor_id,score_createTime,
+  		item_id,item_name,item_project_id,item_createTime,
+  		rater.user_id,rater.user_name,rater.user_no,rater.sex AS user_sex,
+  		competitor.user_id,competitor.user_name,competitor.user_no,competitor.sex AS user_sex 
+  	from 
+  		ss_ppt_score 
+  	left join 
+  		ss_ppt_item
+  	on 
+  		score_item_id = item_id
+  	left join
+  		ss_user rater
+  	on
+  		score_rater_id = rater.user_id
+  	left join
+  		ss_user competitor
+  	on
+  		score_competitor_id = competitor.user_id
+  </select>
+  
+  <!-- 批量添加数据 -->
+  <insert id="insertEntitys" parameterType="java.util.List">
+	insert into 
+		ss_ppt_score (score_id,score_item_id,score_value,score_rater_id,score_competitor_id,score_createTime)
+	values
+	<!-- collection根据参数类型确定, 可以是map或者list -->
+	<foreach collection="list" item="item" index="index" separator=",">
+	    (null, #{item.scoreItemId,jdbcType=INTEGER}, #{item.scoreValue,jdbcType=INTEGER}, #{item.scoreRaterId,jdbcType=INTEGER}, #{item.scoreCompetitorId,jdbcType=INTEGER}, now())
+	</foreach>
+  </insert>
+  
+  <!-- 单条添加 -->
+  <insert id="insertSelective" parameterType="com.sss.pojo.PPTScore">
+	insert into 
+		ss_ppt_score (score_id,score_item_id,score_value,score_rater_id,score_competitor_id,score_createTime)
+	values
+	    (null, #{item.scoreItemId,jdbcType=INTEGER}, #{item.scoreValue,jdbcType=INTEGER}, #{item.scoreRaterId,jdbcType=INTEGER}, #{item.scoreCompetitorId,jdbcType=INTEGER}, now())
+  </insert>
+  
+  <!-- 根据主键修改 -->
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.PPTScore">
+  	update ss_ppt_score
+  	<set>
+  		<if test="pptItem!=null">
+  			score_item_id = #{pptItem.itemId,jdbcType=INTEGER},
+  		</if>
+  		<if test="scoreValue!=null">
+  			score_value = #{scoreValue,jdbcType=INTEGER},
+  		</if>
+  		<if test="scoreRaterId!=null">
+  			score_rater_id = #{scoreRaterId,jdbcType=INTEGER},
+  		</if>
+  		<if test="scoreCompetitorId!=null">
+  			score_competitor_id = #{scoreCompetitorId,jdbcType=INTEGER},
+  		</if>
+  		<if test="scoreCreateTime!=null">
+  			score_createTime = #{scoreCreateTime,jdbcType=VARCHAR},
+  		</if>
+  	</set>
+  	where score_id = #{scoreId,jdbcType=INTEGER}
+  </update>
+  
+  <!-- 根据主键删除 -->
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_ppt_score
+    where score_id = #{scoreId,jdbcType=INTEGER}
+  </delete>
+  
+</mapper>

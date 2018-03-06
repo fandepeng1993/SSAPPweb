@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>新增出差报告</title>
+	
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.cookie.js"></script>
+	<!-- angularjs自动化表单部分 -->
+	<script type="text/javascript" src="../../js/loadAngularResource.js"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script src="../../js/json/LAreaData2.js" type="text/javascript"></script>
+	<script src="../../js/jquery-form.js" type="text/javascript"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.autocomplete.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		function initCalendar() {
+			laydate({
+			    elem: '#fromdate', //目标元素。由于laydate.js封装了一个轻量级的选择器引擎，因此elem还允许你传入class、tag但必须按照这种方式 '#id .class'
+			    event: 'focus' //响应事件。如果没有传入event，则按照默认的click
+			});
+			laydate({
+			    elem: '#enddate', //目标元素。由于laydate.js封装了一个轻量级的选择器引擎，因此elem还允许你传入class、tag但必须按照这种方式 '#id .class'
+			    event: 'focus' //响应事件。如果没有传入event，则按照默认的click
+			});
+		}
+		//var currentUserId = Request["userId"];
+		//用于展现表单的menuCode
+		var menuCode;
+		var visit = null;
+		var selPri = null;
+		var photoUrls = new Array();
+		var element;
+		$(document).ready(function(){
+			menuCode = Request["menuCode"];
+			selPri = Request["selPri"];
+			var visitId = Request["visitId"];
+			if(typeof(visitId) != "undefined") {
+				getVisit(visitId);
+			} else {
+				initForm();
+			}
+		});
+		
+		//根据ss_form表取出数据构建form表单
+		function initForm() {
+			$.ajax({
+				url: "../../formAdmin/formsByMenuCode/" + menuCode,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					element = eval("(" + data + ")");
+					if(!useAngularForm) {
+						$("#createSubmitForm").remove();
+						
+						new UserCommon().createForm("addBusTripReportForm", element, 4);
+						$("#createdate").parent().parent().hide();
+						$("#customerName").parent().append("<select style=\"width:22px;height:24px;\" id=\"customerName_select\"></select>");
+						initCalendar();
+						
+						if(visit == null) {
+							getCompany();
+						} else {
+							$("#customerName").val(visit.customer.customerName);
+							$("#customerName").attr("readOnly", "readOnly");
+							$("#customerId").val(visit.customer.id);
+							$("#visitId").val(visit.visitId);
+							changeContact();
+						}
+						$("#customerName").change(function () {
+							changeContact();
+						});
+						$("#contact").change(function () {
+							$("#contactTel").val($("#contact option[value='" + $(this).val() + "']").attr("contactTel"));
+						});
+						//初始化地址联动
+						new AreaCascade().initWithoutAdmin("addressDTO");
+						//初始化层的大小 
+						initLayerSize();
+					}
+				} 
+			});
+		}
+		
+		//自动化创建表单之后需要调用的函数
+		function afterCreateCustomForm() {
+			$("#createdate").parentsUntil("li").parent().hide();
+			
+			if(visit == null) {
+				getCompany();
+			} else {
+				$("#customerName").val(visit.customer.customerName);
+				$("#customerName").attr("readOnly", "readOnly");
+				$("#customerId").val(visit.customer.id);
+				$("#visitId").val(visit.id);
+				changeContact();
+			}
+			$("#customerName").change(function () {
+				changeContact();
+			});
+			$("#contact").change(function () {
+				$("#contactTel").val($("#contact option[value='" + $(this).val() + "']").attr("contactTel"));
+			});
+			//初始化地址联动
+			new AreaCascade().initWithoutAdmin("addressDTO");
+		}
+		
+		var allData = [];
+		/**
+		 *	添加弹出框填写完成之后保存调用的函数
+		 */
+		function save() {
+			$.each(allData, function (index, item) {
+				if(item.customerName == $("#customerName").val()) {
+					$("#customerId").val(item.id);
+				}
+			});
+			if($("#customerId").val() == "") {
+				new UserCommon().check("success","请填写正确的客户姓名！",null,"fail");
+				return;
+			}
+			$("#userId").val(currentUserId);
+			$("#address").val(new AreaCascade().getAddress());
+			//填充photoUrls
+			var strs = "";
+			for(var i = 0;i < photoUrls.length;i++) {
+				strs = strs + photoUrls[i] + "|";
+			}
+			strs = strs.substring(0,strs.length-1);
+			$("#photoUrls").val(strs);	
+			
+			var formObj = $("#addBusTripReportForm");
+			var msg = "不能为空！";
+			if(new UserCommon().show("edit-promit", formObj, msg)) {
+			 	var formObjJson = $("#addBusTripReportForm").serializeNestedObject();
+			 	$.ajax({
+					url: "../../busTripReportAdmin/busTripReport",
+					datatype: "text",
+					type: "post",
+					data: JSON.stringify(formObjJson),
+					success: function (data) {
+						var json = eval("(" + data + ")");
+						if(json.status == 1) {
+							new UserCommon().check("success","添加成功！",null,"success");
+							setTimeout(function (){
+								window.parent.initTable(window.parent.ajaxUrl);
+								new UserCommon().layer_close();
+								//window.parent.location.href = "busTripReportMgr.html?menuCode=" + menuCode;
+							}, 1000);
+						} else {
+							new UserCommon().check("success",json.msg,null,"fail");
+						}
+					}
+				});
+			}
+		}
+		
+		function changeCusName() {
+			$("#customerName").val($("#customerName_select").val());
+			changeContact();
+		}
+		
+		function fillSelectValue() {
+			$("#customerName_select").val($("#customerName").val());
+		}
+		
+		function getCompany() {
+			//初始化客户姓名下拉菜单
+			$("#customerName_select").bind("change", function() {
+				changeCusName();
+			});
+			$("#customerName_select").bind("mousedown", function() {
+				fillSelectValue();
+			});
+			initCustomerSel();
+			
+			$("#customerName").keyup(function() {
+				if($("#customerName").val() == "") {
+					initCustomerSel();
+				}
+		   	});
+			
+			//根据关键字查询相关企业名称
+			$("#customerName").autocomplete({
+				source:function(query,process){
+		            var matchCount = this.options.items;//返回结果集最大数量
+		            $.get("../../cusAdmin/getCusesByKeyAndPri?selPri=" + selPri + "&keyWords=" + encodeURI(query),{"iccid":query,"matchCount":matchCount},function(respData){
+		            	respData = $.parseJSON(respData);//解析返回的数据
+		            	allData = respData;
+		            	//下拉菜单更新
+		            	var str = "";
+						$.each(allData, function(index, item) {
+							str = str + "<option value=\"" + item.customerName + "\">" + item.customerName + "</option>"; 
+						});
+						$("#customerName_select").empty();
+						$("#customerName_select").append(str);
+	            		return process(respData);
+	            	});
+		        },
+		        formatItem:function(item){
+		            return item["customerName"];
+		        },
+		        setValue:function(item){
+		            return {'data-value':item["customerName"], 'real-value':item["customerName"]};
+		        }
+			});
+		}
+		
+		function initCustomerSel() {
+			$.ajax({
+				url: "../../cusAdmin/cusesByUserPri/" + currentUserId + "," + selPri,
+				datatype: "text",
+				type: "get",
+				data: {},
+				success: function (data) {
+					var json = eval("(" + data + ")");
+					allData = json;
+					var str = "";
+					$.each(json, function(index, item) {
+						str = str + "<option value=\"" + item.customerName + "\">" + item.customerName + "</option>"; 
+					});
+					$("#customerName_select").html(str);
+				}
+			});
+		}
+		
+		function changeContact () {
+			if(visit == null) {
+				$("#contactTel").val("");
+				$.each(allData, function (index, item) {
+					if(item.customerName == $("#customerName").val()) {
+						$("#customerId").val(item.id);
+						$.ajax({
+							url: "../../contactAdmin/getContactsByCusId/" + item.id,
+							datatype: "json",
+							type: "get",
+							data: {},
+							success: function (data, status, xhr) {
+								var contacts = eval("(" + data + ")");
+								var str = "<option value='-1'>请选择</option>";
+								$.each(contacts, function(index, item) {
+									str = str + "<option contactTel='" + item.telephone + "' value=\"" + item.id + "\">" + item.name + "</option>"; 
+								});
+								$("#contact").html(str);
+							} 
+						});
+					}
+				});
+			} else {
+				$.ajax({
+					url: "../../contactAdmin/getContactsByCusId/" + visit.customer.id,
+					datatype: "json",
+					type: "get",
+					data: {},
+					success: function (data, status, xhr) {
+						var contacts = eval("(" + data + ")");
+						var str = "<option value='-1'>请选择</option>";
+						$.each(contacts, function(index, item) {
+							str = str + "<option contactTel='" + item.telephone + "' value=\"" + item.id + "\">" + item.name + "</option>"; 
+						});
+						$("#contact").html(str);
+						//$("#contact").val(busTripReport.contact.id);
+					} 
+				});
+			}
+		}
+		
+		function showMap() {
+			var address = new AreaCascade().getAddress();
+			window.parent.admin_role_add('<strong>地址坐标</strong>',"../projectMgr/map.html?address=" + encodeURI(address),'500');
+		}
+		
+		/*管理员-角色-添加*/
+		function admin_role_add(title,url,w){
+			new UserCommon().layer_show(title,url,w);
+		}
+		
+		function getVisit(visitId) {
+			$.ajax({
+				url: "../../visitPlanAdmin/visit/" + visitId,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					visit = eval("(" + data + ")");
+					initForm();
+				} 
+			});
+		}
+		
+		/**
+		 * 上传图片input改变时触发
+		 */
+		function upload() {
+			$("#uploadForm").attr("action", "../../uploadServlet?action=busTripReports");
+			$(".rwzs_img_h").css("height","150px");
+			//$("#uploadForm").submit();
+			$("#uploadForm").ajaxSubmit({ 
+				success: function (data, status) { 
+					var json = eval("(" + data + ")");
+					//alert(json.msg);
+			    	if(json.status == 1) {
+			    		$("#uploadForm").prev().attr("src", json.msg);
+			    		photoUrlStr = json.msg;
+			    		//alert(photoUrlStr);
+			    		var photoUrlArr = photoUrlStr.split("|");
+			    		var length = photoUrls.length;
+			    		for (var i=0;i < photoUrlArr.length;i++) {
+			    			photoUrls.push(photoUrlArr[i]);
+			    			$("#imgDiv").append("<div class=\"rwzs_img_pb\"><img style='width:70px;height:70px;' src='" + photoUrlArr[i] + "' name='reportImg' id='reportImg" + i + "'\><div class=\"yinying\" onclick='removeImg(" + i + ")'><i class=\"glyphicon glyphicon-trash\"></i><p>点击删除</p></div></div>");
+			    		}
+			    		
+			    		var current_img = $(".rwzs_img_pb");
+			    		current_img.mouseleave(function(){
+			    			$(".rwzs_img_pb .yinying").hide();
+		    			});
+						for(var i = 0; i<current_img.length; i++){
+							current_img.eq(i).mouseover(function(){
+								$(".rwzs_img_pb .yinying").hide();
+								$(this).children(".yinying").show();
+							})
+						} 
+			    		/* $("#imgDiv").append("<img onclick='removeImg(" + length + ")' id='reportImg" + length + "' style='width:50px;height:50px;' src='" + photoUrls + "'\>");
+			    		photoUrlss.push(photoUrls); */
+						//初始化层的大小
+						initLayerSize();
+			    	} else {
+			    		new UserCommon().check("success",json.msg,null,"fail");
+			    	}
+				} 
+			});
+		}
+			
+		function removeImg(index) {
+			$("#reportImg" + index).remove();
+			$(".rwzs_img_pb .yinying").hide();
+			var imgIndex = $("img[name='reportImg']").index($("#img" + index));
+			photoUrls.splice(imgIndex-1, 1);
+		}
+	</script>
+</head>
+<body>
+	<div class="edit">
+		<div class="edit-content">
+			<div class="edit-in">
+				<form id="addBusTripReportForm">
+					<div id="createSubmitForm" ng-app="app" ng-controller="creatSubmitFormCtrl" class="previewText">
+						<div style="border:1px solid #d9d9d9;">
+							<div gridster='gridsterOpts' ng-style="{width:((gridsterOpts.columns)*200)+1+'px'}">
+								<ul>
+									<li gridster-item="item" ng-repeat="item in sercoundItems" ng-style="{zIndex:100-item.row}">
+										<my-directivelist>
+										</my-directivelist>
+									</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</form>
+				<div id="imgDiv" class="rwzs_img_h"></div>
+			</div>
+			<div class="edit-bottom">
+				<form name="uploadForm" target="_self" id="uploadForm" action="" enctype="multipart/form-data" method="post">
+				     <input type="file" name="image" multiple="multiple" onchange="upload()" style="float:left">
+				</form>
+				<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();"><i class="glyphicon glyphicon-remove"></i>&nbsp;关闭</button>
+				<button type="button" class="btn btn-xs edit-save btn-primary" onclick="save()"><i class="glyphicon glyphicon-ok"></i>&nbsp;保存</button>
+			</div>
+		</div>	
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span>
+			<span></span>
+			<div><img src="../../images/sanjiao.png" width="10"></div>
+		</div>
+	</div>
+</body>
+</html>

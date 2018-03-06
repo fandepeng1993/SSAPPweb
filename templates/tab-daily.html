@@ -1,0 +1,27 @@
+<ion-view title="工作日报" ng-controller="DailyCtrl">
+	<ion-nav-buttons side="right">
+        <a class="button icon ion-android-microphone button-clear" ng-click="doSomething()" href="#">
+        </a>
+    </ion-nav-buttons>
+	<ion-content overflow-scroll="false" style="padding:10px;">
+		<div class="list list-inset" style="margin:0px;margin-top:20px;">
+			<label class="item item-input" style="border-right:0px;border-left:0px;border-color:#8ab4d6;">
+				<span class="input-label" style="font-size:16px;font-weight:normal">日期：</span>
+				<input type="text" placeholder="年 月 日" style="font-size:16px;font-weight:normal">
+				<!-- <ionic-datepicker input-obj="datepickerObjectEnd">
+  					<button class="button button-block button-positive"> {{datepickerObjectEnd.inputDate | date:datepickerObjectEnd.dateFormat}}</button>
+				</ionic-datepicker> -->
+				<i class="ion-ios-calendar-outline" style="color:#ccc;padding-right:36px;font-size:32px;"></i>	
+			</label>
+			<label class="item item-input" style="border-right:0px;border-left:0px;border-color:#8ab4d6;">
+				<span class="input-label" style="font-size:16px;font-weight:normal">汇报人：</span>
+				<input type="text" placeholder="请输入姓名" style="font-size:16px;font-weight:normal">
+			</label>
+			<div class="form-group" style="margin-top:20px;">
+				<label for="name" style="padding-left:17px;font-size:16px;font-weight:normal">日报内容</label>
+				<textarea class="form-control" rows="5" placeholder="请输入日报内容.." style="resize:none;border-color:#66afe9"></textarea>
+			</div>
+			<a class="button" style="width:90%;margin-top:40px;margin-left:5%;text-align:center;border-radius:5px;background:#7fcff4;color:#fff;font-family:微软雅黑;border:1px solid #378caa;" href="#/tab/dash">提交</a>
+		</div>
+	</ion-content>
+</ion-view>

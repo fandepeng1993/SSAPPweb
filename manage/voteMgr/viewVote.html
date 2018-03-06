@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>查看问卷</title>
+<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+<script type="text/javascript" src="../../js/checkUser.js"></script>
+<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+<script type="text/javascript" src="../../js/UserUtil.js"></script>
+<script type="text/javascript" src="../../js/UserCommon.js"></script>
+<style type="text/css">
+.Lq{display:none}
+</style>
+<script type="text/javascript">
+
+	var questionCount = 1;
+	var selectorCount = []
+	var addtext;
+	//用于展现表单的menuCode
+	var menuCode;
+	$(document).ready(function() {
+		menuCode = Request["menuCode"];
+		voteId = Request["voteId"];
+		getVote(voteId);
+		
+		
+	});
+	
+	function getVote(id) {
+		$.ajax({
+			url: "../../ssVoteAdmin/vote/" + id,
+			datatype: "json",
+			type: "get",
+			data: {},
+			success: function (data, status, xhr) {
+				vote = eval("(" + data + ")");
+				initForm();
+			} 
+		});
+	}
+	
+	function getQuestion(voteId){
+		$.ajax({
+			url: "../../voteQuestionAdmin/voteQuestions/" + voteId,
+			datatype: "json",
+			type: "get",
+			data: {},
+			success: function (data, status, xhr) {
+			qus =   data ;
+				for(var i =0;i<qus.length;i++){
+					if(i>0){
+						addQuestion();
+					}
+					$("input[name='question']").eq(i).val(qus[i].questionName);
+					if(qus[i].isMultiselect==0){
+						$("input[name='singlebox']").eq(i).attr("checked","checked");
+						$("input[name='doublebox']").eq(i).attr("disabled","disabled");
+					} else if (qus[i].isMultiselect==1){
+						$("input[name='doublebox']").eq(i).attr("checked","checked");
+						$("input[name='singlebox']").eq(i).attr("disabled","disabled");
+					}
+					var quId = qus[i].id;
+					getItems(quId,i);
+				}
+			}
+		});
+	}
+	
+	function getItems(quId, index){
+		$.ajax({
+			url: "../../voteQuestionItemAdmin/voteQuestionItems/" + quId,
+			datatype: "json",
+			type: "get",
+			data: {},
+			success: function (data, status, xhr) {
+				items = data;
+				for(var j =0;j<items.length;j++){
+					if(j>0){
+						addselector($("input[name='addButton']").eq(index));
+					}
+					$("form[name='cloneForm']").eq(index).find("input[name='selector']").eq(j).val(items[j].optionName);
+				}
+				//所有文本框只读
+			$("input").attr("readonly","readonly");
+			new UserCommon().radioListener();
+			} 
+		});
+	}
+	//根据ss_form表取出数据构建form表单
+	function initForm() {
+		fillselectdept();
+		fillBaseDatas();
+		//初始化层的大小
+		initLayerSize();
+		getQuestion(voteId);
+		addtext = $("form[name='cloneForm']").eq(0).clone();
+		$("form[name='cloneForm']").eq(0).find(".del_con").css("display","none");
+		new UserCommon().radioListener();
+	}
+	//查看所有部门
+	function fillselectdept(){
+		var deptId = vote.votePri;
+		$.ajax({
+		      url: "../../deptAdmin/depts/",
+		      datatype: "text",
+		      type: "get",
+		      data: {},
+		      success: function (data, status, xhr) {
+		    	  	$("#dept").empty();
+		    	  	var deptStr = "<option value=\"-1\">请选择</option>";
+					$.each(eval("(" + data + ")"), function(index, deptItem) {
+						if(vote.votePri != null && vote.votePri == deptItem.deptId) {
+							//对部门设定选中
+							deptStr = deptStr + "<option value=\"" + deptItem.deptId + "\" selected=\"selected\">" + deptItem.deptName + "</option>";
+						} else {
+							deptStr = deptStr + "<option value=\"" + deptItem.deptId + "\">" + deptItem.deptName + "</option>";
+						}
+					});
+					$("#dept").html(deptStr);
+			      }
+			});
+		}
+	
+	function fillBaseDatas(){
+		$("#voteName").val(vote.title);
+		$("#enddate").val(vote.enddate.substring(0,19));
+		$("#createdate").val(vote.createdate.substring(0,19));
+	}
+ 	//增加问题
+	function addQuestion() {
+		var length=$("form[name='cloneForm']").length; 
+		$('#test').append(addtext.prop("outerHTML"));
+		var contH=$('#test').height();
+	    $("form[name='cloneForm']:last").find('legend').html('问题'+(length+1));
+	    var Ohe=$('.table-responsive').height();
+	    var tops=$("form[name='cloneForm']:last").offset().top;
+	    if((contH-Ohe)>=0){
+		   $('.table-responsive').scrollTop(contH-Ohe+62); 
+	    }
+	  	//为radio添加监听事件
+		new UserCommon().radioListener();
+	}
+	
+	var index;
+ 	//增加选项
+	function addselector(arg) {
+		var Obj = arg;
+		index = Obj.parent().parent().parent().parent().parent().index();
+		if (!selectorCount['' + index]) {
+			selectorCount['' + index] = 2
+		} else {
+			++selectorCount['' + index]
+		}
+		
+		var newChoose = "<p class=selectorCount" + index + selectorCount[index] + ">" + 
+		"<span style=\"width:60px; display:inline-block\" >选项"+ selectorCount[index]+":</span>"+
+		"<input type='text' name='selector' label='选项名称' errormsg='不能为空！'>" +"</p>";
+		Obj.closest(".div").append(newChoose);
+		//Obj.closest(".div").append("<p class=selectorCount" + index + selectorCount[index] + ">选项"+ selectorCount[index]+ "：<input type='text' name='selector'></p>");
+	} 
+
+</script>
+</head>
+<body class="viewVote">
+<div class="table-responsive" style="height:450px; overflow-y:scroll; padding-left:5%; padding-right:5%;">
+	<form id="titleForm" name="con1">
+		<img src="../../images/wenjuan/wjname.png" style="height: 16px;width: 16px;"/>
+	    <span>问卷名称:</span><input type="text" name="vote" id="voteName" />
+		<img src="../../images/wenjuan/wjtime.png" style="height: 16px;width: 16px;"/>
+		<span>截止日期：</span><input id="enddate" /><br /> 
+		<div style="margin:16px 0 16px 0" class="votepri">
+		<img src="../../images/wenjuan/wjquanxian.png" style="height: 16px;width: 16px;"/>
+		<span>投票权限:</span><select name="select" id="dept" class="select" disabled="disabled" style="width:182px";></select>	
+		<img src="../../images/wenjuan/wjtime.png" style="height: 16px;width: 16px;"/>
+		<span>创建日期：</span><input  id="createdate"  />	
+	 	</div>
+	 </form>
+	 <div id="test">   	
+		 <form style="position:relative;" name="cloneForm">
+				<div class="addtext">
+				<fieldset
+			  	style="display: block; -webkit-margin-start: 25px; -webkit-margin-end: 25px; -webkit-padding-before: 0.35em; -webkit-padding-start: 0.75em; -webkit-padding-end: 0.75em; -webkit-padding-after: 0.625em; border-image-source: initial; border-image-slice: initial; border-image-width: initial; border-image-outset: initial; border-image-repeat: initial; min-width: -webkit-min-content; border-width: 2px; border-style: groove; border-color: threedface;">
+			    <legend name="numLegend" style="display: block; width: 80px;padding: 7px;font-size: 21px;line-height: inherit;color: #333;border: 0;margin-bottom: 0px;">问题1</legend>
+			    <div  class="div">
+					<p  class="question">
+					<span style="color: red; font-size: 18px" class='Lq'>*</span>
+					<span style="width:56px; display:inline-block;">
+						问题名: 
+					</span>
+						<input type="text" name="question" label="问题名" errormsg="不能为空！"/>
+						<input type="radio" value="0" name="singlebox"  />单选
+						<input type="radio" value="1" name="doublebox"  />多选
+					</p>
+					<p  class="selector">
+					<span style="color: red; font-size: 18px" class='Lq'>*</span>
+					<span style="width:56px; display:inline-block;" name="selpkq">选项1:</span>
+						<input type="text" name="selector" label="选项名称" errormsg="不能为空！">
+						<input type="button" name="addButton" onclick="addselector($(this))" value="增加选项" style="color:white;background-color: #29abe2;border:1px solid #12789b;display:none; 
+   						 outline:none;padding-left: 24px;background-image: url(../../images/wenjuan/zengjia.png);background-attachment: norepeat;background-repeat: no-repeat;background-position: 4%;height: 23px;line-height: 21px;"/>
+					</p>
+			  </fieldset>
+			  </div>
+		 </form>
+	 </div>			
+		<div id="buttionDiv" class="buttionDiv">
+			<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();"><i class="glyphicon glyphicon-remove"></i>&nbsp;关闭</button>
+		</div>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert"
+				aria-hidden="true">&times;</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span> <span></span>
+			<div>
+				<img src="../../images/sanjiao.png" width="10">
+			</div>
+		</div>
+	</div>
+</body>
+</html>

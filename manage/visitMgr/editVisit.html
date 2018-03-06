@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>修改拜访计划</title>
+	
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.cookie.js"></script>
+	<!-- angularjs自动化表单部分 -->
+	<script type="text/javascript" src="../../js/loadAngularResource.js"></script>
+	<script src="../../js/json/CityJson.js" type="text/javascript"></script>
+    <script src="../../js/json/ProJson.js" type="text/javascript"></script>
+    <script src="../../js/json/DistrictJson.js" type="text/javascript"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.autocomplete.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		function initCalendar() {
+			laydate({
+			    elem: '#fromdate', //目标元素。由于laydate.js封装了一个轻量级的选择器引擎，因此elem还允许你传入class、tag但必须按照这种方式 '#id .class'
+			    event: 'focus' //响应事件。如果没有传入event，则按照默认的click
+			});
+			laydate({
+			    elem: '#enddate', //目标元素。由于laydate.js封装了一个轻量级的选择器引擎，因此elem还允许你传入class、tag但必须按照这种方式 '#id .class'
+			    event: 'focus' //响应事件。如果没有传入event，则按照默认的click
+			});
+		}
+		//var currentUserId = Request["userId"];
+		//用于展现表单的menuCode
+		var menuCode;
+		var visit;
+		var cusSelPri;
+		var element;
+		$(document).ready(function(){
+			menuCode = Request["menuCode"];
+			cusSelPri = Request["cusSelPri"];
+			var visitId = Request["visitId"];
+			getVisit(visitId);
+		});
+		
+		//根据ss_form表取出数据构建form表单
+		function initForm() {
+			$.ajax({
+				url: "../../formAdmin/formsByMenuCode/" + menuCode,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					element = eval("(" + data + ")");
+					
+					if(!useAngularForm) {
+						$("#createSubmitForm").remove();
+						
+						new UserCommon().createForm("updateVisitForm", element, 4);
+						new UserCommon().fillForm("updateVisitForm", visit);
+						$("#customerName").val(visit.customer.customerName);
+						initCalendar();
+						getCompany();
+						//初始化层的大小
+						initLayerSize();
+					}
+				} 
+			});
+		}
+		
+		//自动化创建表单之后需要调用的函数
+		function afterCreateCustomForm() {
+			new UserCommon().fillForm("updateVisitForm", visit);
+			$("#customerName").val(visit.customer.customerName);
+			getCompany();
+		}
+
+		var allData;
+		/**
+		 *	添加弹出框填写完成之后保存调用的函数
+		 */
+		function updateForm() {
+			$("#customerId").val("");
+			$.each(allData, function (index, item) {
+				if(item.customerName == $("#customerName").val()) {
+					$("#customerId").val(item.id);
+				}
+			});
+			if($("#customerId").val() == "") {
+				new UserCommon().check("success","请填写正确的客户姓名！",null,"fail");
+				return;
+			}
+			
+			//alert(UE.getEditor('editor').getContent());
+			var formObj = $("#updateVisitForm");
+			//var obj = $("#hello");
+			var msg = "不能为空！";
+			$("#userId").val(currentUserId);
+			if(new UserCommon().show("edit-promit", formObj, msg)) {
+			 	var formObjJson = $("#updateVisitForm").serializeNestedObject();
+			 	$.ajax({
+					url: "../../visitPlanAdmin/visit",
+					datatype: "text",
+					type: "put",
+					data: JSON.stringify(formObjJson),
+					success: function (data) {
+						var json = eval("(" + data + ")");
+						if(json.status == 1) {
+							new UserCommon().check("success","修改成功！",null,"success");
+							setTimeout(function (){
+								window.parent.initTable(window.parent.ajaxUrl);
+								new UserCommon().layer_close();
+								//window.parent.location.href = "visitMgr.html?menuCode=" + menuCode;
+							}, 1000);
+						} else {
+							new UserCommon().check("success",json.msg,null,"fail");
+						}
+					}
+				});
+			}
+		}
+		
+		function changeCusName() {
+			$("#customerName").val($("#customerName_select").val());
+			initContactSelect(false);
+		}
+		
+		function fillSelectValue() {
+			$("#customerName_select").val($("#customerName").val());
+		}
+		
+		var contacts;
+		function initContactSelect(isInit) {
+			$.each(allData, function (index, item) {
+				if(item.customerName == $("#customerName").val()) {
+					$("#customerId").val(item.id);
+				}
+			});
+			
+			$.ajax({
+				url: "../../contactAdmin/getContactsByCusId/" + $("#customerId").val(),
+				datatype: "text",
+				type: "get",
+				data: {},
+				success: function (data) {
+					contacts = eval("(" + data + ")");
+					var str = "";
+					$.each(contacts, function(index, item) {
+						str = str + "<option value=\"" + item.id + "\">" + item.name + "</option>"; 
+					});
+					$("#contact").html(str);
+					if(!isInit) fillContactDetail();
+				}
+			});
+		}
+		
+		function fillContactDetail() {
+			$.each(contacts, function(index, item) {
+				if(item.id == $("#contact").val()) {
+					$("#contactPosition").val(item.position);
+					$("#contactTel").val(item.officeTel);
+				}
+			});
+		}
+		
+		function getCompany() {
+			$("#customerName").bind("change", function() {
+				initContactSelect(false);
+			});
+			$("#contact").bind("change", function() {
+				fillContactDetail();
+			});
+			
+			//初始化客户姓名下拉菜单
+			$("#customerName_select").bind("change", function() {
+				changeCusName();
+			});
+			$("#customerName_select").bind("mousedown", function() {
+				fillSelectValue();
+			});
+			initCustomerSel();
+			
+			$("#customerName").keyup(function() {
+				if($("#customerName").val() == "") {
+					initCustomerSel();
+				}
+		   	});
+			
+			//根据关键字查询相关企业名称
+			$("#customerName").autocomplete({
+				source:function(query,process){
+		            var matchCount = this.options.items;//返回结果集最大数量
+		            $.get("../../cusAdmin/getCusesByKeyAndPri?selPri=" + cusSelPri + "&keyWords=" + encodeURI(query),{"iccid":query,"matchCount":matchCount},function(respData){
+		            	respData = $.parseJSON(respData);//解析返回的数据
+		            	allData = respData;
+		            	//下拉菜单更新
+		            	var str = "";
+						$.each(allData, function(index, item) {
+							str = str + "<option value=\"" + item.customerName + "\">" + item.customerName + "</option>"; 
+						});
+						$("#customerName_select").empty();
+						$("#customerName_select").append(str);
+	            		return process(respData);
+	            	});
+		        },
+		        formatItem:function(item){
+		            return item["customerName"];
+		        },
+		        setValue:function(item){
+		            return {'data-value':item["customerName"], 'real-value':item["customerName"]};
+		        }
+			});
+		}
+		
+		function initCustomerSel() {
+			$.ajax({
+				url: "../../cusAdmin/cusesByUserPri/" + currentUserId + "," + cusSelPri,
+				datatype: "text",
+				type: "get",
+				data: {},
+				success: function (data) {
+					var json = eval("(" + data + ")");
+					allData = json;
+					var str = "";
+					$.each(json, function(index, item) {
+						str = str + "<option value=\"" + item.customerName + "\">" + item.customerName + "</option>"; 
+					});
+					$("#customerName_select").html(str);
+					initContactSelect(true);
+				}
+			});
+		}
+		
+		function getVisit(visitId) {
+			$.ajax({
+				url: "../../visitPlanAdmin/visit/" + visitId,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					visit = eval("(" + data + ")");
+					initForm();
+				} 
+			});
+		}
+	</script>
+</head>
+<body>
+	<div class="edit">
+		<div class="edit-content">
+			<div class="edit-in">
+				<form id="updateVisitForm">
+					<div id="createSubmitForm" ng-app="app" ng-controller="creatSubmitFormCtrl" class="previewText">
+						<div style="border:1px solid #d9d9d9;">
+							<div gridster='gridsterOpts' ng-style="{width:((gridsterOpts.columns)*200)+1+'px'}">
+								<ul>
+									<li gridster-item="item" ng-repeat="item in sercoundItems" ng-style="{zIndex:100-item.row}">
+										<my-directivelist>
+										</my-directivelist>
+									</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+			<div class="edit-bottom">
+				<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();"><i class="glyphicon glyphicon-remove"></i>&nbsp;关闭</button>
+				<button type="button" class="btn btn-xs edit-save btn-primary" onclick="updateForm()"><i class="glyphicon glyphicon-ok"></i>&nbsp;保存</button>
+			</div>
+		</div>	
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span>
+			<span></span>
+			<div><img src="../../images/sanjiao.png" width="10"></div>
+		</div>
+	</div>
+</body>
+</html>

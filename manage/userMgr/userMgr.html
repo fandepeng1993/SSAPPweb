@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>员工管理</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+	<link href="../../css/font-awesome.min.css" rel="stylesheet">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+	
+		//根据权限渲染页面
+		var menuCode;
+		$(document).ready(function(){
+			menuCode = Request["menuCode"];
+			$.ajax({
+			      url: "../../sessionAdmin/getPri",
+			      datatype: "json",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+			    	  var pathname = window.location.pathname;
+			    	  var url = pathname.substring(pathname.indexOf("/", 1) + 1, pathname.length); 
+			    	  $.each(eval("(" + data + ")"), function(index, item) {
+			      			if(item.menuUrl == url) {
+			      				if(item.menuName == "查看") {
+			      					initTable();
+			      					$("#search-g").show();
+			      					$("#keySpan").show();
+			      					$("#keyWords").show();
+			      				} else if(item.menuName == "增加") {
+			      					$("#add-g").show();
+			      				} else if(item.menuName == "修改") {
+			      					$("#update-g").show();
+			      				} else if(item.menuName == "删除") {
+			      					$("#delete-g").show();
+			      				}
+			      			}
+			    	  });
+			      } 
+			});
+		});
+		</script>
+		<script type="text/javascript">
+		var users = null;
+		var defaultIMG = "../../images/default.png";
+		
+		function initTable() {
+			$.ajax({
+				url: "../../userAdmin/allUsers",
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					$("#userTable").empty();
+					users = data;
+					totalRecords =  data.length;
+					
+					//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+					if(totalRecords % pageSize != 0) {
+						totalPages = Math.floor(totalRecords / pageSize) + 1;
+					} else {
+						totalPages = totalRecords / pageSize;
+					}
+					//根据totalPages初始化页码插件
+					$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+					$("#Pagination").pagination(totalPages);
+					
+					/* $.each(eval("(" + data + ")"), function(index, item) {
+						if(index < pageSize) {
+							addUserInfo(index, item);
+						} else if(index > pageSize) {
+							return;
+						}
+					}); */
+				} 
+			});
+		}
+		
+		var pageSize = 10;
+		var pageNo = 1;//当前的页码
+		var totalRecords = 0;
+		var totalPages = 0;
+		
+		
+		function circleInfos() {
+			 $("#userTable").empty();
+			 $.each(users, function(index, item) {
+				 if(index >= ((pageNo-1)*pageSize) && index < (pageNo*pageSize)) {
+					 addUserInfo(index, item);
+				 } else if(index > (pageNo*pageSize)) {
+					 return;
+				 }
+		      });
+			//为checkbox添加监听事件
+			 new UserCommon().checkboxListener();
+		}
+		/**
+		 * 填充查看所有用户的列表
+		 */
+		function addUserInfo(index, item) {
+			var str = "";
+			if(index%2 ==0){
+				str = str + "<tr class=\"light checkboxTr\" style=\"font-size:12px;\" id=\"Tr" + item.userId + "\" onclick=\"fillThisCB('" + item.userId + "')\">";
+			}else{
+				str = str + "<tr class=\"active checkboxTr\" style=\"font-size:12px;\" id=\"Tr" + item.userId + "\" onclick=\"fillThisCB('" + item.userId + "')\">";
+			}
+			str = str + "<td><input type=\"checkbox\" name=\"selectFlag\" id=\"CB" + item.userId + "\" value=" + item.userId + " onclick=\"fillThisCB('" + item.userId + "')\" class=\"check\"></td>" +
+							"<td>" + (index+1) + "</td>" + 
+						    "<td>" + item.userNo + "</td>" + 
+						    "<td><span name=\"add-g1\" ><a onclick=\"fillUserDetail(" + item.userId + ")\" style=\"cursor:pointer\">" + item.userName + "</a></span></td>" + 
+						    "<td>" + item.sex + "</td>" + 
+						    "<td>" + item.telephone + "</td>" +
+						    "<td>" + item.positionName + "</td>" +
+						    "<td>" + item.deptName + "</td>" +
+						    "</tr>"; 
+			$("#userTable").append(str);
+			//重新添加事件
+			$('span[name=add-g1]').click(function(){
+		        $('.list2-input').show();
+		         $('.input2-bg').show();
+		    });
+		}
+		/**
+		 * 根据userId填充单个用户详细信息查看表单
+		 */
+		function fillUserDetail(id) {
+			$.each(users, function(index, item) {
+				if(item.userId == id) {
+					admin_role_add('<strong>人员查看</strong>','viewUser.html?userId=' + item.userId,'700');
+				}
+		    });
+		}
+		
+		
+		/**
+		 * 选择修改后填充相关信息
+		 */
+		function fillUpdateSelect() {
+			var but = $("input[name='selectFlag']");
+			var selUserId;
+			var num = 0;
+			for(var i=0; i<but.length; i++) {
+				if(but[i].checked) { 
+					if(num == 0) {
+						selUserId = but[i].value;
+					}
+					num += 1;
+					//alert(but[i].value);
+				}
+			} 
+			if(num == 1) {
+				$.each(users, function(index, item) {
+					if(item.userId == selUserId) {
+						admin_role_add('<strong>人员修改</strong>','editUser.html?userId=' + item.userId,'700');
+					}
+			    });
+			} else {
+				new UserCommon().check("success","请选择一个用户！",null,"warning");
+			}
+		}
+		 
+		function deleteUsers() {
+			var but = $("input[name='selectFlag']");
+			var str = "";
+			for(var i=0; i<but.length; i++) {
+				if(but[i].checked) { 
+					str += but[i].value + ",";
+				}
+			}
+			if(str != null && str.trim() != "") {
+				str = str.substring(0, str.length-1);
+				layer.confirm('要删除么？',function(index){
+					$.ajax({
+					      url: "../../userAdmin/user/" + str,
+					      datatype: "text",
+					      type: "delete",
+					      data: {},
+					      success: function (data) {
+					    	  var json = eval("(" + data + ")");
+					    	  if(json.status == 1) {
+					    		  new UserCommon().check("success",json.msg,null,"success");
+					    		  initTable();
+					    		  layer.close(index);
+					    	  } else {
+					    		  new UserCommon().check("success",json.msg,null,"fail");
+					    	  }
+					      }
+					});
+				});
+			} else {
+				new UserCommon().check("success","请选择要删除的用户！",null,"warning");
+			}
+		}
+		
+		function getUserByKey() {
+			var keyWords = $("#keyWords").val();
+			$.ajax({
+				url: "../../userAdmin/getAllUsersByKey?keyWords=" + encodeURI(keyWords),
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					$("#userTable").empty();
+					users = data;
+					totalRecords = data.length;
+					
+					//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+					if(totalRecords % pageSize != 0) {
+						totalPages = Math.floor(totalRecords / pageSize) + 1;
+					} else {
+						totalPages = totalRecords / pageSize;
+					}
+					
+					$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+					$("#Pagination").pagination(totalPages);
+				} 
+			});
+		} 
+		
+
+		
+		
+		//模拟上传excel
+		function clickChooseFile() {
+			$("#uploadEventFile").click();
+		}
+
+		$(document).ready(function () {
+			$("#uploadEventFile").bind("change", function() {
+				$("#uploadEventPath").attr("value", $("#uploadEventFile").val());
+			});
+		});
+		
+		//点击上传按钮
+		function uploadBtn () {
+			var uploadEventFile = $("#uploadEventFile").val();
+			if (uploadEventFile == '') {
+				new UserCommon().check("success","请选择文件",null,"fail");
+			} else if (uploadEventFile.lastIndexOf(".xls") < 0) {//可判断以.xls和.xlsx结尾的excel
+				new UserCommon().check("success","请选择正确的excel文件",null,"warning");
+			} else {
+				var url = '../../userAdmin/importExcel/' + currentUserId;
+				var formData = new FormData($('#upload')[0]);
+				
+				sendAjaxRequest(url, 'POST', formData);
+			}
+		};
+		
+		function sendAjaxRequest (url, type, data) {
+			$.ajax({
+				url : url,
+				type : type,
+				data : data,
+				success : function(dataList) {
+					setTimeout(function (){
+						window.location.href = "userMgr.html";	
+					}, 1000);
+					new UserCommon().check("success","excel导入成功",null,"success");	
+				},
+				error : function() {
+					new UserCommon().check("success","excel上传失败",null,"fail");
+				},
+				cache : false,
+				contentType : false,
+				processData : false
+			});
+		};
+		
+		/*管理员-角色-添加*/
+		function admin_role_add(title,url,w){
+			new UserCommon().layer_show(title,url,w);
+		}
+		function AddUser() {
+			admin_role_add('<strong>人员添加</strong>',"addUser.html",'700');
+		}
+		
+		function advancedSearch(dto) {
+			$.ajax({
+				url: "../../userAdmin/selectByAdvancedSearch" ,
+				datatype: "json",
+				type: "post",
+				data: JSON.stringify(dto),
+				success: function (data, status, xhr) {
+					$("#userTable").empty();
+					users = data;
+					totalRecords = data.length;
+					//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+					if(totalRecords % pageSize != 0) {
+						totalPages = Math.floor(totalRecords / pageSize) + 1;
+					} else {
+						totalPages = totalRecords / pageSize;
+					}
+					
+					$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+					$("#Pagination").pagination(totalPages);
+				} 
+			});
+		}
+	</script>
+</head>
+<body>
+	<div class="bt-div">
+		<div class="bt-div-in" style="width:auto">
+			<button type="button" class="btn btn-default btn-xs bt-one" id="add-g" onclick="AddUser()">
+				<span class="glyphicon glyphicon-plus color-add"></span> 添加
+			</button>
+			<button type="button" class="btn btn-default btn-xs bt-two" id="update-g" onclick="fillUpdateSelect()">
+				<span class="glyphicon glyphicon-edit color-edit"></span> 修改
+			</button>
+			<button type="button" class="btn btn-default btn-xs bt-three" id="delete-g" onclick="deleteUsers()">
+				<span class="glyphicon glyphicon-trash color-del"></span> 删除
+			</button>
+			<span class="bt-div-title" id="keySpan">姓名或工号:</span>
+			<input class="bt-div-input" type="text" id="keyWords">
+			<button type="button" class="btn btn-default bt-div-bt" id="search-g" onclick="getUserByKey()">
+				<span class="glyphicon glyphicon-search color-zn"></span> 搜索
+			</button>
+			<button type="button" class="btn btn-default bt-div-bt" style="display: inline-block;" onclick="slideRight()">
+				<span class="glyphicon glyphicon-filter color-zn"></span> 高级筛选
+			</button>
+		</div>
+		<div class="check_right" style="margin-top:12px;">
+		
+				<form enctype="multipart/form-data" id="batchUpload" action="../userAdmin/importExcel" method="post" class="form-horizontal">
+					<input type="file" name="excelFile" style="width: 0px; height: 0px;"
+						id="uploadEventFile">
+					<input id="uploadEventPath" disabled="disabled" type="text" placeholder="请选择excel表" 
+						style="border: 1px solid #e6e6e6;display:inline-block;cursor:not-allowed;"class="bt-div-input">
+					<button type="button" class="btn btn-default bt-div-bt" style="display:inline-block;" id="uploadEventBtn" onclick="clickChooseFile()"> 
+						<span class="glyphicon glyphicon-book"></span> 选择文件
+					</button>
+					<button type="button"type="button" class="btn btn-default bt-div-bt" style="display:inline-block;"  onclick="uploadBtn()">
+						<span class="glyphicon glyphicon-save"></span> 导入excel
+					</button>
+				</form>
+		
+		
+		
+				<!-- <form enctype="multipart/form-data" id="upload" action="../userAdmin/importExcel" method="post" class="form-horizontal">
+					<input type="file" name="excelFile" style="width: 0px; height: 0px;display:none"
+						id="uploadEventFile"> 
+					<input id="uploadEventPath" disabled="disabled" type="text" placeholder="请选择excel表"
+						style="border: 1px solid #e6e6e6; height: 26px; width: 200px;">
+					<button class="btn btn-xs" id="uploadEventBtn"
+						style="height: 26px;" type="button" onclick="clickChooseFile()"><span class="glyphicon glyphicon-book"></span> 选择文件
+					</button>
+				</form>
+				<button type="button" class="btn btn-xs" style="height: 26px;margin-right:15px;" type="button" onclick="uploadBtn()"><span class="glyphicon glyphicon-save"></span> 导入excel</button> -->
+ 		</div>
+	</div>
+	<div class="bt-div-two-table ">
+		<div class="table-responsive centerTable">
+			<table class="table table-data-bottom text-center tableHidden">
+				<thead>
+					<tr class="table-first-tr">
+						<th fieldType="checkbox">
+							<input type="checkbox" name="ifAll" onClick="checkAll()" class="all">
+						</th>
+						<th fieldType="num">序号</th>
+						<th>用户工号</th>
+						<th>姓名</th>
+						<th>性别</th>
+						<th>电话</th>
+						<th>岗位</th>
+						<th>所在部门</th>
+					</tr>
+				</thead>
+				<tbody id="userTable">
+				</tbody>
+			</table> 
+		</div>
+		<div class="pages">
+	        <div id="Pagination"></div>
+	        <div class="searchPage">
+	          <span class="page-sum" id="sumPage"></span>
+	          <span class="page-go">跳转<input type="text">页</span>
+	          <a href="javascript:;" class="page-btn">GO</a>
+	        </div>
+	    </div>
+    </div>
+    <!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<div class="search-background" id="background" onclick="hidebg()"></div>
+
+</body>
+</html>

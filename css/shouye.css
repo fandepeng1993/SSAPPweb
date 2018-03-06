@@ -1,0 +1,352 @@
+
+
+
+*{
+	margin:0px;
+	padding:0px;
+}
+
+.Fonsize{
+	font-size:26px;
+}
+
+.panel_contain{
+	padding:10px 20px; 
+}
+.tittle_head_left{
+	float:left;
+}
+.tittle_head_right{
+	float:right;
+	margin-top: 23px;
+}
+
+.tittle_date{
+	display:inline-block;
+	width: 100px;
+	background:#4fd0be;
+	vertical-align: top;
+	color:white;
+}
+.tittle_time{
+	width: 100px;
+    display: inline-block;
+    background: white;
+    margin-left: -4px;
+    height:40px;
+    color:#4fd0be;
+    text-align:center;
+    border-top:1px solid #f1f1f2;
+    border-right:1px solid #f1f1f2;
+    border-bottom:1px solid #f1f1f2;
+    box-shadow: 1px 0px 1px 0px #f1f1f2;
+    
+}
+.fdp-left{
+	float:left;
+}
+.tittle_date .fdp-left{
+	width:50px;
+	height:40px;
+	text-align:center;
+	
+}
+.tittle_date .fdp-left:nth-child(2){
+	text-align:left;
+}
+.table{
+	margin: 0px;
+}
+.table td,th{
+	text-align: center;
+}
+.table th{
+	color: #a5a6bb;
+}
+.table td p{
+	margin:0px;
+	display: inline-block;
+	max-width: 100px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	vertical-align: bottom;
+
+}
+.shouye_box{
+	background: #fff;
+	border: 1px solid #f1f1f2;
+	position: relative;
+}
+.Sy_closed,.Sy_slideUp{
+	margin-right: 10px;
+	cursor: pointer;
+}
+.shouye_box>div:nth-child(1){
+	padding-left: 4%;
+}
+.openSwitch{
+	position: absolute;
+	right: 15px;
+	top: 15px;
+}
+.table-hover tr td{
+	cursor:pointer;
+}
+
+.moreOperate .dropdown-menu{
+	left: 50%;
+	-ms-transform:translateX(-50%); 	/* IE 9 */
+	-moz-transform:translateX(-50%);	/* Firefox */
+	-webkit-transform:translateX(-50%); /* Safari 和 Chrome */
+	-o-transform:translateX(-50%);	/* Opera */
+	}
+.shouye_box>div:nth-child(1) span {
+	margin-bottom: 10px;
+	display: inline-block;
+}
+
+.hasVote{
+	color:#4fd0be;
+}
+.questintest tr td:nth-child(3){
+	color: #f56a71;
+	cursor:pointer;
+}
+.hasNOVote{
+	color: #f56a71;
+}
+.questintest tr td:nth-child(3).hasVote{
+	color:#4fd0be;
+}
+.enterNetBook tr td:nth-child(2){
+	color:#3dabf6;
+	cursor: pointer;
+}
+.businessTrip tr td:nth-child(2){
+	cursor: pointer;
+	color:#3dabf6 ;
+	
+}
+.weekMeet tr td:nth-child(3){
+	color:#3dabf6 ;
+	cursor: pointer;
+}
+ul.row{
+	margin-bottom: 20px;
+}
+.badge-danger{
+	background: #f45b63;
+}
+.Workflow_item{
+	cursor:pointer;
+}
+.Attendance td img{
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	-webkit-border-radius: 50%;
+	-moz-border-radius: 50%;
+	-ms-border-radius: 50%;
+	border: 1px solid red;
+	vertical-align: bottom;
+}
+.nameDepart{
+	display: inline-block;
+	margin-left: 10px;
+	text-align: left;
+}
+.departMent{
+	font-size: 10px;
+	color:#a5a6bb;
+}
+.NeedPading{
+	padding: 10px 20px 10px 20px;
+	text-align: right;
+}
+.NeedPading img{
+	width: 75px;
+	height: 75px;
+	vertical-align: bottom;
+}
+.shouye_box.NeedPading .nameDepart{
+    padding-left:0px;
+	margin-left: 0px;
+	/*margin-right: 50px;*/
+	text-align: center;
+	float: left;
+	margin-top: 10px;
+}
+.shouye_box.NeedPading .nameDepart span{
+	margin: 0px;
+}
+.BigColor{
+	color:#ffaa92;
+	font-size: 30px;
+}
+.BigFonts{
+	font-size: 20px;
+}
+.dailyReport{
+	color:#b5e26b ;
+}
+.weekReport{
+	color:#60d9ff ;
+}
+.monthReport{
+	color:#fcd458;
+}
+.weekPlan{
+	color:#26e3c6;
+}
+.departWeek{
+	color: #9975f6;;
+}
+.shopUrgency{
+	background-color: #4fd0be;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	position: relative;
+}
+.row.shopUrgency_head{
+	margin: 0;
+}
+.shopUrgency_left{
+	color: white;
+	float: left;
+}
+.shopUrgency_left .departMent{
+	color: white;
+}
+.BigFonts18{
+	font-size: 18px;
+}
+.shopUrgency .Sy_closED,.shopUrgency .Sy_slideUP{
+	color: white;
+	margin-right: 10px;
+	cursor: pointer;
+}
+.searchBox{
+	float: right;
+	position: relative;
+}
+.searchBox input{
+	border: none;
+	outline: none;
+	height: 30px;
+	line-height: 30px;
+	padding-left: 15px;
+	padding-right: 15px;
+	-webkit-border-radius: 15px;
+	-moz-border-radius: 15px;
+	-ms-border-radius: 15px;
+	background: #80dbd1;
+	text-indent: 20px;
+	margin-right: 8em;
+	margin-top: 0.6em;
+	color: white;
+}
+.search_Icon{
+	color: white;
+	font-size: 20px!important;
+	position: absolute;
+	top:15px;
+	left: 10px;
+}
+
+.allchecked{
+	text-align: center;
+	width: 80px;
+	line-height: 26px;
+	-webkit-border-radius: 15px;
+	-moz-border-radius: 15px;
+	-ms-border-radius: 15px;
+}
+.satrtB{
+	text-align: center;
+	width: 80px;
+	line-height: 26px;
+	-webkit-border-radius: 15px;
+	-moz-border-radius: 15px;
+	-ms-border-radius: 15px;
+}
+.icheckbox_square-green{
+	margin-left: 0px!important;
+}
+.allchecked i.iconfont{
+	font-size: 10px;
+	display: inline-block;
+	height: 20px;
+}
+.iconfont.redColor:before{
+	color: red!important;
+}
+.clientManagement tr td:nth-child(1),.ProjectManagement tr td:nth-child(1){
+	color: #3dabf6;
+}
+.FormMarign{
+	margin-top: 20px;
+	margin-bottom:20px;
+}
+.Workflow_item i.iconfont  {
+	display: inline-block;
+	font-size: 40px;
+	height: 40px;
+}
+.Color_org{
+	color: #fcd458;
+}
+.Color_skyBlue{
+	color: #26e3c6;
+}
+.Color_green{
+	color: #b5e26b;
+}
+.Color_seaBlue{
+	color: #60d9ff;
+}
+.Color_purple{
+	color: #9975f6;
+}
+.Color_pink{
+	color: #ffaa92;
+}
+
+.i_Badge{
+	position: absolute;
+	right: -20px;
+	top: -4px;
+}
+.Workflow_item{
+	padding: 15px 30px ;
+	border-bottom:1px solid #ddd ;
+}
+.workflow_Info{
+	display: inline-block;
+	margin-left: 10%;
+}
+
+/* @media (min-width:1903px)
+bootstrap.min.css:5
+.col-md-2 {
+    width: 16.66666667%;
+} */
+@media screen and (min-width:1533px) {
+   .weekActive {
+      width:16.66667%;
+      float:left;
+    } 
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

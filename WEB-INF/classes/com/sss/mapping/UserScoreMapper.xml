@@ -1,0 +1,476 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IUserScoreDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.UserScore" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="score" property="score" jdbcType="INTEGER" />
+    <result column="fromdate" property="fromdate" jdbcType="VARCHAR" />
+    <result column="enddate" property="enddate" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    
+    <association property="employee" javaType="com.sss.pojo.User">
+		<id column="eu_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="eu_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="eu_position_name" property="position.positionName" jdbcType="VARCHAR" />
+	    <result column="eu_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="eu_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="eu_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="eu_user_status" property="status" jdbcType="VARCHAR" />
+	</association>
+	<association property="creator" javaType="com.sss.pojo.User">
+		<id column="cu_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="cu_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="cu_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="cu_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="cu_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="cu_user_status" property="status" jdbcType="VARCHAR" />
+	</association>
+	<association property="institution" javaType="com.sss.pojo.Institution">
+		<id column="iu_institution_id" property="id" jdbcType="INTEGER" />
+		<result column="iu_institution_name" property="name" jdbcType="VARCHAR" />
+	    <result column="iu_institution_content" property="content" jdbcType="VARCHAR" />
+	    <result column="iu_institution_score" property="score" jdbcType="INTEGER" />
+	    <result column="iu_institution_createdate" property="createdate" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		us.*,
+  		u.user_id as eu_user_id,
+  		u.user_name as eu_user_name,
+  		u.user_no as eu_user_no,
+  		u.position_id as eu_position_id,
+  		u.position_name as eu_position_name,
+  		u.sex as eu_user_sex,
+  		u.status as eu_user_status,
+  		u1.user_id as cu_user_id,
+  		u1.user_name as cu_user_name,
+  		u1.user_no as cu_user_no,
+  		u1.position_id as cu_position_id,
+  		u1.sex as cu_user_sex,
+  		u1.status as cu_user_status,
+  		i.id as iu_institution_id,
+  		i.name as iu_institution_name,
+  		i.content as iu_institution_content,
+  		i.score as iu_institution_score,
+  		i.createdate as iu_institution_createdate
+    from 
+    	ss_userscore us
+   	left join
+   		view_userinfo u
+   	on
+   		us.employee = u.user_id
+   	left join
+   		ss_user u1
+   	on
+   		us.creator = u1.user_id
+ 	left join
+   		ss_institution i
+   	on
+   		us.institutionId = i.id
+  </sql>
+  
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by us.createdate desc
+  </select>
+  <select id="selectListByEmpId"  resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" /> 
+    where us.employee = #{employeeId,jdbcType=INTEGER} order by us.createdate desc
+  </select>
+  <select id="selectListByEmpIdLazy"  resultMap="BaseResultMap" >
+    <include refid="associateQuery" /> 
+    where us.employee = #{empId,jdbcType=INTEGER} 
+    order by us.createdate desc
+    limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="selectListByInstId"  resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" /> 
+    where us.institutionId = #{institutionId,jdbcType=INTEGER} order by us.createdate desc
+  </select>
+  <select id="scoreByEmpIdAndBeginTime" resultType="java.lang.Integer" >
+    select sum(score) from ss_userscore where employee = #{empId,jdbcType=INTEGER} and fromdate &gt;= #{beginTime,jdbcType=VARCHAR}
+  </select>
+  <select id="totalScoreByEmpId" resultType="java.lang.Integer" >
+    select sum(score) from ss_userscore where employee = #{empId,jdbcType=INTEGER}
+  </select>
+  <select id="getUScoresByEmpIds" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where us.employee in 
+    <foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>  
+    order by us.createdate desc
+  </select>
+  <select id="getUScoresCountByEmpIds" resultType="java.lang.Integer" >
+    select count(*) from ss_userscore
+    where employee in 
+    <foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>  
+  </select>
+  <select id="getUScoresByEmpIdsLazy" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where us.employee in 
+    <foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>  
+    order by us.createdate desc
+    limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="getCountByUserPri" resultType="java.lang.Integer" >
+    select count(*) from ss_userscore
+    where employee in 
+    <foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>  
+  </select>
+  <select id="getCountByUserPriAndKey" resultType="java.lang.Integer" >
+    select count(*) from ss_userscore us
+    left join
+    	ss_user u
+    on
+   		us.employee = u.user_id
+    where us.employee in 
+    <foreach item="item" index="index" collection="empIds" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>  
+		and u.user_name like "%"#{key,jdbcType=VARCHAR}"%" 
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where us.id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="getNoFillCountBy" resultType="java.lang.Integer" >
+    select count(*) from ss_userscore
+    where employee = #{empId,jdbcType=INTEGER} and
+    		institutionId = #{institutionId,jdbcType=INTEGER} and
+    		fromdate &gt;= #{fromdate,jdbcType=VARCHAR} and
+    		fromdate &lt;= #{enddate,jdbcType=VARCHAR}
+  </select>
+  <select id="getNoFillCountByPri" resultType="java.lang.Integer" >
+    select count(*) from ss_userscore
+    where employee in 
+	    <foreach item="item" index="index" collection="empIds" open="(" separator="," close=")">  
+		  #{item}  
+		</foreach>  
+    	and institutionId = #{institutionId,jdbcType=INTEGER}
+    	and	fromdate &gt;= #{fromdate,jdbcType=VARCHAR} 
+    	and	fromdate &lt;= #{enddate,jdbcType=VARCHAR}
+  </select>
+  <select id="searchByDTO"  resultMap="BaseResultMap" parameterType="com.sss.pojo.dto.SearchUScoreDTO" >
+	<include refid="associateQuery" />
+	where 
+	  <if test="employeeName != null and employeeName != ''" >
+	      u.user_name like "%"#{employeeName,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="employeeName == null or employeeName == ''" >
+	      u.user_name like "%%" 
+	  </if>
+	  <if test="employeeIds != null" >
+	      AND us.employee in
+	      <foreach item="item" index="index" collection="employeeIds" open="(" separator="," close=")">  
+		  	#{item}  
+		  </foreach>  
+	  </if>
+	  <if test="creatorIds != null" >
+	      AND us.creator in
+	      <foreach item="item" index="index" collection="creatorIds" open="(" separator="," close=")">  
+		  	#{item}  
+		  </foreach>  
+	  </if>
+	  <if test="creatorName != null and creatorName != ''" >
+	      AND u1.user_name like "%"#{creatorName,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="institutionIds != null" >
+	      AND us.institutionId in
+	      <foreach item="item" index="index" collection="institutionIds" open="(" separator="," close=")">  
+		  	#{item}  
+		  </foreach>  
+	  </if>
+	  <if test="score != null" >
+	      AND us.score = #{score,jdbcType=INTEGER}
+	  </if>
+	  <if test="fromdateBegin != null and fromdateBegin != ''" >
+	      AND us.fromdate &gt;= #{fromdateBegin,jdbcType=VARCHAR}
+	  </if>
+	  <if test="fromdateEnd != null and fromdateEnd != ''" >
+	      AND us.fromdate &lt;= #{fromdateEnd,jdbcType=VARCHAR}
+	  </if>
+	  <if test="enddateBegin != null and enddateBegin != ''" >
+	      AND us.enddate &gt;= #{enddateBegin,jdbcType=VARCHAR}
+	  </if>
+	  <if test="enddateEnd != null and enddateEnd != ''" >
+	      AND us.enddate &lt;= #{enddateEnd,jdbcType=VARCHAR}
+	  </if>
+	  <if test="createdateBegin != null and createdateBegin != ''" >
+	      AND us.createdate &gt;= #{createdateBegin,jdbcType=VARCHAR}
+	  </if>
+	  <if test="createdateEnd != null and createdateEnd != ''" >
+	      AND us.createdate &lt;= #{createdateEnd,jdbcType=VARCHAR}
+	  </if>
+	order by us.createdate desc
+  </select>
+  <select id="getCountByDTO" resultType="java.lang.Integer" parameterType="com.sss.pojo.dto.SearchUScoreDTO" >
+	select count(*)
+    from 
+    	ss_userscore us
+   	left join
+   		ss_user u
+   	on
+   		us.employee = u.user_id
+   	left join
+   		ss_user u1
+   	on
+   		us.creator = u1.user_id
+ 	left join
+   		ss_institution i
+   	on
+   		us.institutionId = i.id
+	where 
+	  <if test="employeeName != null and employeeName != ''" >
+	      u.user_name like "%"#{employeeName,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="employeeName == null or employeeName == ''" >
+	      u.user_name like "%%" 
+	  </if>
+	  <if test="employeeIds != null" >
+	      AND us.employee in
+	      <foreach item="item" index="index" collection="employeeIds" open="(" separator="," close=")">  
+		  	#{item}  
+		  </foreach>  
+	  </if>
+	  <if test="creatorIds != null" >
+	      AND us.creator in
+	      <foreach item="item" index="index" collection="creatorIds" open="(" separator="," close=")">  
+		  	#{item}  
+		  </foreach>  
+	  </if>
+	  <if test="creatorName != null and creatorName != ''" >
+	      AND u1.user_name like "%"#{creatorName,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="institutionIds != null" >
+	      AND us.institutionId in
+	      <foreach item="item" index="index" collection="institutionIds" open="(" separator="," close=")">  
+		  	#{item}  
+		  </foreach>  
+	  </if>
+	  <if test="score != null" >
+	      AND us.score = #{score,jdbcType=INTEGER}
+	  </if>
+	  <if test="fromdateBegin != null and fromdateBegin != ''" >
+	      AND us.fromdate &gt;= #{fromdateBegin,jdbcType=VARCHAR}
+	  </if>
+	  <if test="fromdateEnd != null and fromdateEnd != ''" >
+	      AND us.fromdate &lt;= #{fromdateEnd,jdbcType=VARCHAR}
+	  </if>
+	  <if test="enddateBegin != null and enddateBegin != ''" >
+	      AND us.enddate &gt;= #{enddateBegin,jdbcType=VARCHAR}
+	  </if>
+	  <if test="enddateEnd != null and enddateEnd != ''" >
+	      AND us.enddate &lt;= #{enddateEnd,jdbcType=VARCHAR}
+	  </if>
+	  <if test="createdateBegin != null and createdateBegin != ''" >
+	      AND us.createdate &gt;= #{createdateBegin,jdbcType=VARCHAR}
+	  </if>
+	  <if test="createdateEnd != null and createdateEnd != ''" >
+	      AND us.createdate &lt;= #{createdateEnd,jdbcType=VARCHAR}
+	  </if>
+  </select>
+  <select id="searchByDTOLazy"  resultMap="BaseResultMap" >
+	<include refid="associateQuery" />
+	where 
+	  <if test="dto.employeeName != null and dto.employeeName != ''" >
+	      u.user_name like "%"#{dto.employeeName,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="dto.employeeName == null or dto.employeeName == ''" >
+	      u.user_name like "%%" 
+	  </if>
+	  <if test="dto.employeeIds != null" >
+	      AND us.employee in
+	      <foreach item="item" index="index" collection="dto.employeeIds" open="(" separator="," close=")">  
+		  	#{item}  
+		  </foreach>  
+	  </if>
+	  <if test="dto.creatorIds != null" >
+	      AND us.creator in
+	      <foreach item="item" index="index" collection="dto.creatorIds" open="(" separator="," close=")">  
+		  	#{item}  
+		  </foreach>  
+	  </if>
+	  <if test="dto.creatorName != null and dto.creatorName != ''" >
+	      AND u1.user_name like "%"#{dto.creatorName,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="dto.institutionIds != null" >
+	      AND us.institutionId in
+	      <foreach item="item" index="index" collection="dto.institutionIds" open="(" separator="," close=")">  
+		  	#{item}  
+		  </foreach>  
+	  </if>
+	  <if test="dto.score != null" >
+	      AND us.score = #{dto.score,jdbcType=INTEGER}
+	  </if>
+	  <if test="dto.fromdateBegin != null and dto.fromdateBegin != ''" >
+	      AND us.fromdate &gt;= #{dto.fromdateBegin,jdbcType=VARCHAR}
+	  </if>
+	  <if test="dto.fromdateEnd != null and dto.fromdateEnd != ''" >
+	      AND us.fromdate &lt;= #{dto.fromdateEnd,jdbcType=VARCHAR}
+	  </if>
+	  <if test="dto.enddateBegin != null and dto.enddateBegin != ''" >
+	      AND us.enddate &gt;= #{dto.enddateBegin,jdbcType=VARCHAR}
+	  </if>
+	  <if test="dto.enddateEnd != null and dto.enddateEnd != ''" >
+	      AND us.enddate &lt;= #{dto.enddateEnd,jdbcType=VARCHAR}
+	  </if>
+	  <if test="dto.createdateBegin != null and dto.createdateBegin != ''" >
+	      AND us.createdate &gt;= #{dto.createdateBegin,jdbcType=VARCHAR}
+	  </if>
+	  <if test="dto.createdateEnd != null and dto.createdateEnd != ''" >
+	      AND us.createdate &lt;= #{dto.createdateEnd,jdbcType=VARCHAR}
+	  </if>
+	order by us.createdate desc
+	limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_userscore
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByDate" >
+    delete from ss_userscore
+    where employee = #{empId,jdbcType=INTEGER} and 
+    	fromdate = #{fillReportDate,jdbcType=VARCHAR} and 
+    	enddate = #{fillReportDate,jdbcType=VARCHAR}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.UserScore" >
+    insert into ss_userscore (id, employee, creator, 
+      institutionId, score, fromdate, 
+      enddate, createdate)
+    values (#{id,jdbcType=INTEGER}, #{employee.userId,jdbcType=INTEGER}, #{creator.userId,jdbcType=INTEGER}, 
+      #{institution.id,jdbcType=INTEGER}, #{score,jdbcType=INTEGER}, #{fromdate,jdbcType=VARCHAR}, 
+      #{enddate,jdbcType=VARCHAR}, #{createdate,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.UserScore" >
+    <selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+    </selectKey>
+    insert into ss_userscore
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="employee != null and employee.userId != null" >
+        employee,
+      </if>
+      <if test="creator != null and creator.userId != null" >
+        creator,
+      </if>
+      <if test="institution != null and institution.id != null" >
+        institutionId,
+      </if>
+      <if test="score != null" >
+        score,
+      </if>
+      <if test="fromdate != null" >
+        fromdate,
+      </if>
+      <if test="enddate != null" >
+        enddate,
+      </if>
+        createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="employee != null and employee.userId != null" >
+        #{employee.userId,jdbcType=INTEGER},
+      </if>
+      <if test="creator != null and creator.userId != null" >
+        #{creator.userId,jdbcType=INTEGER},
+      </if>
+      <if test="institution != null and institution.id != null" >
+        #{institution.id,jdbcType=INTEGER},
+      </if>
+      <if test="score != null" >
+        #{score,jdbcType=INTEGER},
+      </if>
+      <if test="fromdate != null" >
+        #{fromdate,jdbcType=VARCHAR},
+      </if>
+      <if test="enddate != null" >
+        #{enddate,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.UserScore" >
+    update ss_userscore
+    <set >
+      <if test="employee != null and employee.userId != null" >
+        employee = #{employee.userId,jdbcType=INTEGER},
+      </if>
+      <if test="creator != null and creator.userId != null" >
+        creator = #{creator.userId,jdbcType=INTEGER},
+      </if>
+      <if test="institution != null and institution.id != null" >
+        institutionId = #{institution.id,jdbcType=INTEGER},
+      </if>
+      <if test="score != null" >
+        score = #{score,jdbcType=INTEGER},
+      </if>
+      <if test="fromdate != null" >
+        fromdate = #{fromdate,jdbcType=VARCHAR},
+      </if>
+      <if test="enddate != null" >
+        enddate = #{enddate,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.UserScore" >
+    update ss_userscore
+    set employee = #{employee.userId,jdbcType=INTEGER},
+      creator = #{creator.userId,jdbcType=INTEGER},
+      institutionId = #{institution.id,jdbcType=INTEGER},
+      score = #{score,jdbcType=INTEGER},
+      fromdate = #{fromdate,jdbcType=VARCHAR},
+      enddate = #{enddate,jdbcType=VARCHAR},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by us.createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by us.createdate desc
+  </select>
+</mapper>

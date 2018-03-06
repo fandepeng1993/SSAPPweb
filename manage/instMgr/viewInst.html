@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>查看制度</title>
+	
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.cookie.js"></script>
+	<!-- angularjs自动化表单部分 -->
+	<script type="text/javascript" src="../../js/loadAngularResource.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		//var currentUserId = Request["userId"];
+		//用于展现表单的menuCode
+		var menuCode;
+		var institution;
+		var selPri;
+		var element;
+		$(document).ready(function(){
+			menuCode = Request["menuCode"];
+			selPri = Request["selPri"];
+			var institutionId = Request["institutionId"];
+			getInst(institutionId);
+		});
+		
+		//根据ss_form表取出数据构建form表单
+		function initForm() {
+			$.ajax({
+				url: "../../formAdmin/formsByMenuCode/" + menuCode,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					element = eval("(" + data + ")");
+					
+					if(!useAngularForm) {
+						$("#createSubmitForm").remove();
+						
+						new UserCommon().createForm("updateInstForm", element, 4);
+						new UserCommon().fillForm("updateInstForm", institution);
+						
+						fillDeptSelect();
+						//初始化层的大小
+						initLayerSize();
+					}
+				} 
+			});
+		}
+		
+		//自动化创建表单之后需要调用的函数
+		function afterCreateCustomForm() {
+			new UserCommon().fillForm("updateInstForm", institution);
+			fillDeptSelect();
+		}
+		
+		function getInst(institutionId) {
+			$.ajax({
+				url: "../../instAdmin/institution/" + institutionId,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					institution = eval("(" + data + ")");
+					initForm();
+				} 
+			});
+		}
+		
+		/**
+		 * 选择添加后填充相关选择下拉框
+		 */
+		function fillDeptSelect() {
+			$("#dept").empty();
+			var str = "<option value=\"-1\">请选择</option>";
+			var url = "";
+			if(selPri == 1) {
+				url = "../../deptAdmin/depts";
+			} else {
+				url = "../../deptAdmin/getAllDeptsByUserId/" + currentUserId;
+			}
+			$.ajax({
+			      url: url,
+			      datatype: "text",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+						$.each(eval("(" + data + ")"), function(index, item) {
+							str = str + "<option value=\"" + item.deptId + "\">" + item.deptName + "</option>"
+						});
+						$("#dept").html(str);
+						
+						$("#dept").val(institution.position.dept.deptId);
+						$.ajax({
+							url: "../../posAdmin/PosesFromDeptId/" + institution.position.dept.deptId,
+							datatype: "json",
+							type: "get",
+							data: {},
+							success: function (data, status, xhr) {
+								$("#position").empty();
+								str = "<option value=\"-1\">请选择</option>";
+								$.each(eval("(" + data + ")"), function(index, item) {
+									str = str + "<option value=\"" + item.positionId + "\">" + item.positionName + "</option>";
+								});
+								$("#position").append(str);
+								
+								$("#position").val(institution.position.positionId);
+							} 
+						});
+			      }
+			});
+		}
+	    
+	    /**
+		 * 添加操作，根据deptId填充岗位选择下拉框
+		 */
+		function fillPosition() {
+			var id = $("#dept").val();
+			$.ajax({
+				url: "../../posAdmin/PosesFromDeptId/" + id,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					$("#position").empty();
+					str = "<option value=\"-1\">请选择</option>";
+					$.each(eval("(" + data + ")"), function(index, item) {
+						str = str + "<option value=\"" + item.positionId + "\">" + item.positionName + "</option>";
+					});
+					$("#position").append(str);
+				} 
+			});
+		}
+	</script>
+</head>
+<body>
+	<div class="edit">
+		<div class="edit-content">
+			<div class="edit-in">
+				<form id="updateInstForm">
+					<div id="createSubmitForm" ng-app="app" ng-controller="creatSubmitFormCtrl" class="previewText">
+						<div style="border:1px solid #d9d9d9;max-height: 500px;">
+							<div gridster='gridsterOpts' ng-style="{width:((gridsterOpts.columns)*200)+1+'px'}">
+								<ul>
+									<li gridster-item="item" ng-repeat="item in sercoundItems" ng-style="{zIndex:100-item.row}">
+										<my-directivelist>
+										</my-directivelist>
+									</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+			<div class="edit-bottom">
+				<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();">
+				<i class="glyphicon glyphicon-remove"></i>&nbsp;关闭
+				</button>
+			</div>
+		</div>	
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span>
+			<span></span>
+			<div><img src="../../images/sanjiao.png" width="10"></div>
+		</div>
+	</div>
+</body>
+</html>

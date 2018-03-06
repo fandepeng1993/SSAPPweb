@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.ISupplyDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.Supply" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <!-- <result column="productivepower_id" property="productivepowerId" jdbcType="INTEGER" /> -->
+    <result column="annual_output" property="annualOutput" jdbcType="VARCHAR" />
+    <result column="supply_name" property="supplyName" jdbcType="VARCHAR" />
+    <result column="type" property="type" jdbcType="VARCHAR" />
+    <result column="address" property="address" jdbcType="VARCHAR" />
+    <result column="legal_person" property="legalPerson" jdbcType="VARCHAR" />
+    <result column="fund" property="fund" jdbcType="DOUBLE" />
+    <result column="level" property="level" jdbcType="VARCHAR" />
+    <result column="size" property="size" jdbcType="VARCHAR" />
+    <result column="remark" property="remark" jdbcType="LONGVARCHAR" />
+    <result column="createdate" property="createDate" jdbcType="VARCHAR" />
+    <result column="contact" property="contact" jdbcType="VARCHAR" />
+    <collection  property="powers" javaType="list" ofType="com.sss.pojo.ProductivePower">
+		<id column="sp_power_id" property="id" jdbcType="INTEGER" />
+		<id column="sp_power_supply_id" property="supplyId" jdbcType="INTEGER" />
+		<result column="sp_power_machine_type" property="machineType" jdbcType="VARCHAR" />
+	    <result column="sp_power_measure" property="measure" jdbcType="VARCHAR" />
+	    <result column="sp_power_number" property="number" jdbcType="VARCHAR" />
+	    <result column="sp_power_createdate" property="createDate" jdbcType="VARCHAR" />
+	</collection>
+  </resultMap>
+  <sql id="associateQuery">
+   	SELECT 
+		sup.*,
+		ptp.id as sp_power_id,
+		ptp.supply_id as sp_power_supply_id,
+		ptp.machine_type as sp_power_machine_type,
+		ptp.measure as sp_power_measure,
+		ptp.number as sp_power_number,
+		ptp.createdate as sp_power_createdate
+	FROM 
+		ss_supply sup
+	LEFT JOIN
+		ss_productivepower ptp
+	ON
+		sup.id = ptp.supply_id
+  </sql>
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by sup.createdate desc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" /> 
+    where sup.id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_supply
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.Supply" >
+   	<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+	</selectKey>
+    insert into ss_supply (id, annual_output, 
+      supply_name, type, address, 
+      legal_person, fund, level, 
+      size, remark, createdate,contact)
+    values (#{id,jdbcType=INTEGER}, #{annualOutput,jdbcType=VARCHAR}, 
+      #{supplyName,jdbcType=VARCHAR}, #{type,jdbcType=VARCHAR}, #{address,jdbcType=VARCHAR}, 
+      #{legalPerson,jdbcType=VARCHAR}, #{fund,jdbcType=DOUBLE}, #{level,jdbcType=VARCHAR}, 
+      #{size,jdbcType=VARCHAR}, #{remark,jdbcType=LONGVARCHAR}, #{createDate,jdbcType=VARCHAR},#{contact,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.Supply" >
+   	<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+	</selectKey>
+    insert into ss_supply
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="annualOutput != null" >
+        annual_output,
+      </if>
+      <if test="supplyName != null" >
+        supply_name,
+      </if>
+      <if test="type != null" >
+        type,
+      </if>
+      <if test="address != null" >
+        address,
+      </if>
+      <if test="legalPerson != null" >
+        legal_person,
+      </if>
+      <if test="fund != null" >
+        fund,
+      </if>
+      <if test="level != null" >
+        level,
+      </if>
+      <if test="size != null" >
+        size,
+      </if>
+      <if test="remark != null" >
+        remark,
+      </if>
+      	createdate,
+      <if test="contact != null" >
+        contact,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="annualOutput != null" >
+        #{annualOutput,jdbcType=VARCHAR},
+      </if>
+      <if test="supplyName != null" >
+        #{supplyName,jdbcType=VARCHAR},
+      </if>
+      <if test="type != null" >
+        #{type,jdbcType=VARCHAR},
+      </if>
+      <if test="address != null" >
+        #{address,jdbcType=VARCHAR},
+      </if>
+      <if test="legalPerson != null" >
+        #{legalPerson,jdbcType=VARCHAR},
+      </if>
+      <if test="fund != null" >
+        #{fund,jdbcType=DOUBLE},
+      </if>
+      <if test="level != null" >
+        #{level,jdbcType=VARCHAR},
+      </if>
+      <if test="size != null" >
+        #{size,jdbcType=VARCHAR},
+      </if>
+      <if test="remark != null" >
+        #{remark,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="createDate == null or createDate == ''" >
+        now(),
+      </if>
+      <if test="createDate != null and createDate != ''" >
+        #{createDate,jdbcType=VARCHAR},
+      </if>
+      <if test="contact != null" >
+        #{contact,jdbcType=LONGVARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.Supply" >
+    update ss_supply
+    <set >
+      <if test="annualOutput != null" >
+        annual_output = #{annualOutput,jdbcType=VARCHAR},
+      </if>
+      <if test="supplyName != null" >
+        supply_name = #{supplyName,jdbcType=VARCHAR},
+      </if>
+      <if test="type != null" >
+        type = #{type,jdbcType=VARCHAR},
+      </if>
+      <if test="address != null" >
+        address = #{address,jdbcType=VARCHAR},
+      </if>
+      <if test="legalPerson != null" >
+        legal_person = #{legalPerson,jdbcType=VARCHAR},
+      </if>
+      <if test="fund != null" >
+        fund = #{fund,jdbcType=DOUBLE},
+      </if>
+      <if test="level != null" >
+        level = #{level,jdbcType=VARCHAR},
+      </if>
+      <if test="size != null" >
+        size = #{size,jdbcType=VARCHAR},
+      </if>
+      <if test="remark != null" >
+        remark = #{remark,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="createDate != null" >
+        createdate = #{createDate,jdbcType=VARCHAR},
+      </if>
+      <if test="contact != null" >
+        contact = #{contact,jdbcType=LONGVARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKeyWithBLOBs" parameterType="com.sss.pojo.Supply" >
+    update ss_supply
+    set  annual_output = #{annualOutput,jdbcType=VARCHAR},
+      supply_name = #{supplyName,jdbcType=VARCHAR},
+      type = #{type,jdbcType=VARCHAR},
+      address = #{address,jdbcType=VARCHAR},
+      legal_person = #{legalPerson,jdbcType=VARCHAR},
+      fund = #{fund,jdbcType=DOUBLE},
+      level = #{level,jdbcType=VARCHAR},
+      size = #{size,jdbcType=VARCHAR},
+      remark = #{remark,jdbcType=LONGVARCHAR},
+      createdate = #{createDate,jdbcType=VARCHAR},
+      contact = #{contact,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.Supply" >
+    update ss_supply
+    set annual_output = #{annualOutput,jdbcType=VARCHAR},
+      supply_name = #{supplyName,jdbcType=VARCHAR},
+      type = #{type,jdbcType=VARCHAR},
+      address = #{address,jdbcType=VARCHAR},
+      legal_person = #{legalPerson,jdbcType=VARCHAR},
+      fund = #{fund,jdbcType=DOUBLE},
+      level = #{level,jdbcType=VARCHAR},
+      size = #{size,jdbcType=VARCHAR},
+      createdate = #{createDate,jdbcType=VARCHAR},
+      contact = #{contact,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by sup.createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by sup.createdate desc
+  </select>
+</mapper>

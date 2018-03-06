@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IPositionDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.Position" >
+    <id column="position_id" property="positionId" jdbcType="INTEGER" />
+    <result column="position_name" property="positionName" jdbcType="VARCHAR" />
+    <result column="position_desc" property="positionDesc" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    <result column="gradeTitle" property="gradeTitle" jdbcType="VARCHAR" />
+    
+    <association property="dept" javaType="com.sss.pojo.Department">
+		<id column="pd_dept_id" property="deptId" jdbcType="INTEGER" />
+	    <result column="pd_dept_pid" property="parentDept.deptId" jdbcType="INTEGER" />
+	    <result column="pd_dept_name" property="deptName" jdbcType="VARCHAR" />
+	</association>
+	<association property="parentPos" javaType="com.sss.pojo.Position">
+		<id column="pp_position_id" property="positionId" jdbcType="INTEGER" />
+	    <result column="pp_position_pid" property="parentPos.positionId" jdbcType="INTEGER" />
+	    <result column="pp_dept_name" property="dept.deptName" jdbcType="VARCHAR" />
+	    <result column="pp_position_name" property="positionName" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		p.*,
+  		d.dept_id as pd_dept_id,
+  		d.dept_pid as pd_dept_pid,
+  		d.dept_name as pd_dept_name,
+  		pp.position_id as pp_position_id,
+  		pp.position_pid as pp_position_pid,
+  		pp.position_name as pp_position_name,
+  		dd.dept_name as pp_dept_name
+    from 
+    	ss_position p
+   	left join
+   		ss_department d
+   	on
+   		p.dept_id = d.dept_id
+   	left join
+   		ss_position pp
+   	on
+   		p.position_pid = pp.position_id
+   	left join
+   		ss_department dd
+   	on
+   		pp.dept_id = dd.dept_id
+  </sql>
+  <!-- 返回一个list的写法 -->
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" />
+  </select>
+  <select id="selectListByDeptId"  resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where p.dept_id = #{deptId,jdbcType=INTEGER}
+  </select>
+  <select id="selectByDeptAndPosName"  resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where d.dept_name = #{deptName,jdbcType=VARCHAR}
+    	and p.position_name = #{positionName,jdbcType=VARCHAR}
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+   <include refid="associateQuery" />
+    where p.position_id = #{positionId,jdbcType=INTEGER}
+  </select>
+  <select id="selectByKey" resultMap="BaseResultMap" parameterType="java.lang.String">
+    <include refid="associateQuery" />
+    where p.position_name like "%"#{keyWords,jdbcType=VARCHAR}"%" order by p.createdate desc
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_position
+    where position_id = #{positionId,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.Position" >
+    insert into ss_position (position_id, position_name, position_desc, 
+    	dept_id, position_pid, gradeTitle, createdate
+      )
+    values (#{positionId,jdbcType=INTEGER}, #{positionName,jdbcType=VARCHAR}, 
+        #{positionDesc,jdbcType=VARCHAR}, #{dept.deptId,jdbcType=INTEGER}, 
+        #{parentPos.positionId,jdbcType=INTEGER}, #{gradeTitle,jdbcType=VARCHAR}, #{createdate,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.Position" >
+    insert into ss_position
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="positionId != null" >
+        position_id,
+      </if>
+      <if test="positionName != null" >
+        position_name,
+      </if>
+      <if test="positionDesc != null" >
+        position_desc,
+      </if>
+      <if test="dept != null and dept.deptId != null" >
+        dept_id,
+      </if>
+      <if test="parentPos != null and parentPos.positionId != null" >
+        position_pid,
+      </if>
+      <if test="gradeTitle != null" >
+        gradeTitle,
+      </if>
+        createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="positionId != null" >
+        #{positionId,jdbcType=INTEGER},
+      </if>
+      <if test="positionName != null" >
+        #{positionName,jdbcType=VARCHAR},
+      </if>
+      <if test="positionDesc != null" >
+        #{positionDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="dept != null and dept.deptId != null" >
+        #{dept.deptId,jdbcType=INTEGER},
+      </if>
+      <if test="parentPos != null and parentPos.positionId != null" >
+      	#{parentPos.positionId,jdbcType=INTEGER},
+      </if>
+      <if test="gradeTitle != null" >
+      	#{gradeTitle,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.Position" >
+    update ss_position
+    <set>
+      <if test="positionName != null" >
+        position_name = #{positionName,jdbcType=VARCHAR},
+      </if>
+      <if test="positionDesc != null" >
+        position_desc = #{positionDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="dept != null and dept.deptId != null" >
+        dept_id = #{dept.deptId,jdbcType=INTEGER},
+      </if>
+      <if test="parentPos != null and parentPos.positionId != null" >
+      	position_pid = #{parentPos.positionId,jdbcType=INTEGER},
+      </if>
+      <if test="parentPos != null and parentPos.positionId == null" >
+      	position_pid = null,
+      </if>
+      <if test="gradeTitle != null" >
+      	gradeTitle = #{gradeTitle,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where position_id = #{positionId,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.Position" >
+    update ss_position
+    set position_name = #{positionName,jdbcType=VARCHAR},
+      position_desc = #{positionDesc,jdbcType=VARCHAR},
+      dept_id = #{dept.deptId,jdbcType=INTEGER},
+      position_pid = #{parentPos.positionId,jdbcType=INTEGER},
+      gradeTitle = #{gradeTitle,jdbcType=VARCHAR},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where position_id = #{positionId,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+  </select>
+</mapper>

@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<div style="width:40%; float:left">
+	当前用户：<img id="userPhotoUrl" src="" style="display:none;width:50px;height:50px;"><span id="curUserName" ></span><br/>
+    文件选择: <input type="file" id="file_box"><br/>
+    <br/>------ 基础功能 ------ <br/>
+	姓名：<input id="userName" /><br/>
+	密码：<input id="password" /><br/>
+    <button onclick="init()">初始化</button><br/>
+	<button onclick="loginOut()">登出</button><br/>
+    <button onclick="register()">注册</button><br/>
+
+    <button onclick="login()">登录</button><br/>
+    <button onclick="getSelfInfo()">获取个人信息</button><br/>
+	资源URL：<input id="resourceUrl" /><br/>
+	 <button onclick="getResource()">获取资源URL</button><br/>
+    <br/>------ 发送消息 ------ <br/>
+	发送人姓名：<input id="userNameInConversation" /><br/>
+	发送人昵称：<input id="userNickNameInConversation" /><br/>
+	消息内容：<input id="content" /><br/>
+    <button onclick="sendSingleMsg()">发送单聊消息</button><br/>
+	<button onclick="sendSingleCustom()">发送单聊自定义消息</button><br/>
+    <button onclick="sendSinglePic()">发送单聊图片消息</button><br/>
+    <button onclick="sendSingleFile()">发送单聊文件消息</button><br/>
+    <button onclick="sendSingleLocation()">发送单聊地理位置消息</button><br/>
+
+    <br>
+    <br/>------ 群组功能 ------ <br/>
+	组名：<input id="groupName" /><br/>
+	组描述：<input id="groupDesc" /><br/>
+    <button onclick="createGroup()">新增群组</button><br/>
+    <button onclick="getGroups()">群组列表</button><br/>
+	群组ID：<input id="groupID" /><br/>
+    <button onclick="getGroupMembers()">获取群组成员</button><br/>
+	成员名称：<input id="addMemberName" /><br/>
+    <button onclick="addGroupMembers()">添加群组成员</button>(填写群组ID和成员名称)<br/>
+    <button onclick="delGroupMembers()">删除群组成员</button><br/>
+
+    <button onclick="updateGroupInfo()">更新群组信息</button>(填写组名，组描述和群组ID)<br/>
+    <button onclick="getGroupInfo()">获取群组信息</button>(填写群组ID)<br/>
+    <button onclick="exitGroup()">退出群组</button>(填写群组ID)<br/>
+	目标组ID：<input id="targetGid" /><br/>
+	目标组名：<input id="targetGName" /><br/>
+	发送内容：<input id="groupContent" /><br/>
+    <button onclick="sendGroupMsg()">发送群聊消息</button><br/>
+	<button onclick="sendGroupCustom()">发送群聊自定义消息</button><br/>
+    <button onclick="sendGroupPic()">发送群聊图片消息</button><br/>
+    <button onclick="sendGroupFile()">发送群聊文件消息</button><br/>
+    <button onclick="sendGroupLocation()">发送群聊地理位置消息</button><br/>
+    <button onclick="addGroupShield()">屏蔽群</button><br/>
+	<button onclick="delGroupShield()">删除屏蔽</button><br/>
+    <br>
+    <button onclick="getConversation()">获取会话列表</button><br/>
+    <br>
+	<br/>------ 免打扰 ------ <br/>
+    <button onclick="noDisturb()">免打扰列表</button><br/>
+	免打扰姓名称：<input id="disturbUserName" /><br/>
+    <button onclick="addSingleDisturb()">添加单聊（支持跨应用）免打扰</button><br/>
+    <button onclick="delSingleDisturb()">删除单个免打扰</button><br/>
+	免打扰群组：<input id="disturbGroup" /><br/>
+    <button onclick="addGroupDisturb()">添加群免打扰</button><br/>
+    <button onclick="delGroupDisturb()">删除群免打扰</button><br/>
+    <button onclick="addGlobalDisturb()">添加全局免打扰</button><br/>
+    <button onclick="delGlobalDisturb()">删除全局免打扰</button><br/>
+    <br>
+	<br/>------ 黑名单------ <br/>
+	姓名称：<input id="blackUserName" /><br/>
+    <button onclick="getBlackList()">获取黑名单</button><br/>
+    <button onclick="addBlack()">添加黑名单</button><br/>
+    <button onclick="delBlack()">删除黑名单</button><br/>
+    <br>
+	<br/>------ 个人设置 ------ <br/>
+	昵称：<input id="setNickName" /><br/>
+	生日：<input id="setBirthday" /><br/>
+	签名：<input id="setSignature" /><br/>
+	性别：<input id="setGender" /><br/>
+	地区：<input id="setRegion" /><br/>
+	地址：<input id="setAddress" /><br/>
+    <button onclick="updateUserInfo()">修改用户信息</button><br/>
+    <button onclick="updateUserPic()">修改头像</button><br/>
+	旧的密码：<input id="oldPassword" /><br/>
+	新的密码：<input id="newPassword" /><br/>
+	密码是否经过MD5：<input id="isMD5" />0--否；1--是<br/>
+    <button onclick="updateUserPwd()">修改密码</button><br/>
+	<br/>------ 好友功能 ------<br/>
+	 <button onclick="getFriendList()">好友列表</button><br/>
+	添加好友名称：<input id="addFriendName" /><br/>
+	添加原因：<input id="why" /><br/>
+	 <button onclick="addFriend()">添加好友</button><br/>
+	删除好友名称：<input id="deleteFriendName" /><br/>
+	 <button onclick="delFriend()">删除好友</button><br/>
+	好友名称：<input id="friendName" /><br/>
+	好友备注：<input id="friendMemoName" /><br/>
+	 <button onclick="updateFriendMemo()">更新好友备注</button><br/>
+	<br/>
+</div>
+
+<div id="dashboard" style="width:60%; height: 800px; float:left; background: black; color: #eeeeee;overflow-y: scroll;"></div>
+<br/>
+拒绝原因：<input id="centerFriendWhy" />（拒绝原因为""，则为同意添加。）<br/>
+<button onclick="centerAddFriend()">确定</button>
+</body>
+<script src='../../js/JMessage/jmessage-sdk-web.2.2.0.min.js'></script>
+<script src='../../js/md5.js'></script>
+<script src="../../js/jquery-1.11.1.min.js"></script>
+<script src='../../js/UserUtil.js'></script>
+
+<script src="http://7qn8xa.com1.z0.glb.clouddn.com/emoji.js"></script>
+
+<script>
+    //var across_user = 'ldkSmail';
+    var across_appkey = '95811b694b5efcc279dc7cb6';
+	//var target_nickname='ldkSmail';
+	//var gid=10217803;
+	//var target_gname='xu_test'
+
+    window.JIM = new JMessage({
+        // debug : true
+    });
+
+	JIM.onDisconnect(function(){
+	  console.log("【disconnect】");
+	}); //异常断线监听
+	
+    function appendToDashboard(text) {
+        $('#dashboard').append('<p style="margin-left: 16px">' + text + '</p>')
+        $('#dashboard').emoji();
+    }
+
+    function getFile() {
+        var fd = new FormData();
+        var file = document.getElementById('file_box');
+        if(!file.files[0]) {
+		    appendToDashboard('error:' + '获取文件失败');
+            throw new Error('获取文件失败');
+        }
+        fd.append(file.files[0].name, file.files[0]);
+        return fd;
+    }
+
+    function init() {
+		var now = new Date().getTime();
+		var signature = hex_md5("appkey=" + across_appkey + "&"
+				+ "timestamp=" + now + "&"
+				+ "random_str=aaaaaaaaaaaaaaaaaaaa&"
+				+ "key=5bb690d252ebf20984caba8f").toUpperCase();
+		console.log(now + "--" + signature);
+        JIM.init({
+            "appkey": across_appkey,
+			"random_str": "aaaaaaaaaaaaaaaaaaaa",
+			"signature": signature,
+			"timestamp": now,
+        }).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+            appendToDashboard('success' + JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data))
+			showErrorMsg(data);
+        });
+    }
+	
+    function loginOut(){
+	     JIM.loginOut();
+	}
+	function register(){
+		var userName = $("#userName").val();
+		var password = $("#password").val();
+		  JIM.register({
+            'username' : userName,
+			'password': password,
+			'is_md5' : false
+        }).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+            appendToDashboard(JSON.stringify(data));
+          }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data))
+			showErrorMsg(data);
+        });
+	}
+	var curUserName;
+    function login() {
+		var userName = $("#userName").val();
+		var password = $("#password").val();
+        JIM.login({
+            'username' : userName,
+            'password' : password
+        }).onSuccess(function(data) {
+			curUserName = userName;
+			$("#curUserName").html(curUserName);
+            console.log('success:' + JSON.stringify(data));
+            appendToDashboard(JSON.stringify(data));
+            JIM.onMsgReceive(function(data) {
+                console.log('msg_receive:' + JSON.stringify(data));
+                //appendToDashboard('msg_receive:' + JSON.stringify(data));
+				$.each(data.messages, function (index, item) {
+					var messages = "";
+					if(item.from_gid != 0) {
+						messages = "来自群组：" + item.content.target_name + "   ";
+					}
+					if(item.content.msg_type == "text") {
+						messages = messages + item.content.from_name + "：" + item.content.msg_body.text + "    			-创建时间：" + new Date(item.content.create_time).format("yyyy-MM-dd HH:mm:ss");
+					} else if(item.content.msg_type == "image") {
+						messages = messages + item.content.from_name + "：" + "<img src='" + item.content.msg_body.media_url + "' style=\"width:100px;height:100px;\">" + "    			-创建时间：" + new Date(item.content.create_time).format("yyyy-MM-dd HH:mm:ss");
+					} else if(item.content.msg_type == "file") {
+						messages = messages + item.content.from_name + "：" + "文件：<a href=\"" + item.content.msg_body.media_url + "\" style=\"color:blue;\">" + item.content.msg_body.fname + "</a>" + "    			-创建时间：" + new Date(item.content.create_time).format("yyyy-MM-dd HH:mm:ss");
+					} else if(item.content.msg_type == "location") {
+						messages = messages + item.content.from_name + "：" + "位置：" + item.content.msg_body.label + 
+							"(latitude:" + item.content.msg_body.latitude + ", longitude:" + item.content.msg_body.longitude + ")" + 
+							"    			-创建时间：" + new Date(item.content.create_time).format("yyyy-MM-dd HH:mm:ss");
+					}
+					appendToDashboard(messages);
+				});
+            });
+
+            JIM.onEventNotification(function(data) {
+                console.log('event_receive: ' + JSON.stringify(data));
+                //appendToDashboard('event_receive: ' +JSON.stringify(data));
+				if(data.event_type == 1) {
+					//账号在其他地方登录，强制踢人事件
+					appendToDashboard("账号在其他地方登录，强制踢人事件：\n" + "申请人：" + data.from_username + "\n添加原因：" + data.description);
+				} else if(data.event_type == 2) {
+					//修改密码强制登出事件
+					appendToDashboard("修改密码强制登出事件：\n" + "申请人：" + data.from_username + "\n添加原因：" + data.description);
+				} else if(data.event_type == 5) {
+					//好友应答事件
+					if(data.extra == 1) {
+						appendToDashboard("好友应答事件：\n" + "申请人：" + data.from_username + "\n添加原因：" + data.description);
+						addTargetName = data.from_username;
+					} else if(data.extra == 2 && data.return_code == 0) {
+						appendToDashboard("好友应答事件：\n" + "添加好友" + data.from_username + "成功！");
+					} else if(data.extra == 2 && data.return_code != 0) {
+						appendToDashboard("好友应答事件(被拒)：\n" + "拒绝人：" + data.from_username + "\n拒绝原因：" + data.description);
+					}
+					
+					return;
+				} else if(data.event_type == 6) {
+					//删除好友事件
+					appendToDashboard("删除好友事件：\n" + "被好友" + data.from_username + "删除！");
+				} else if(data.event_type == 7) {
+					//好友更新事件
+					appendToDashboard("好友更新事件：\n" + "申请人：" + data.from_username + "\n添加原因：" + data.description);
+				} else if(data.event_type == 8) {
+					//创建群组业务事件
+					appendToDashboard("创建群组业务事件：\n" + "申请人：" + data.from_username + "\n添加原因：" + data.description);
+				} else if(data.event_type == 9) {
+					//退出群组业务事件
+					appendToDashboard("退出群组业务事件：\n" + "申请人：" + data.from_username + "\n添加原因：" + data.description);
+				} else if(data.event_type == 10) {
+					//添加群组成员业务事件
+					appendToDashboard("添加群组成员业务事件：\n" + "申请人：" + data.from_username + "\n添加原因：" + data.description);
+				} else if(data.event_type == 11) {
+					//删除群组成员业务事件
+					appendToDashboard("删除群组成员业务事件：\n" + "申请人：" + data.from_username + "\n添加原因：" + data.description);
+				} else if(data.event_type == 12) {
+					//修改群组信息业务事件
+					appendToDashboard("修改群组信息业务事件：\n" + "申请人：" + data.from_username + "\n添加原因：" + data.description);
+				} else if(data.event_type == 37) {
+					//免打扰变更事件
+					appendToDashboard("免打扰变更事件：\n" + "申请人：" + data.from_username + "\n添加原因：" + data.description);
+				} else if(data.event_type == 38) {
+					//黑名单变更事件
+					appendToDashboard("黑名单变更事件：\n" + "申请人：" + data.from_username + "\n添加原因：" + data.description);
+				}
+				
+            });
+			JIM.onSyncConversation(function(data) { //离线消息同步监听
+                console.log('event_receive: ' + JSON.stringify(data));
+                //appendToDashboard('event_receive: ' +JSON.stringify(data));
+				//appendToDashboard('event_receive: ' +JSON.stringify(data));
+				$.each(data[0].msgs, function (index, item) {
+					var messages = "";
+					if(item.content.target_type == "group") {
+						messages = "来自群组：" + item.content.target_name + "   ";
+					}
+					if(item.content.msg_type == "text") {
+						messages = messages + item.content.from_name + "：" + item.content.msg_body.text + "    			-创建时间：" + new Date(item.content.create_time).format("yyyy-MM-dd HH:mm:ss");
+						appendToDashboard(messages);
+					} else if(item.content.msg_type == "image") {
+						getResourceAndReturn(item.content.msg_body.media_id, 
+							function(resourceData){
+							messages = messages + item.content.from_name + "：" + "<img src='" + resourceData.url + "' style=\"width:100px;height:100px;\">" + "    			-创建时间：" + new Date(item.content.create_time).format("yyyy-MM-dd HH:mm:ss");
+							appendToDashboard(messages);
+						})
+					} else if(item.content.msg_type == "file") {
+						getResourceAndReturn(item.content.msg_body.media_id, 
+							function(resourceData){
+							messages = messages + item.content.from_name + "：" + "文件：<a href=\"" + resourceData.url + "\" style=\"color:blue;\">" + item.content.msg_body.fname + "</a>" + "    			-创建时间：" + new Date(item.content.create_time).format("yyyy-MM-dd HH:mm:ss");
+							appendToDashboard(messages);
+						})
+					} else if(item.content.msg_type == "location") {
+						messages = messages + item.content.from_name + "：" + "位置：" + item.content.msg_body.label + 
+							"(latitude:" + item.content.msg_body.latitude + ", longitude:" + item.content.msg_body.longitude + ")" + 
+							"    			-创建时间：" + new Date(item.content.create_time).format("yyyy-MM-dd HH:mm:ss");
+						appendToDashboard(messages);
+					}
+					
+				});
+				
+            });
+			
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			 showErrorMsg(data);
+        }).onTimeout(function(data) {
+            console.log('timeout:' + JSON.stringify(data));
+			 appendToDashboard('timeout: ' +JSON.stringify(data));
+        });
+    }
+
+    function getSelfInfo() {
+        JIM.getUserInfo({
+            'username' : curUserName
+        }).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+			if(data.user_info.nickname != "") $("#curUserName").html(data.user_info.nickname);
+			else $("#curUserName").html(data.user_info.username);
+			if(data.user_info.avatar != "") getResource(data.user_info.avatar);
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			 showErrorMsg(data);
+        });
+		
+    }
+
+	function getResource(resourceUrl){
+		if(resourceUrl == null) var media_id = $("#resourceUrl").val();
+		else media_id = resourceUrl;
+	   JIM.getResource({'media_id' : media_id}).onSuccess(function(data){
+				      console.log('success:' + JSON.stringify(data));
+					  if(data.url != "") {
+						$("#userPhotoUrl").show();
+						$("#userPhotoUrl").attr("src", data.url);
+					  }
+			          appendToDashboard('success: ' +JSON.stringify(data));
+				 }).onFail(function(data){
+				      console.log('success:' + JSON.stringify(data));
+			          appendToDashboard('success: ' +JSON.stringify(data));
+				 });
+	}
+	
+	function getResourceAndReturn(resourceUrl, callBack){
+		if(resourceUrl == null) var media_id = $("#resourceUrl").val();
+		else media_id = resourceUrl;
+		JIM.getResource({'media_id' : media_id}).onSuccess(function(data){
+				      callBack(data);
+				 }).onFail(function(data){
+				      console.log('success:' + JSON.stringify(data));
+			          appendToDashboard('success: ' +JSON.stringify(data));
+				 });
+	}
+
+    function sendSingleMsg() {
+		var target_username = $("#userNameInConversation").val();
+		var target_nickname = $("#userNickNameInConversation").val();
+		var content = $("#content").val();
+        JIM.sendSingleMsg({
+            'target_username' : target_username,
+			'target_nickname' : target_nickname,
+            'content' : content,
+            'appkey' : across_appkey
+        }).onSuccess(function(data) {
+			var newDate = new Date();
+			console.log(data);
+			//appendToDashboard('success: ' +JSON.stringify(data));
+			appendToDashboard(curUserName + "：" + content + "                     -创建时间：" + newDate.format("yyyy-MM-dd HH:mm:ss"));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+    }
+	
+	
+	function createGroup(){
+		var groupName = $("#groupName").val();
+		var groupDesc = $("#groupDesc").val();
+		 JIM.createGroup({
+            'group_name' :  groupName,
+            'group_description' : groupDesc
+        }).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+	}
+
+	function getGroups(){
+		JIM.getGroups().onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+	}
+	
+
+	function updateGroupInfo(){
+		var groupName = $("#groupName").val();
+		var groupDesc = $("#groupDesc").val();
+		var groupID = $("#groupID").val();
+		if(groupName == "") groupName = null;
+		if(groupDesc == "") groupDesc = null;
+		JIM.updateGroupInfo( {'group_name' : groupName,'group_description' : groupDesc,'gid':groupID}).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+	}
+	
+		
+	function addGroupShield(){
+	     JIM.addGroupShield({'gid':gid}).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+	}
+	
+	function delGroupShield(){
+	     JIM.delGroupShield({'gid':gid}).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+	}
+	
+	function getGroupInfo(){
+		var groupID = $("#groupID").val();
+		JIM.getGroupInfo({'gid':groupID}).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+	}
+	
+	function exitGroup(){
+		var groupID = $("#groupID").val();
+		JIM.exitGroup({'gid':groupID}).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data))
+			showErrorMsg(data);
+        });
+	}
+	
+	function getGroupMembers(){
+		var groupID = $("#groupID").val();
+		JIM.getGroupMembers({'gid':groupID}).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data)); 
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+	}
+	
+	function addGroupMembers(){
+		var groupID = $("#groupID").val();
+		var addMemberName = $("#addMemberName").val();
+		JIM.addGroupMembers({'gid':groupID,'member_usernames':[{'username': addMemberName,'appkey': across_appkey}]}).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data))
+			showErrorMsg(data);
+        });
+	}
+	
+	function delGroupMembers(){
+		var groupID = $("#groupID").val();
+		var addMemberName = $("#addMemberName").val();
+		JIM.delGroupMembers({'gid':groupID,'member_usernames':[{'username': addMemberName,'appkey': across_appkey}]}).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+	}
+	
+    function sendGroupMsg() {
+		var targetGid = $("#targetGid").val();
+		var targetGName = $("#targetGName").val();
+		var groupContent = $("#groupContent").val();
+        JIM.sendGroupMsg({
+            'target_gid' : targetGid,
+			'target_gname' : targetGName,
+            'content' : groupContent
+			//'at_list' : [{'username':across_user,'appkey':across_appkey}]
+        }).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+    }
+	
+	function sendGroupCustom(){
+	    JIM.sendGroupCustom({
+            'target_gid' : gid,
+			'target_gname' : target_gname,
+            'custom' : {'k1':'v1','k2':'v2'}
+        }).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+	}
+	
+	
+	function sendSingleCustom(){
+	  JIM.sendSingleCustom({
+            'target_username' : across_user,
+			'target_nickname' : target_nickname,
+            'custom' : {'k1':'v1','k2':'v2'},
+			'appkey' : across_appkey
+        }).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+	}
+
+    function sendAcrossSingleMsg() {
+        JIM.sendSingleMsg({
+           'target_username' : across_user,
+		   'target_nickname' : target_nickname,
+            'content' : 'Hi, JiGuang',
+			'appkey' : across_appkey
+        }).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+    }
+
+
+
+    function sendSinglePic() {
+		var userNameInConversation = $("#userNameInConversation").val();
+		var userNickNameInConversation = $("#userNickNameInConversation").val();
+        JIM.sendSinglePic({
+            'target_username' : userNameInConversation,
+			'target_nickname' : userNickNameInConversation,
+			'appkey' : across_appkey,
+            'image' : getFile()
+        }).onSuccess(function(data,msg) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+			appendToDashboard('send: ' +JSON.stringify(msg));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+    }
+
+    function sendGroupPic() {
+		var targetGid = $("#targetGid").val();
+		var targetGName = $("#targetGName").val();
+        JIM.sendGroupPic({
+            'target_gid' : targetGid,
+			'target_gname' : targetGName,
+            'image' : getFile()
+        }).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+    }
+
+
+    function sendSingleFile() {
+		var userNameInConversation = $("#userNameInConversation").val();
+		var userNickNameInConversation = $("#userNickNameInConversation").val();
+        JIM.sendSingleFile({
+            'file' : getFile(),
+			'target_username' : userNameInConversation,
+			'target_nickname' : userNickNameInConversation,
+			'appkey' : across_appkey
+        }).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+    }
+
+    function sendGroupFile() {
+		var targetGid = $("#targetGid").val();
+		var targetGName = $("#targetGName").val();
+        JIM.sendGroupFile({
+            'target_gid' : targetGid,
+			'target_gname' : targetGName,
+            'file' : getFile()
+        }).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+    }
+
+    function sendSingleLocation() {
+		var userNameInConversation = $("#userNameInConversation").val();
+		var userNickNameInConversation = $("#userNickNameInConversation").val();
+        JIM.sendSingleLocation({
+            'target_username' : userNameInConversation,
+			'target_nickname' : userNickNameInConversation,
+			'appkey' : across_appkey,
+            'latitude' : 38.6577668476,
+            'longitude' : 104.0829574963,
+            'scale' : 1,
+            'label' : '广东省深圳市南山区'
+        }).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+    }
+
+    function sendGroupLocation() {
+		var targetGid = $("#targetGid").val();
+        JIM.sendGroupLocation({
+            'target_gid' : targetGid,
+            'latitude' : 38.6577668476,
+            'longitude' : 104.0829574963,
+            'scale' : 1,
+            'label' : '广东省深圳市南山区'
+        }).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+    }
+
+
+  function getConversation() {
+        JIM.getConversation().onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+    }
+
+  function noDisturb() {
+        JIM.getNoDisturb().onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+    }
+	
+
+  function addSingleDisturb() {
+		var disturbUserName = $("#disturbUserName").val();
+        JIM.addSingleNoDisturb({'appkey': across_appkey,'target_name' : disturbUserName}).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+    }
+
+  function delSingleDisturb() {
+		var disturbUserName = $("#disturbUserName").val();
+        JIM.delSingleNoDisturb({'appkey': across_appkey,'target_name' : disturbUserName}).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+    }
+
+  function addGroupDisturb() {
+		var disturbGroup = $("#disturbGroup").val();
+        JIM.addGroupNoDisturb({'gid': disturbGroup}).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+    }
+
+  function delGroupDisturb() {
+		var disturbGroup = $("#disturbGroup").val();
+        JIM.delGroupNoDisturb({'gid': disturbGroup}).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+    }
+	
+	
+
+  function addGlobalDisturb() {
+        JIM.addGlobalNoDisturb().onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+    }
+	
+  function delGlobalDisturb() {
+        JIM.delGlobalNoDisturb().onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+    }
+
+
+
+  function getBlackList() {
+        JIM.getBlacks().onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+    }
+
+  function addBlack() {
+		var blackUserName = $("#blackUserName").val();
+        JIM.addSingleBlacks({'member_usernames':[{'username': blackUserName,'appkey':across_appkey}]}).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+    }
+
+	function delBlack() {
+		var blackUserName = $("#blackUserName").val();
+        JIM.delSingleBlacks({'member_usernames':[{'username': blackUserName,'appkey':across_appkey}]}).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+    }
+	
+
+   function updateUserInfo() {
+		//var userJson = {};
+		var setNickName = $("#setNickName").val();
+		var setBirthday = $("#setBirthday").val();
+		var setSignature = $("#setSignature").val();
+		var setGender = $("#setGender").val();
+		var setRegion = $("#setRegion").val();
+		var setAddress = $("#setAddress").val();
+		if(setGender == "未知") {
+			setGender = 0;
+		} else if(setGender == "男") {
+			setGender = 1;
+		} else if(setGender == "女") {
+			setGender = 2;
+		} 
+		/*if(setNickName != "") userJson.nickname = setNickName;
+		if(setBirthday != "") userJson.birthday = setBirthday;
+		if(setSignature != "") userJson.signature = setSignature;
+		if(setGender != "") userJson.gender = setGender;
+		if(setRegion != "") userJson.region = setRegion;
+		if(setAddress != "") userJson.address = setAddress;*/
+		JIM.updateSelfInfo({
+                'nickname' : setNickName, // 昵称
+                /* 'birthday' : setBirthday, // 生日
+                'signature' : setSignature, // 签名
+                'gender' : setGender, // 性别，0未知, 1男，2女
+                'region' : setRegion, //	地区
+                'address' : setAddress //	地址 */
+               }).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+    }
+
+  	function updateUserPic() {
+        JIM.updateSelfAvatar({'avatar' : getFile()}).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+    }
+
+	
+
+	function updateUserPwd() {
+		var oldPassword = $("#oldPassword").val();
+		var newPassword = $("#newPassword").val();
+		var isMD5 = $("#isMD5").val();
+		if(isMD5 == 0) isMD5 = false;
+		else isMD5 = true;
+        JIM.updateSelfPwd({'old_pwd' : oldPassword,'new_pwd':newPassword,'is_md5' : isMD5}).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+    }
+	function getFriendList(){
+	  JIM.getFriendList().onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+	}
+	
+	function addFriend(){
+		var addFriendName = $("#addFriendName").val();
+		var why = $("#why").val();
+		JIM.addFriend({'appkey':across_appkey,'target_name':addFriendName,'from_type':'1','why':why}).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			//appendToDashboard('success: ' +JSON.stringify(data));
+			appendToDashboard("向" + addFriendName + "发送添加好友请求!请求原因：" + why);
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+	}
+	var addTargetName = "";
+	
+	function centerAddFriend() {
+		var centerFriendWhy = $("#centerFriendWhy").val();
+		JIM.addFriend({
+             'target_name' : addTargetName ,
+               'from_type' : '2',
+                     'why' : centerFriendWhy,
+                  'appkey' : across_appkey
+               }).onSuccess(function(data) {
+                   //data.code 返回码
+                   //data.message 描述
+				   console.log(data.code + "--" + data.message);
+				   if(centerFriendWhy != "") {
+						appendToDashboard("拒绝成功！");
+				   } else {
+						appendToDashboard("添加成功！");
+				   }
+               }).onFail(function(data) {
+                   // 同上
+				   console.log(data.code + "--" + data.message);
+               });
+	}
+	
+	function updateFriendMemo(){
+		var friendName = $("#friendName").val();
+		var friendMemoName = $("#friendMemoName").val();
+	  JIM.updateFriendMemo({
+          'target_name' : friendName,
+            'memo_name' : friendMemoName
+               }).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+	}
+	
+	function delFriend(){
+		 var deleteFriendName = $("#deleteFriendName").val();
+	  JIM.delFriend({'appkey':across_appkey,'target_name':deleteFriendName}).onSuccess(function(data) {
+            console.log('success:' + JSON.stringify(data));
+			appendToDashboard('success: ' +JSON.stringify(data));
+        }).onFail(function(data) {
+            console.log('error:' + JSON.stringify(data));
+			showErrorMsg(data);
+        });
+	}
+	
+	function showErrorMsg(data) {
+		var json = {
+			880207: "用户被对方拉黑"
+		};
+		if(typeof(json[data.code]) != "undefined") {
+			appendToDashboard('error: ' + json[data.code]);
+		} else {
+			appendToDashboard('error: ' +JSON.stringify(data));
+		}
+	}
+
+</script>
+</html>

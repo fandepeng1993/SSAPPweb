@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>查看销售机会</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script src="../../js/bootstrap.min.js"></script>
+	<script src="../../js/json/CityJson.js" type="text/javascript"></script>
+    <script src="../../js/json/ProJson.js" type="text/javascript"></script>
+    <script src="../../js/json/DistrictJson.js" type="text/javascript"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.autocomplete.js"></script>
+	<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+	<script type="text/javascript" src="../../js/underscore.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		//var currentUserId = window.parent.parent.currentUserId;
+   	  var currentUserId = window.parent.currentUserId;
+   	  /*var aH3;
+		var aDiv;
+		function initTab() {
+			aH3=$("#cen_right_top").children("h3");
+			aDiv=$("#cen_right_top").children("div");
+			for(var i=0;i<aH3.length;i++)
+			{
+				aH3[i].index=i;
+				aH3[i].onclick=function() {
+					for(var i=0;i<aH3.length;i++) {
+						aH3[i].className="";
+						aDiv[i].style.display="none";
+					}
+					this.className="white";
+					aDiv[this.index].style.display="block";
+				}
+			}
+		} */
+		
+		function initCalendar() {
+			laydate({
+			    elem: '#exceptedtime', //目标元素。由于laydate.js封装了一个轻量级的选择器引擎，因此elem还允许你传入class、tag但必须按照这种方式 '#id .class'
+			    event: 'focus' //响应事件。如果没有传入event，则按照默认的click
+			});
+		}
+		//var currentUserId = Request["userId"];
+		//用于展现表单的menuCode
+		var menuCode;
+		var salechan;
+		var selPri;
+		var salechanId;
+		$(document).ready(function(){
+			$("#replyContent").hide();
+			//$("#addReply").hide();
+			//$("#delReply").hide();
+			menuCode = Request["menuCode"];
+			selPri = Request["selPri"];
+			salechanId = Request["salechanId"];
+			var customerId = Request["customerId"];
+			getSalechan(salechanId);
+			initTable(salechanId);
+			//expand();
+			//initTab();
+		});
+		
+		//根据ss_form表取出数据构建form表单
+		function initForm() {
+			$.ajax({
+				url: "../../formAdmin/formsByMenuCode/" + menuCode,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					element = eval("(" + data + ")");
+					new UserCommon().createForm("updateSalechanForm", element, 4);
+					new UserCommon().fillForm("updateSalechanForm", salechan);
+					$("#exceptedtime").val($("#exceptedtime").val().substring(0,10));
+					$("#createdate").parent().parent().hide();
+					$(".zsy-textarea").css({"position":"absolute","left":"400px","top":"0px","width":"420px"});
+					$(".zsy-textarea textarea").css({"min-width":"312px","resize":"none","height":"105px"});
+					//初始化层的大小
+					//initLayerSize();
+					/* $("#projectName").change(function () {
+						changeProject();
+					}); */
+					initCalendar();
+					getCustomerName();
+				} 
+			});
+		}
+		var allData;
+		/**
+		 *	添加弹出框填写完成之后保存调用的函数
+		 */
+		function updateForm() {
+			$.each(allData, function (index, item) {
+				if(item.customerName == $("#customerName").val()) {
+					$("#customerId").val(item.id);
+				}
+			});
+			if($("#customerId").val() == "") {
+				new UserCommon().check("success","请填写正确的客户姓名！",null,"fail");
+				return;
+			}
+			$("#userId").val(currentUserId);
+			
+			var formObj = $("#updateSalechanForm");
+			var msg = "不能为空！";
+			if(new UserCommon().show("edit-promit", formObj, msg)) {
+			 	var formObjJson = $("#updateSalechanForm").serializeNestedObject();
+			 	$.ajax({
+					url: "../../salechanAdmin/salechan",
+					datatype: "text",
+					type: "put",
+					data: JSON.stringify(formObjJson),
+					success: function (data) {
+						var json = eval("(" + data + ")");
+						if(json.status == 1) {
+							new UserCommon().check("success","添加成功！",null,"success");
+							setTimeout(function (){
+								//new UserCommon().layer_close();
+								window.parent.location.href = "salechanMgr.html?menuCode=" + menuCode;
+							}, 1000);
+						} else {
+							new UserCommon().check("success",json.msg,null,"fail");
+						}
+					}
+				});
+			}
+		}
+		
+		//联系人列表部分
+		var chanRecos = null;
+		var arr = null;
+		function initTable(salechanId) {
+			$.ajax({
+				url: "../../salechanRecoAdmin/selByUIdAndChance/" + currentUserId + "," + salechanId,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					/* $("#chanRecoTable").empty(); */
+					arr = _.groupBy(data, function(item){ return item.rootId });
+					if(typeof(arr[1]) != "undefined") chanRecos = arr[1];
+					else chanRecos = [];
+					circleInfos();
+					initLayerSize();
+					//initForm();
+					expand();
+				} 
+			});
+		}
+
+		
+		function circleInfos() {
+			 $("#accordion").empty();
+			 var str = "";
+			 var str1 = "";
+			 //$.each(chanRecos, function(index, item) {
+				 //new UserCommon().fillTable("accordion",item,index);
+				 //为checkbox添加监听事件
+				 //new UserCommon().checkboxListener();
+	/* str	= str+     "<fieldset style=\"display: block; -webkit-margin-start: 25px; -webkit-margin-end: 25px; -webkit-padding-before: 0.35em; -webkit-padding-start: 0.75em; -webkit-padding-end: 0.75em; -webkit-padding-after: 0.625em; border-image-source: initial; border-image-slice: initial; border-image-width: initial; border-image-outset: initial; border-image-repeat: initial; min-width: -webkit-min-content; border-width: 2px; border-style: groove; border-color: threedface;\">" + 
+    				"<legend name=\"numLegend\" style=\"display: block; width: 69px;padding: 7px;font-size: 21px;line-height: inherit;color: #333;border: 0;margin-bottom: 0px;\">记录</legend><div>"+
+					"<div><div>";
+	str	= str+			"<img alt=\"image\" class=\"img-circle\" weight=\"55px\" height=\"55px\" src='"+item.user.photoUrl+"'>";
+	//alert(item.user.photoUrl);
+	str	= str+			"<span>" + item.user.userName + "</span>" +
+						"<div style=\"margin-left:20px;\">"+ item.progressContent;
+							
+							str = str + "<input type=\"button\" value=\"+\" onclick=\"addOne(" + item.id + "," + salechanId + "," + item.id +  ",'" + item.user.userName + "')\" />";
+		str = str + 	"</div>"+
+					"</div>"+
+					"<div style=\"margin-top:10px;\">";
+	str = str + 			"全部评论";
+						if(typeof(arr[item.id]) != "undefined") {
+							str = str + "(" + arr[item.id].length + ")"
+						};
+	 					if(typeof(arr[item.id]) != "undefined") {
+							$.each(arr[item.id], function(replyIndex, replyItem) {
+	str = str +					"<div>"+
+									"@" + replyItem.user.userName + ": " + replyItem.progressContent;
+	str = str +						"<input type=\"button\" value=\"+\" onclick=\"addOne(" + replyItem.id + ","  + salechanId + "," + replyItem.rootId + ",'" + replyItem.user.userName + "')\" />";
+	str = str +					"</div>";
+							});
+						}
+	str = str +	"</div>"+
+				"</div></fieldSet>"; */
+str1 = str1+"<div class=\"xsjh-title\">" +
+				"<img src=\"../../images/JL.png\">记录 <span>全部记录(" + chanRecos.length + ")</span>" +
+			"</div>" ;
+			$("#accordion").append(str1);
+			$.each(chanRecos, function(index, item) {
+str = str +	"<div class=\"xsjh-top\">" +
+			"<div class=\"xsjh-top-left\"><img src='" + item.user.photoUrl + "' /></div>" +
+				"<div class=\"xsjh-top-right\">" +
+					"<div class=\"xsjh-top-right-top\">";
+str = str +				"<p>" +
+							"<span>" + item.user.userName + "</span>" +
+							"<span>" + item.createdate.substring(0,19) + "</span>" +
+							"<span><img src=\"../../images/huifu.png\" onclick=\"addOne(" + item.id + "," + salechanId + "," + item.id +  ",'" + item.user.userName + "')\" /></span>" +
+						"</p>";
+str = str +				"<p>" + item.progressContent + "<i class=\"glyphicon glyphicon-chevron-down\"></i></p>" +
+					"</div>" +
+					"<div class=\"xsjh-content\">" +
+						"<div class=\"xsjh-content-right\">";
+
+					if(typeof(arr[item.id]) != "undefined") { 
+						$.each(arr[item.id], function(replyIndex, replyItem) { 
+str = str +						"<p>" +
+									"<img src='"+ replyItem.user.photoUrl +"' />" +
+									"<span>@" + replyItem.user.userName + "：" + replyItem.progressContent  + "</span>" +
+									"<span>" + replyItem.createdate.substring(0,19) +  "</span>" +
+									"<img src=\"../../images/huifu.png\" onclick=\"addOne(" + replyItem.id + ","  + salechanId + "," + replyItem.rootId + ",'" + replyItem.user.userName + "')\" />" +
+								"</p>";
+						});
+					}
+str = str +				"</div>" +
+					"</div>" +
+				"</div>" +
+			"</div>";
+			});
+			$("#accordion").append(str);
+			initLayerSize();
+		}
+		var pid,rootId,userName;
+		
+		/*管理员-角色-添加*/
+		function admin_role_add(title,url,w){
+			new UserCommon().layer_show(title,url,w);
+		}
+		
+		function addOne (pidd,salechanId,rootIdd,name888) {
+			$(".xsjh-bottom-bg").show();
+			$(".xsjh-bottom-fixed").show();
+			pid = pidd;
+			rootId = rootIdd;
+			userName = name888;
+			salechanId = salechanId;
+			
+			//parent.window.admin_role_add('<strong>添加评论</strong>',"addReco.html?userName=" + userName +  "&salechanId=" + salechanIdd + "&rootId=" + rootId + "&pid=" + pid, iframeJson.width*0.55);
+			/* $("#replyContent").show();
+			$("#replyContent").val("@"+userName+": ");
+			$("#addReply").show();
+			$("#delReply").show(); */
+		}
+		
+		function addReply() {
+			var str = $(".xsjh-bottom-fixed").find(".content").val();
+			//提交时去除@字符串
+			if(str.charAt(0) == "@" && str.indexOf(":") != -1) {
+			  var replyUserName = $.trim(str.split(":")[0]);
+			  if(replyUserName == "@"+ userName) {
+			   		content = $.trim(str.substring(str.indexOf(":")+1, str.length));
+			  }
+			} else {
+			 		content = str;
+			}
+		    if (content == null || content == "") {
+		    	new UserCommon().check("success","评论不能为空哦！",null,"fail");
+		    	return;
+		    }
+			var json = {
+					user:{
+						userId:currentUserId
+					},
+					parentRecord:{
+						id:pid
+					},
+					rootId:rootId,
+					progressContent:content,
+					saleChance:{
+						id:salechanId
+					},
+					isleaf:0
+			};
+			$.ajax({
+				  url: "../../salechanRecoAdmin/salechanReco",
+				  datatype: "text",
+				  type: "post",
+				  data: JSON.stringify(json),
+				  success: function (data) {
+					  var json = eval("(" + data + ")");
+					  if(json.status == 1) {
+						  new UserCommon().check("success","添加成功",null,"success");
+						  setTimeout(function (){
+							  //initTable(salechanId);
+							  initTable(salechanId);
+							  $(".xsjh-bottom-fixed").hide();
+							  $(".xsjh-bottom-bg").hide();
+							  $(".content").val("");
+							  //new UserCommon().layer_close();
+						  }, 1000);
+					  } else {
+						  new UserCommon().check("success",json.msg,null,"fail");
+						  //new UserCommon().layer_close();
+					  }
+				  }
+				});
+		}
+	
+		function getSalechan(salechanId) {
+			$.ajax({
+				url: "../../salechanAdmin/salechan/" + salechanId,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					salechan = eval("(" + data + ")");
+					initForm();
+				} 
+			});
+		}
+		
+		function expand(){
+			var rightT = $(".xsjh-top-right");
+			for(var j = 0;j< rightT.length; j++){
+				if(rightT.eq(j).find(".xsjh-content-right").children("p").length > 0){
+					rightT.eq(j).children(".xsjh-top-right-top").next(".xsjh-content").show();
+					rightT.eq(j).children(".xsjh-top-right-top").find("i").removeClass("glyphicon-chevron-down");
+					rightT.eq(j).children(".xsjh-top-right-top").find("i").addClass("glyphicon-chevron-up");
+				}else{
+					rightT.eq(j).children(".xsjh-top-right-top").next(".xsjh-content").hide();
+					rightT.eq(j).children(".xsjh-top-right-top").find("i").removeClass("glyphicon-chevron-up");
+					rightT.eq(j).children(".xsjh-top-right-top").find("i").addClass("glyphicon-chevron-down");
+				}
+			}
+			for(var i = 0; i< rightT.length; i++){
+				$(".xsjh-top-right").eq(i).children(".xsjh-top-right-top").click(function(){
+					if($(this).find("i").hasClass("glyphicon-chevron-down")){
+						$(this).find("i").removeClass("glyphicon-chevron-down");
+						$(this).find("i").addClass("glyphicon-chevron-up");
+						$(this).next(".xsjh-content").show();
+					}else if($(this).find("i").hasClass("glyphicon-chevron-up")){
+						$(this).next(".xsjh-content").hide();
+						$(this).find("i").addClass("glyphicon-chevron-down");
+						$(this).find("i").removeClass("glyphicon-chevron-up");
+					}
+				})
+			}
+			var imgClick = $(".xsjh-top-right").find("img");
+			//for(var j = 0; j< imgClick.length; j++){
+				/* $(".xsjh-top-right").find("img").eq(j).click(function(){
+					
+					alert(replyItem.id);
+					$(".xsjh-bottom-bg").show();
+					$(".xsjh-bottom-fixed").show();
+				}) */
+			//}
+			$(".xsjh-bottom-bg").click(function(){
+				$(".xsjh-bottom-bg").hide();
+				$(".xsjh-bottom-fixed").hide();
+			})
+		}
+		
+		function getCustomerName() {
+			$.ajax({
+				url: "../../cusAdmin/cusesByUserPri/" + currentUserId + "," + selPri,
+				datatype: "text",
+				type: "get",
+				data: {},
+				success: function (data) {
+					var json = eval("(" + data + ")");
+					allData = json;
+					var str = "";
+					$.each(json, function(index, item) {
+						str = str + "<option value=\"" + item.customerName + "\">" + item.customerName + "</option>"; 
+					});
+					$("#customerName").html(str);
+					$("#customerName").val(salechan.customer.customerName);
+					/* $("#select").val(visit.customer.customerName); */
+				}
+			});
+		}
+	</script>
+</head>			
+<body>
+	<div class="edit">
+		<div class="edit-content">
+			<div class="edit-in">
+				<div id="cen_right_top">
+					<!-- <h3 class="white">机会基本信息</h3>
+					<h3>记录</h3> -->
+					<div class="div" style="display:block">
+						<form id="updateSalechanForm">
+						</form>
+					</div>
+					<!-- <div class="panel-group" id="accordion"></div>  -->
+					<div class="xsjh-line-fg"></div>
+					<div class="xsjh" id="accordion">
+						<!-- <div class="xsjh-title">
+							<img src="../../images/JL.png">记录 <span>全部评论(4)</span>
+						</div>
+						<div class="xsjh-top">
+							<div class="xsjh-top-left"><img src="../../images/default.png" /></div>
+							<div class="xsjh-top-right">
+								<div class="xsjh-top-right-top">
+									<p>
+										<span>王鹏翔</span>
+										<span>2017年3月30日 13:00</span>
+										<span><img src="../../images/huifu.png" /></span>
+									</p>
+									<p>今天谈的客户都挺顺利的，好开心！<i class="glyphicon glyphicon-chevron-down"></i></p>
+								</div>
+								<div class="xsjh-content">
+									<div class="xsjh-content-right">
+										<p>
+											<img src="../../images/default.png" />
+											<span>@李邓珂：小李你个色胚！</span>
+											<span>2017年3月30日 13:00</span>
+											<img src="../../images/huifu.png" />
+										</p>
+										<p>
+											<img src="../../images/default.png" />
+											<span>@李邓珂：小李你个色胚！</span>
+											<span>2017年3月30日 13:00</span>
+											<img src="../../images/huifu.png" />
+										</p>
+										<p>
+											<img src="../../images/default.png" />
+											<span>@李邓珂：小李你个色胚！</span>
+											<span>2017年3月30日 13:00</span>
+											<img src="../../images/huifu.png" />
+										</p>
+									</div>
+								</div>
+							</div>
+						</div>
+						第二个
+						<div class="xsjh-top">
+							<div class="xsjh-top-left"><img src="../../images/default.png" /></div>
+							<div class="xsjh-top-right">
+								<div class="xsjh-top-right-top">
+									<p>
+										<span>王鹏翔</span>
+										<span>2017年3月30日 13:00</span>
+										<span><img src="../../images/huifu.png" /></span>
+									</p>
+									<p>今天谈的客户都挺顺利的，好开心！<i class="glyphicon glyphicon-chevron-down"></i></p>
+								</div>
+								<div class="xsjh-content">
+									<div class="xsjh-content-right">
+										<p>
+											<img src="../../images/default.png" />
+											<span>@李邓珂：小李你个色胚！</span>
+											<span>2017年3月30日 13:00</span>
+											<img src="../../images/huifu.png" />
+										</p>
+										<p>
+											<img src="../../images/default.png" />
+											<span>@李邓珂：小李你个色胚！</span>
+											<span>2017年3月30日 13:00</span>
+											<img src="../../images/huifu.png" />
+										</p>
+										<p>
+											<img src="../../images/default.png" />
+											<span>@李邓珂：小李你个色胚！</span>
+											<span>2017年3月30日 13:00</span>
+											<img src="../../images/huifu.png" />
+										</p>
+									</div>
+								</div>
+							</div>
+						</div> -->
+					</div>		
+				</div>
+			</div>
+			<textarea id="replyContent" rows="3" cols="" ></textarea>
+			<!-- <button id="addReply" type="button" class="btn btn-xs edit-close btn-primary" onclick="addReply()"><i class="glyphicon glyphicon-remove"></i>&nbsp;保存</button>
+			<button id="delReply" type="button" class="btn btn-xs edit-close btn-primary" onclick="delReply()"><i class="glyphicon glyphicon-remove"></i>&nbsp;关闭</button> -->
+			<div class="edit-bottom">
+				<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();"><i class="glyphicon glyphicon-remove"></i>&nbsp;关闭</button>
+				<!-- <button type="button" class="btn btn-xs edit-updateForm btn-primary" onclick="updateForm()"><i class="glyphicon glyphicon-ok"></i>&nbsp;保存</button> -->
+			</div>
+		</div>	
+	</div>
+	<div class="xsjh-bottom-bg"></div>
+	<div class="xsjh-bottom-fixed">
+		<textarea class="content" rows="3" cols="3"></textarea>
+		<button class="btn btn-primary" onclick="addReply()" >发表评论</button>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span>
+			<span></span>
+			<div><img src="../../images/sanjiao.png" width="10"></div>
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.ICheckInOutDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.CheckInOut" >
+    <id column="userId" property="user.userNo" jdbcType="INTEGER" />
+    <id column="checkTime" property="checkTime" jdbcType="VARCHAR" />
+    <id column="checkType" property="checkType" jdbcType="VARCHAR" />
+    
+    <association property="user" javaType="com.sss.pojo.User">
+		<id column="eu_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="eu_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="eu_position_name" property="position.positionName" jdbcType="VARCHAR" />
+	    <result column="eu_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="eu_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="eu_dept_name" property="position.dept.deptName" jdbcType="VARCHAR" />
+	    <result column="eu_user_photoUrl" property="photoUrl" jdbcType="VARCHAR" />
+	    <result column="eu_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="eu_user_status" property="status" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		IF(c.checkType='I',"刷脸","指纹") as checkType,
+  		c.*,
+  		u.user_id as eu_user_id,
+  		u.user_name as eu_user_name,
+  		u.user_no as eu_user_no,
+  		u.position_id as eu_position_id,
+  		u.position_name as eu_position_name,
+  		u.dept_id as eu_dept_id,
+  		u.dept_name as eu_dept_name,
+  		u.sex as eu_user_sex,
+  		u.status as eu_user_status
+    from 
+    	ss_checkinout c
+   	inner join
+   		view_userinfo u
+   	on
+   		c.userId = u.user_no
+  </sql>
+  <!-- 返回一个list的写法 -->
+  <select id="selectList"  resultMap="BaseResultMap">
+    <include refid="associateQuery" /> order by c.checkTime desc
+    limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="getLastRecordLazy"  resultMap="BaseResultMap"   >
+    <include refid="associateQuery" />
+    <!-- SELECT * from ss_checkinout b --> where DATE_FORMAT(c.checkTime,'%Y-%m-%d') in
+    <foreach item="item" index="index" collection="item" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>  
+    and userId = #{userNo,jdbcType=VARCHAR} order by c.checkTime desc
+  </select>
+   <select id="getLastDateLazy" resultType="java.lang.String">
+   SELECT
+		c.checkTime
+	FROM
+		ss_checkinout c
+	WHERE
+		userId = #{userNo,jdbcType=VARCHAR}
+	GROUP BY
+		substring(c.checkTime, 1, 11)
+	ORDER BY
+		c.checkTime DESC
+	LIMIT #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  
+  <select id="getCount"  resultType="java.lang.Integer">
+	select COUNT(*) from ss_checkinout
+  </select>
+   <select id="getCountByUserNo" resultType="java.lang.Integer" parameterType="java.lang.String">
+	select COUNT(*) FROM 
+	(
+	SELECT * FROM ss_checkinout c  where userId = #{userNo,jdbcType=VARCHAR}  GROUP BY substring(c.checkTime,1,11)
+	)a
+  </select>
+  
+  <select id="selectByDate"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" />
+    	where c.checkTime &gt;= #{fromdate,jdbcType=VARCHAR}
+   		and c.checkTime &lt;= #{enddate,jdbcType=VARCHAR}
+    	order by u.user_name desc
+  </select>
+</mapper>

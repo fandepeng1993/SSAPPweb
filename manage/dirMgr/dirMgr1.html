@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>岗位管理</title>
+	<!-- <link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css"> -->
+	<link id="easyuiTheme" rel="stylesheet" href="../../js/plug-in/easyui/themes/metrole/easyui.css" type="text/css">
+	<link id="easyuiTheme" rel="stylesheet" href="../../js/plug-in/easyui/themes/metrole/main.css" type="text/css">
+	<link id="easyuiTheme" rel="stylesheet" href="../../js/plug-in/easyui/themes/metrole/icon.css" type="text/css">
+	<link rel="stylesheet" type="text/css" href="../../js/plug-in/accordion/css/accordion.css">
+	<link rel="stylesheet" type="text/css" href="../../js/plug-in/accordion/css/icons.css">
+	<link rel="stylesheet" type="text/css" href="../../js/plug-in/tools/css/metrole/common.css">
+	<link rel="stylesheet" type="text/css" href="../../js/plug-in/ace/css/font-awesome.css">
+	<style>
+	div.datagrid-cell-c1-text{
+	    line-height: normal!important;
+	}
+	div.datagrid-cell-c1-code{
+		text-align:center;
+	}
+	div.datagrid-cell-c1-code img{
+	vertical-align: middle;
+	}
+	
+	</style>	
+	<!-- 需要的js插件 -->
+ 	<script type="text/javascript" src="../../js/plug-in/mutiLang/zh-cn.js"></script>
+	<script type="text/javascript" src="../../js/plug-in/jquery/jquery-1.8.3.js"></script>
+	<script type="text/javascript" src="../../js/plug-in/jquery/jquery.cookie.js" ></script>
+	<script type="text/javascript" src="../../js/plug-in/jquery-plugs/storage/jquery.storageapi.min.js" ></script>
+	<script type="text/javascript" src="../../js/plug-in/tools/dataformat.js"></script>
+	<script type="text/javascript" src="../../js/plug-in/easyui/jquery.easyui.min.1.3.2.js"></script>
+	<script type="text/javascript" src="../../js/plug-in/easyui/locale/zh-cn.js"></script>
+	<script type="text/javascript" src="../../js/plug-in/tools/syUtil.js"></script>
+	<script type="text/javascript" src="../../js/plug-in/easyui/extends/datagrid-scrollview.js"></script>
+	<script type="text/javascript" src="../../js/plug-in/My97DatePicker/WdatePicker.js"></script>
+	<script type="text/javascript" src="../../js/plug-in/lhgDialog/lhgdialog.min.js?skin=metrole"></script>
+	<script type="text/javascript" src="../../js/plug-in/ace/js/bootstrap-tab.js"></script>
+	<script type="text/javascript" src="../../js/plug-in/layer/layer.js"></script>
+	<script type="text/javascript" src="../../js/plug-in/tools/curdtools_zh-cn.js"></script>
+	<script type="text/javascript" src="../../js/plug-in/tools/easyuiextend.js"></script>
+	<script type="text/javascript" src="../../js/plug-in/jquery-plugs/hftable/jquery-hftable.js"></script>
+	<script type="text/javascript" src="../../js/plug-in/tools/json2.js"></script>
+	
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<!-- <script type="text/javascript" src="../../js/bootstrap.min.js"></script> -->
+	<!-- <script type="text/javascript" src="../../js/jquery.pagination.js"></script> -->
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+</head>
+<body>
+	<div id="system_function_functionList" class="easyui-layout" fit="true">
+		<div region="center" style="padding:0px;border:0px">      
+			<script type="text/javascript">
+				$(function() {
+					$.ajax({
+					      url: '../../menuAdmin/getMenuByPid/1',//../../menuAdmin/getMenuByPid/1
+					      datatype: "json",
+					      type: "get",
+					      data: {},
+					      success: function (data, status, xhr) {
+					    	  	var datas = eval("(" + data + ")");
+					    	  	$.each(datas, function(index, item) {
+					    	  		if(item.isLeaf == 0) {
+					    	  			item.state = "closed";
+					    	  		}
+					    	  		if(index == 0) {
+					    	  		} else {
+					    	  			item._parentId = 2;
+					    	  		}
+					    	  		/* if(item.isLeaf == 0) {
+					    	  			item.state = "closed";
+					    	  		}
+					    	  		console.log(typeof(item.parentMenu));
+					    	  		if(typeof(item.parentMenu) == "object") {
+						    	  		item._parentId = item.parentMenu.menuId;
+					    	  		} */
+					    	  	});
+					    	  	console.log(datas);
+							    storage = $.localStorage;
+							    if (!storage) storage = $.cookieStorage;
+							    $('#functionList').treegrid({
+							        idField: 'menuId',
+							        treeField: 'menuName',
+							        title: '菜单管理',
+							        data: datas,
+							        // url: 'functionController.do?functionGrid&field=id,functionName,TSIcon_iconPath,functionType,functionUrl,functionOrder,functionIconStyle,',
+							        fit: true,
+							        loadMsg: '数据加载中...',
+							        pageSize: 10,
+							        pagination: false,
+							        pageList: [10, 20, 30],
+							        sortOrder: 'asc',
+							        rownumbers: true,
+							        singleSelect: true,
+							        fitColumns: true,
+							        striped: true,
+							        showFooter: true,
+							        frozenColumns: [[]],
+							        columns: [[{
+							            field: 'menuId',
+							            title: '编号',
+							            hidden: true
+							        },
+							        {
+							            field: 'menuName',
+							            title: '菜单名称'
+							        },
+							        {
+							            field: 'menuCode',
+							            title: '菜单代码',
+							        },
+							        {
+							            field: 'functionType',
+							            title: '菜单类型',
+							            formatter: function(value, rec, index) {
+							                if (value == undefined) return '';
+							                var valArray = value.split(',');
+							                if (valArray.length > 1) {
+							                    var checkboxValue = '';
+							                    for (var k = 0; k < valArray.length; k++) {
+							                        if (valArray[k] == '0') {
+							                            checkboxValue = checkboxValue + '菜单类型' + ',';
+							                        }
+							                        if (valArray[k] == '1') {	
+							                            checkboxValue = checkboxValue + '权限类型' + ',';
+							                        }
+							                    }
+							                    return checkboxValue.substring(0, checkboxValue.length - 1);
+							                } else {
+							                    if (value == '0') {
+							                        return '菜单类型';
+							                    }
+							                    if (value == '1') {
+							                        return '权限类型';
+							                    } else {
+							                        return value;
+							                    }
+							                }
+							            }
+							        },
+							        {
+							            field: 'menuUrl',
+							            title: '菜单地址',
+							            width: 80
+							        },
+							        {
+							            field: 'parentMenu',
+							            title: '操作',
+							            width: 100,
+							            formatter: function(value, rec, index) {
+							                if (!rec.menuId) {
+							                    return '';
+							                }
+							                var href = '';
+							                href += "<a href='#'   class='ace_button'  onclick=delObj('functionController.do?del&id=" + rec.menuId + "','functionList') style='background-color:#ec4758;' >  <i class=' fa fa-trash-o'></i> ";
+							                href += "删除</a>&nbsp;";
+							                href += "<a href='#'   class='ace_button'  onclick=operationDetail('" + rec.menuId + "','" + index + "')>  <i class=' fa fa-cog'></i>";
+							                href += "页面控件权限</a>&nbsp;";
+							                return href;
+							            }
+							        }]],
+							        onLoadSuccess: function(data) {
+							            $("#functionList").treegrid("clearSelections");
+							            if (!true) {
+							                if (data.total && data.rows.length == 0) {
+							                    var grid = $('#functionList');
+							                    var curr = grid.datagrid('getPager').data("pagination").options.pageNumber;
+							                    grid.datagrid({
+							                        pageNumber: (curr - 1)
+							                    });
+							                }
+							            }
+							        },
+							        onClickRow: function(rowData) {
+							            rowid = rowData.menuId;
+							            gridname = 'functionList';
+							        },
+							        onBeforeExpand: function(rowData) {
+							        	var objs = [];
+							        	$.ajax({
+											url: "../../menuAdmin/getMenuByPid/" + rowData.menuId,
+											datatype: "json",
+											type: "get",
+											data: {},
+											success: function (menuDatas, status, xhr) {
+												objs = eval("(" + menuDatas + ")");
+												
+												$.each(objs, function(objIndex, objItem) {
+													if(objItem.isLeaf == 0) {
+														objItem.state = "closed";
+									    	  		}
+													try {
+														$('#functionList').treegrid('remove', objItem.menuId);
+													} catch(e) {
+													}
+												});
+												
+									        	$('#functionList').treegrid('append', {
+									        		parent: rowData.menuId,
+									        		data: objs
+									        	});
+												$('#functionList').treegrid('refresh',rowData.menuId);
+												$('#functionList').treegrid('expand',rowData.menuId);
+											} 
+										});
+							        }
+							    });
+							  	$('#functionList').treegrid('getPager').pagination({
+							        beforePageText: '',
+							        afterPageText: '/{pages}',
+							        displayMsg: '{from}-{to}共 {total}条',
+							        showPageList: true,
+							        showRefresh: true
+							    });
+							    $('#functionList').treegrid('getPager').pagination({
+							        onBeforeRefresh: function(pageNumber, pageSize) {
+							            $(this).pagination('loading');
+							            $(this).pagination('loaded');
+							        }
+							    });
+							    try {
+							        restoreheader();
+							    } catch(ex) {}
+					    	  
+					      }
+					});
+					
+				});
+				function reloadTable() {
+				    try {
+				        $('#' + gridname).datagrid('reload');
+				        $('#' + gridname).treegrid('reload');
+				    } catch(ex) {}
+				}
+				function reloadfunctionList() {
+				    $('#functionList').treegrid('reload');
+				}
+				function getfunctionListSelected(field) {
+				    return getSelected(field);
+				}
+				function getSelected(field) {
+				    var row = $('#' + gridname).treegrid('getSelected');
+				    if (row != null) {
+				        value = row[field];
+				    } else {
+				        value = '';
+				    }
+				    return value;
+				}
+				function getfunctionListSelections(field) {
+				    var ids = [];
+				    var rows = $('#functionList').treegrid('getSelections');
+				    for (var i = 0; i < rows.length; i++) {
+				        ids.push(rows[i][field]);
+				    }
+				    ids.join(',');
+				    return ids
+				}
+				function getSelectRows() {
+				    return $('#functionList').datagrid('getChecked');
+				}
+				function saveHeader() {
+				    var columnsFields = null;
+				    var easyextends = false;
+				    try {
+				        columnsFields = $('#functionList').datagrid('getColumns');
+				        easyextends = true;
+				    } catch(e) {
+				        columnsFields = $('#functionList').datagrid('getColumnFields');
+				    }
+				    var cols = storage.get('functionListhiddenColumns');
+				    var init = true;
+				    if (cols) {
+				        init = false;
+				    }
+				    var hiddencolumns = [];
+				    for (var i = 0; i < columnsFields.length; i++) {
+				        if (easyextends) {
+				            hiddencolumns.push({
+				                field: columnsFields[i].field,
+				                hidden: columnsFields[i].hidden
+				            });
+				        } else {
+				            var columsDetail = $('#functionList').datagrid("getColumnOption", columnsFields[i]);
+				            if (init) {
+				                hiddencolumns.push({
+				                    field: columsDetail.field,
+				                    hidden: columsDetail.hidden,
+				                    visible: (columsDetail.hidden == true ? false: true)
+				                });
+				            } else {
+				                for (var j = 0; j < cols.length; j++) {
+				                    if (cols[j].field == columsDetail.field) {
+				                        hiddencolumns.push({
+				                            field: columsDetail.field,
+				                            hidden: columsDetail.hidden,
+				                            visible: cols[j].visible
+				                        });
+				                    }
+				                }
+				            }
+				        }
+				    }
+				    storage.set('functionListhiddenColumns', JSON.stringify(hiddencolumns));
+				}
+				function isShowBut() {
+				    var isShowSearchId = $('#isShowSearchId').val();
+				    if (isShowSearchId == "true") {
+				        $("#searchColums").hide();
+				        $('#isShowSearchId').val("false");
+				        $('#columsShow').remove("src");
+				        $('#columsShow').attr("src", "plug-in/easyui/themes/default/images/accordion_expand.png");
+				    } else {
+				        $("#searchColums").show();
+				        $('#isShowSearchId').val("true");
+				        $('#columsShow').remove("src");
+				        $('#columsShow').attr("src", "plug-in/easyui/themes/default/images/accordion_collapse.png");
+				    }
+				}
+				function restoreheader() {
+				    var cols = storage.get('functionListhiddenColumns');
+				    if (!cols) return;
+				    for (var i = 0; i < cols.length; i++) {
+				        try {
+				            if (cols.visible != false) $('#functionList').datagrid((cols[i].hidden == true ? 'hideColumn': 'showColumn'), cols[i].field);
+				        } catch(e) {}
+				    }
+				}
+				function resetheader() {
+				    var cols = storage.get('functionListhiddenColumns');
+				    if (!cols) return;
+				    for (var i = 0; i < cols.length; i++) {
+				        try {
+				            $('#functionList').datagrid((cols.visible == false ? 'hideColumn': 'showColumn'), cols[i].field);
+				        } catch(e) {}
+				    }
+				}
+				function functionListsearch() {
+				    try {
+				        if (!$("#functionListForm").Validform({
+				            tiptype: 3
+				        }).check()) {
+				            return false;
+				        }
+				    } catch(e) {}
+				    if (true) {
+				        var queryParams = $('#functionList').datagrid('options').queryParams;
+				        $('#functionListtb').find('*').each(function() {
+				            queryParams[$(this).attr('name')] = $(this).val();
+				        });
+				        
+				        
+				        $.ajax({
+							url: '../../js/test.json',
+							datatype: "json",
+							type: "get",
+							data: {},
+							success: function (data, status, xhr) {
+							
+								$('#functionList').treegrid({
+								
+									data: data,
+									//url: 'functionController.do?functionGrid&field=id,functionName,TSIcon_iconPath,functionType,functionUrl,functionOrder,functionIconStyle,',
+									pageNumber: 1
+								});
+							}
+						});
+				    }
+				}
+				function dosearch(params) {
+				    var jsonparams = $.parseJSON(params);
+				    $('#functionList').treegrid({
+				        url: 'functionController.do?functionGrid&field=id,functionName,TSIcon_iconPath,functionType,functionUrl,functionOrder,functionIconStyle,',
+				        queryParams: jsonparams
+				    });
+				}
+				function functionListsearchbox(value, name) {
+				    var queryParams = $('#functionList').datagrid('options').queryParams;
+				    queryParams[name] = value;
+				    queryParams.searchfield = name;
+				    $('#functionList').treegrid('reload');
+				}
+				$('#functionListsearchbox').searchbox({
+				    searcher: function(value, name) {
+				        functionListsearchbox(value, name);
+				    },
+				    menu: '#functionListmm',
+				    prompt: '请输入查询关键字'
+				});
+				function EnterPress(e) {
+				    var e = e || window.event;
+				    if (e.keyCode == 13) {
+				        functionListsearch();
+				    }
+				}
+				function searchReset(name) {
+				    $("#" + name + "tb").find(":input").val("");
+				    var queryParams = $('#functionList').datagrid('options').queryParams;
+				    $('#functionListtb').find('*').each(function() {
+				        queryParams[$(this).attr('name')] = $(this).val();
+				    });
+				    $('#functionList').treegrid({
+				        url: 'functionController.do?functionGrid&field=id,functionName,TSIcon_iconPath,functionType,functionUrl,functionOrder,functionIconStyle,',
+				        pageNumber: 1
+				    });
+				}
+			</script>
+
+			<table width="100%" id="functionList" toolbar="#functionListtb"></table>
+			<div id="functionListtb" style="padding:3px; height: auto">
+				<div style="height:30px;" class="datagrid-toolbar">
+					<span style="float:left;">
+						<a href="#" class="easyui-linkbutton" plain="true" icon="icon-add" onclick="addFun('菜单录入','functionController.do?addorupdate','functionList',null,400)">
+							菜单录入
+						</a>
+						<a href="#" class="easyui-linkbutton" plain="true" icon="icon-edit" onclick="update('菜单编辑','functionController.do?addorupdate','functionList',null,490)">
+							菜单编辑
+						</a>
+					</span>
+				</div>
+			</div>
+		</div>
+		<div data-options="region:'east',
+			title:'精细化权限控制',
+			collapsed:true,
+			split:true,
+			border:false,
+			onExpand : function(){
+				li_east = 1;
+			},
+			onCollapse : function() {
+			    li_east = 0;
+			}"
+			style="width: 400px; overflow: hidden;">
+			<div class="easyui-panel" style="padding:0px;border:0px" fit="true" border="false" id="operationDetailpanel"></div>
+		</div>
+	</div>
+
+	<script type="text/javascript">
+		$(function() {
+			var li_east = 0;
+		});
+		//数据规则权数
+		function  operationData(fucntionId) {
+			if(li_east === 0){
+			   $('#system_function_functionList').layout('expand','east'); 
+			}
+			$('#operationDetailpanel').panel("refresh", "functionController.do?dataRule&functionId=" + fucntionId);
+		}
+		function operationDetail(functionId) {
+			if(li_east === 0){
+			   $('#system_function_functionList').layout('expand','east');
+			}
+			/* $('#operationDetailpanel').panel({
+			    href:'operation.html',
+			    onLoad:function(){
+					alert('loaded successfully');
+			    }
+			}); */
+		}
+		function addFun(title, url, id) {
+			var rowData = $('#'+id).datagrid('getSelected');
+			if (rowData) {
+				url += '&TSFunction.id='+ rowData.id;
+			}
+			add(title,url,'functionList',700,480);
+		}
+	</script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>选择岗位</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.autocomplete.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function (){
+			fillDeptSelect();
+			//初始化层的大小
+			initLayerSize(false);
+		});
+		
+		function selectPosition() {
+			var formObj = $("#selectPosForm");
+		 	var msg = "不能为空！";
+			if(new UserCommon().show("edit-promit", formObj, msg)) {
+				var parentIframe = $("iframe",parent.document);
+				var brotherPosId = parentIframe.eq(parentIframe.length-2).contents().find("#positionPid");
+				var brotherPosName = parentIframe.eq(parentIframe.length-2).contents().find("#positionPName");
+				if(brotherPosId != null) {
+					brotherPosId.val($("#position").val());
+				}
+				if(brotherPosName != null) {
+					brotherPosName.val($("#position").find("option:selected").text() + "(" + 
+										$("#dept").find("option:selected").text().replace(/├/g,"") + ")");
+				}
+				new UserCommon().layer_close();
+			}
+		}
+		
+		function fillDeptSelect() {
+			$("#dept").empty();
+			var str = "<option value=\"-1\">请选择</option>";
+			$.ajax({
+			      url: "../../deptAdmin/depts",
+			      datatype: "text",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+						$.each(eval("(" + data + ")"), function(index, item) {
+							str = str + "<option value=\"" + item.deptId + "\">" + item.deptName + "</option>"
+						});
+						$("#dept").html(str);
+			      }
+			});
+		}
+	    
+		function fillPosition() {
+			var id = $("#dept").val();
+			$.ajax({
+				url: "../../posAdmin/PosesFromDeptId/" + id,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					$("#position").empty();
+					str = "<option value=\"-1\">请选择</option>";
+					$.each(eval("(" + data + ")"), function(index, item) {
+						str = str + "<option value=\"" + item.positionId + "\">" + item.positionName + "</option>";
+					});
+					$("#position").append(str);
+				} 
+			});
+		}
+		
+	</script>
+</head>
+<body>
+	<div class="edit">
+		<div class="edit-content">
+			<div class="edit-in">
+				<form id="selectPosForm">
+					<p class="edit-p">
+						<div class="zsy">
+						  <div class="zsy-common">
+						    <div class="zsy-common-left">
+						      <label>
+						        <span style="color:red;font-size:18px">*</span>所属部门：
+						       </label>
+						    </div>
+						    <div class="zsy-common-right">
+						      <select onchange="fillPosition()" style="width:150px" id="dept" name="dept" label="所属部门" errormsg="不能为空！" isempty="false" >
+						      </select>
+						    </div>
+						  </div>
+						  <div class="zsy-common">
+						    <div class="zsy-common-left">
+						      <label>
+						        <span style="color:red;font-size:18px">*</span>所属岗位：
+						      </label>
+						    </div>
+						    <div class="zsy-common-right">
+						      <select class="input-text" id="position" style="width:150px" name="position" label="所属岗位" errormsg="不能为空！" isempty="false" >
+						      </select>
+						    </div>
+						  </div>
+						</div>
+					</p>
+				</form>
+			</div>
+			<div class="edit-bottom">
+				<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();"><i class="glyphicon glyphicon-remove"></i>&nbsp;关闭</button>
+				<button type="button" class="btn btn-xs edit-save btn-primary" onclick="selectPosition()"><i class="glyphicon glyphicon-ok"></i>&nbsp;保存</button>
+			</div>
+		</div>	
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span>
+			<span></span>
+			<div><img src="../../images/sanjiao.png" width="10"></div>
+		</div>
+	</div>
+</body>
+</html>

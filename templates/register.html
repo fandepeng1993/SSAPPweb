@@ -1,0 +1,39 @@
+<ion-view title="注册上上" ng-controller="PopupCtrl">
+	<ion-nav-buttons side="right">
+        <a class="button button-clear confirm-top-icon" ng-click="doSomething()" href="#">
+            登录
+        </a>
+        <!-- <a class="button" ng-click="doSomething()" style="margin-right:10px;" href="#">
+            <i class="ion-plus-round" style="font-size:25px;"></i>
+        </a> -->
+    </ion-nav-buttons>
+    <ion-content overflow-scroll="false" scrollbar-y="false">
+    	<div class="list list-inset" style="margin:0px;margin-top:30px;">
+			<label class="item item-input" style="border-right:0px;border-left:0px;font-size:25px;"><!-- 加入item-select -->
+				<i class="icon ion-iphone placeholder-icon"></i>
+				<input type="text" placeholder="请输入常用手机号" style="font-size:13px;padding-left:11px;font-family:微软雅黑;">
+				<!-- 假如加入选项
+				<select>
+					<option selected="">+86</option>
+					<option >+7</option>
+					<option>+1</option>
+				</select> -->
+				<a href="#/country" class="button button-clear" style="color:#808080;letter-spacing:1px;width:110px;">
+        			+86 <i class="ion-chevron-right" style="color:#ccc"></i>
+      			</a>
+			</label>
+        </div>
+        <div class="list list-inset" style="margin:0px;">
+			<label class="item item-input" style="border-right:0px;border-left:0px;font-size:20px;">
+				<i class="icon ion-compose placeholder-icon"></i>
+				<input type="text" placeholder="请输入验证码" style="font-size:13px;padding-left:5px;font-family:微软雅黑;">
+				<div side="right" style="width:110px;color:#eabd81;height:25px;border-left:1px solid #d6d6d6;padding-left:25px;font-family:微软雅黑;">
+					9 6 5 8
+				</div>
+			</label>
+			<p style="padding-left:16px;padding-top:5px;color:#c9c9c9;font-size:11px;">手机号将作为登录凭证</p>
+			<div style="font-size:12px;color:#b3b3b3;height:20px;line-height:13px;padding-left:18px;width:100%;margin-top:16px;font-family:微软雅黑;"><input type="checkbox" name="" style="width:14px;height:14px;float:left"><div style="line-height:15px;height:20px;padding-left:22px;letter-spacing:1px;">我已阅读并同意《<a href="#" style="text-decoration:none;letter-spacing:2px;padding-left:2px;">上上钢管服务协议</a>》</div></div>
+			<button class="button" style="width:90%;margin-top:40px;margin-left:5%;text-align:center;border-radius:5px;background:#009fe6;color:#fff;font-family:微软雅黑;"  ng-click="showConfirm()" >下一步</button>
+        </div>
+    </ion-content>
+</ion-view>

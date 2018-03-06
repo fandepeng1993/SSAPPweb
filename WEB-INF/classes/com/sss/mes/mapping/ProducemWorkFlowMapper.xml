@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.mes.dao.IProducemWorkFlowDAO" >
+  <select id="getViewEntitys" resultType="java.util.HashMap">
+    SELECT
+		ProduceM_Name AS producemName,
+		COUNT(ProduceM_BillNo) AS totalframeNumber,
+		SUM(ProduceM_Number) AS totalCount,
+		SUM(ProduceM_Weight) AS totalProducemWeight,
+		SUM(ProduceM_Weights) AS totalLenght,
+		ProduceM_BeginDate As produceBeginDate
+	FROM
+		producem_workcard_workflow
+	WHERE
+		ProduceM_BeginDate = #{produceBeginDate, jdbcType=VARCHAR}
+	AND ProduceM_BeginDate != ''
+	GROUP BY
+		ProduceM_Name
+  </select>
+  <select id="getViewEntitysPageAndSize" resultType="java.util.HashMap">
+    SELECT
+		ProduceM_Name AS producemName,
+		COUNT(ProduceM_BillNo) AS totalframeNumber,
+		SUM(ProduceM_Number) AS totalCount,
+		SUM(ProduceM_Weight) AS totalProducemWeight,
+		SUM(ProduceM_Weights) AS totalLenght,
+		ProduceM_BeginDate As produceBeginDate
+	FROM
+		producem_workcard_workflow
+	WHERE
+		ProduceM_BeginDate = #{produceBeginDate, jdbcType=VARCHAR}
+	AND ProduceM_BeginDate != ''
+	GROUP BY
+		ProduceM_Name
+	limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+</mapper>

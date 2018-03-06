@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>查看工作月报</title>
+	
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.cookie.js"></script>
+	<!-- angularjs自动化表单部分 -->
+	<script type="text/javascript" src="../../js/loadAngularResource.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		
+		//当前页面所属菜单的menuCode
+	    var menuCode;
+		var check;
+		var positionId;
+		var element;
+		$(document).ready(function(){ 
+			menuCode = Request["menuCode"];
+			positionId = Request["positionId"];
+			var id = Request["id"];
+			if(positionId != null) {
+				getCheckWithPosId(id, positionId);
+			} else {
+				getCheck(id);
+			}
+		});
+		
+		//根据ss_form表取出数据构建form表单
+		function initForm() {
+			$.ajax({
+				url: "../../formAdmin/formsByMenuCode/" + menuCode,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					element = eval("(" + data + ")");
+					
+					if(!useAngularForm) {
+						$("#createSubmitForm").remove();
+						
+						new UserCommon().createForm("detailForm", element, 4);
+						if(positionId == null) {
+							$("#salary").parent().parent().hide();
+						}
+						setTimeout(function (){
+							new UserCommon().fillForm("detailForm",check);
+							fillForm();
+						},50);
+						//初始化层的大小
+						initLayerSize();
+					}
+					/* new UserCommon().createForm("detailForm", element, 4);
+					if(positionId == null) {
+						$("#salary").parent().parent().hide();
+					}
+					setTimeout(function (){
+						new UserCommon().fillForm("detailForm",check);
+						fillForm();
+					},50);
+					//初始化层的大小
+					initLayerSize(); */
+				} 
+			});
+		}
+		
+		//自动化创建表单之后需要调用的函数
+		function afterCreateCustomForm() {
+			if(positionId == null) {
+				$("#salary").parentsUntil("li").parent().hide();
+			}
+			new UserCommon().fillForm("detailForm",check);
+			fillForm();
+		}
+		
+		function fillForm() {
+			//初始化所属部门下拉菜单
+			$.ajax({
+			      url: "../../deptAdmin/depts",
+			      datatype: "text",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+			    	  	$("#dept").empty();
+			    	  	var str = "<option value=\"-1\">请选择</option>";
+						$.each(eval("(" + data + ")"), function(index, item) {
+							if(check.dept.deptId == item.deptId) {
+								//对菜单设定选中
+								str = str + "<option value=\"" + item.deptId + "\" selected=\"selected\">" + item.deptName + "</option>";
+							} else {
+								str = str + "<option value=\"" + item.deptId + "\">" + item.deptName + "</option>";
+							}
+						});
+						$("#dept").html(str);
+			      }
+			});	
+		}
+		
+		function getCheck(id) {
+			$.ajax({
+				url: "../../checkAdmin/check/" + id,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					check = eval("(" + data + ")");
+					initForm();
+				} 
+			});
+		}
+		
+		function getCheckWithPosId(id, posId) {
+			$.ajax({
+				url: "../../checkAdmin/checkWithPosId/" + id + "," + posId,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					check = eval("(" + data + ")");
+					initForm();
+				} 
+			});
+		}
+		
+	</script>
+</head>
+<body>
+	<div class="edit">
+		<div class="edit-content">
+			<div class="edit-in">
+				<form class="yhtj" id="detailForm">
+					<div id="createSubmitForm" ng-app="app" ng-controller="creatSubmitFormCtrl" class="previewText">
+						<div style="border:1px solid #d9d9d9;">
+							<div gridster='gridsterOpts' ng-style="{width:((gridsterOpts.columns)*200)+1+'px'}">
+								<ul>
+									<li gridster-item="item" ng-repeat="item in sercoundItems" ng-style="{zIndex:100-item.row}">
+										<my-directivelist>
+										</my-directivelist>
+									</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+	            </form>
+			</div>
+			<div class="edit-bottom">
+				<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();">
+				<i class="glyphicon glyphicon-remove"></i>&nbsp;关闭
+				</button>
+			</div>
+		</div>	
+	</div>
+</body>
+</html>

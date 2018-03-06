@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>新增人员</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+	<script src="../../js/jquery-form.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		function initCalendar() {
+			laydate({
+			    elem: '#hello', //目标元素。由于laydate.js封装了一个轻量级的选择器引擎，因此elem还允许你传入class、tag但必须按照这种方式 '#id .class'
+			    event: 'focus' //响应事件。如果没有传入event，则按照默认的click
+			});
+			laydate({
+			    elem: '#hello1', //目标元素。由于laydate.js封装了一个轻量级的选择器引擎，因此elem还允许你传入class、tag但必须按照这种方式 '#id .class'
+			    event: 'focus' //响应事件。如果没有传入event，则按照默认的click
+			});
+		}
+		
+		var defaultIMG = "../../images/default.png";
+		$(document).ready(function(){ 
+			fillDeptSelect();
+			initCalendar();
+			//初始化层的大小
+			initLayerSize();
+		});
+		
+			/**
+			 *	添加弹出框填写完成之后保存调用的函数
+			 */
+			function save() {
+				$("#userId").val(currentUserId);
+			 	var formObj = $("#addUserForm");	
+			 	var msg = "不能为空！";
+				if(new UserCommon().show("edit-promit", formObj, msg)) {
+				 	var formObjJson = $("#addUserForm").serializeNestedObject();
+				 	$.ajax({
+					      url: "../../userAdmin/user/" + currentUserId,//addUserForm
+					      datatype: "text",
+					      type: "post",
+					      data: JSON.stringify(formObjJson),
+					      success: function (data) {
+					    	  var json = eval("(" + data + ")");
+					    	  if(json.status == 1) {
+					    		  //alert(json.msg);
+					    		  new UserCommon().check("success",json.msg,"userMgr.html","success");
+					    		  setTimeout(function (){
+					    			  window.parent.initTable();
+					    			  new UserCommon().layer_close();
+					    			  //window.parent.location.href = "userMgr.html";
+					    		  }, 1000);
+					    	  } else {
+					    		  new UserCommon().check("success",json.msg,null,"fail");
+					    	  }
+					      }
+					});
+				}
+			}
+		
+		    /**
+			 * 选择添加后填充相关选择下拉框
+			 */
+			function fillDeptSelect() {
+				$("#dept").empty();
+				//填充头像
+				$("#addUserForm img[name='userPhoto']").attr("src", defaultIMG);
+				var str = "<option value=\"-1\">请选择</option>";
+				$.ajax({
+	      			  url: "../../deptAdmin/depts",
+				      datatype: "text",
+				      type: "get",
+				      data: {},
+				      success: function (data, status, xhr) {
+							$.each(eval("(" + data + ")"), function(index, item) {
+								str = str + "<option value=\"" + item.deptId + "\">" + item.deptName + "</option>"
+							});
+							$("#dept").html(str);
+				      }
+				});
+			}
+		    
+		    /**
+			 * 添加操作，根据deptId填充岗位选择下拉框
+			 */
+			function fillposition() {
+				var id = $("#dept").val();
+				$.ajax({
+					url: "../../posAdmin/PosesFromDeptId/" + id,
+					datatype: "json",
+					type: "get",
+					data: {},
+					success: function (data, status, xhr) {
+						$("#position").empty();
+						str = "<option value=\"-1\">请选择</option>";
+						$.each(eval("(" + data + ")"), function(index, item) {
+							str = str + "<option value=\"" + item.positionId + "\">" + item.positionName + "</option>";
+						});
+						$("#position").append(str);
+					} 
+				});
+			}
+		    
+			//点击上传头像触发
+			function selectPhoto(obj) {
+				//清掉原来的图片(上传内容)
+				$("#uploadForm").prev().attr("src", "");
+				$("#uploadForm").children("input").val("");
+				//显示上传图片对话框
+				//$("#selectPhoto").show();
+				window.parent.admin_role_add('<strong>上传头像</strong>',"uploadPhoto.html",'500','350');
+			}
+			//点击移除头像触发
+			function removePhoto(obj) {
+				$(obj).prev().prev().attr("src", "");
+				$(obj).prev().prev().prev().val("");
+			}
+			
+			/*管理员-角色-添加*/
+			function admin_role_add(title,url,w,h){
+				new UserCommon().layer_show(title,url,w,h);
+			}
+	</script>
+</head>
+<body>
+	<div class="edit">
+		<div class="edit-content">
+			<div class="edit-in">
+				<form id="addUserForm">
+					<table class="yhtj">
+						<tr>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">用户工号：</div>
+								<input label="用户工号" isEmpty="false" errorMsg="不能为空！" type="text" name="userNo">
+							</td>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">姓名称：</div>
+								<input label="姓名称" isEmpty="false" errorMsg="不能为空！" type="text" name="userName">
+							</td>
+							<td rowspan="5">
+								<div class="yhtj-tx">
+									<input label="photoUrl" isEmpty="true" errorMsg="不能为空！" type="hidden" name="photoUrl">
+									<img alt="员工头像" name="userPhoto" src="" height="100" width="130" style="margin-left:10px;">
+									<a class="btn btn-default btn-xs" id="photoBut" onclick="selectPhoto(this)" style="width:100px;height:22px;margin-left:25px;margin-top:10px;"><span class="glyphicon glyphicon-plus" style="color:#999"></span> 上传头像</a>
+									<a class="btn btn-default btn-xs" onclick="removePhoto(this)" style="width:100px;height:22px;margin-left:25px;margin-top:10px;"><span class="glyphicon glyphicon-minus" style="color:#999"></span> 移除头像</a>
+								</div>
+							</td>
+						</tr>
+						<tr>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">密码：</div>
+								<input label="密码" isEmpty="false" errorMsg="不能为空！" type="password" name="password">
+							</td>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">状态： </div>
+								<select label="状态" isEmpty="false" errorMsg="不能为空！" name="status">
+		                    		<option>在职</option>
+		                    		<option>离职</option>
+		                		</select>
+		                	</td>
+						</tr>
+						<tr>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">部门：</div> 
+								<select label="部门" isEmpty="false" errorMsg="不能为空！" id="dept" onchange="fillposition()"></select>
+		                	</td>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">岗位：</div> 
+								<select label="岗位" isEmpty="false" errorMsg="不能为空！" name="position.positionId" id="position"></select>
+		                	</td>
+						</tr>
+						<tr>
+							<td class="yhtj-tb" colspan="2">
+								<div class="yhtj-tb-div">地址：</div>
+								<input label="地址" isEmpty="true" errorMsg="不能为空！" type="text" name="address" style="width:350px;">
+							</td>
+						</tr>
+						<tr>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">毕业院校：</div>
+								<input label="毕业院校" isEmpty="true" errorMsg="不能为空！" type="text" name="school">
+							</td>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">出生日期：</div>
+								<input label="出生日期" isEmpty="true" errorMsg="不能为空！" id="hello" name="birthdate" class="laydate-icon">
+							</td>
+						</tr>
+						<tr>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">学历：</div>
+								<input label="学历" isEmpty="true" errorMsg="不能为空！" type="text" name="eduBackgound">
+							</td>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">入职日期：</div>
+								<input label="入职日期" isEmpty="true" errorMsg="不能为空！" id="hello1" name="entrydate" class="laydate-icon">
+							</td>
+						</tr>
+						<tr>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">专业：</div>
+								<input label="专业" isEmpty="true" errorMsg="不能为空！" type="text" name="major">
+							</td>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">性别： </div>
+								<select label="性别" isEmpty="true" errorMsg="不能为空！" name="sex" id="sex">
+		                    		<option>男</option>
+		                    		<option>女</option>
+		                		</select>
+		                	</td>
+						</tr>
+						<tr>
+							<td class="yhtj-tb">
+								<div class="yhtj-tb-div">电话：</div>
+								<input label="电话" isEmpty="true" errorMsg="不能为空！" type="text" name="telephone">
+							</td>
+		                	<td class="yhtj-tb">
+		                		<div class="yhtj-tb-div">办公电话：</div>
+		                		<input label="Email" isEmpty="true" errorMsg="不能为空！" type="text" name="officeTel">
+		                	</td>
+						</tr>
+						<tr>
+		                	<td class="yhtj-tb">
+		                		<div class="yhtj-tb-div">Email：</div>
+		                		<input label="Email" isEmpty="true" errorMsg="不能为空！" type="text" name="email">
+		                	</td>
+		                	<td class="yhtj-tb">
+		                		<div class="yhtj-tb-div">基础薪资：</div>
+		                		<input label="基础薪资" isEmpty="true" errorMsg="不能为空！" type="text" name="basePay">
+		                	</td>
+						</tr>
+						<tr>
+		                	<td class="yhtj-tb">
+		                		<div class="yhtj-tb-div">加班工资：</div>
+		                		<input label="加班工资" isEmpty="true" errorMsg="不能为空！" type="text" name="overtimePay">
+		                	</td>
+		                	<td class="yhtj-tb">
+		                		<div class="yhtj-tb-div">试用期：</div>
+		                		<input label="试用期时间" isEmpty="true" errorMsg="不能为空！" type="text" name="probationPeriod">个月
+		                	</td>
+						</tr>
+						<tr>
+		                	<td class="yhtj-tb">
+		                		<div class="yhtj-tb-div">试用工资：</div>
+		                		<input label="试用期工资" isEmpty="true" errorMsg="不能为空！" type="text" name="probationWage">
+		                	</td>
+						</tr>
+					</table>
+				</form>
+			</div>
+			<div class="edit-bottom">
+				<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();"><i class="glyphicon glyphicon-remove"></i>&nbsp;关闭</button>
+				<button type="button" class="btn btn-xs edit-save btn-primary" onclick="save()"><i class="glyphicon glyphicon-ok"></i>&nbsp;保存</button>
+			</div>
+		</div>	
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span>
+			<span></span>
+			<div><img src="../../images/sanjiao.png" width="10"></div>
+		</div>
+	</div>
+</body>
+</html>

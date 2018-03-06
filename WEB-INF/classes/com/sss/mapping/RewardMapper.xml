@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IRewardDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.Reward" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="payNum" property="payNum" jdbcType="DECIMAL" />
+    <result column="payTime" property="payTime" jdbcType="VARCHAR" />
+    <result column="modelName" property="modelName" jdbcType="VARCHAR" />
+    <result column="table" property="table" jdbcType="VARCHAR" />
+    <result column="rid" property="rid" jdbcType="INTEGER" />
+    <result column="description" property="description" jdbcType="VARCHAR" />
+    
+	<association property="payFrom" javaType="com.sss.pojo.ViewUserInfo">
+		<id column="fu_user_id" property="userId" jdbcType="INTEGER" />
+		<result column="fu_position_name" property="positionName" jdbcType="VARCHAR" />
+		<result column="fu_dept_deptName" property="deptName" jdbcType="VARCHAR" />
+		<result column="fu_user_tel" property="telephone" jdbcType="VARCHAR" />
+		<result column="fu_user_name" property="userName" jdbcType="VARCHAR" />
+		<result column="fu_user_sex" property="sex" jdbcType="VARCHAR" />
+		<result column="fu_user_photoUrl" property="photoUrl" jdbcType="VARCHAR" />
+	</association>
+	
+	<association property="payTo" javaType="com.sss.pojo.ViewUserInfo">
+		<id column="tu_user_id" property="userId" jdbcType="INTEGER" />
+		<result column="tu_position_name" property="positionName" jdbcType="VARCHAR" />
+		<result column="tu_dept_deptName" property="deptName" jdbcType="VARCHAR" />
+		<result column="tu_user_tel" property="telephone" jdbcType="VARCHAR" />
+		<result column="tu_user_name" property="userName" jdbcType="VARCHAR" />
+		<result column="tu_user_sex" property="sex" jdbcType="VARCHAR" />
+		<result column="tu_user_photoUrl" property="photoUrl" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		r.*,
+  		f.user_id as fu_user_id,
+  		f.user_name as fu_user_name,
+  		f.position_name as fu_position_name,
+  		f.dept_name as fu_dept_deptName,
+  		f.photoUrl as fu_user_photoUrl,
+  		t.user_id as tu_user_id,
+  		t.user_name as tu_user_name,
+  		t.position_name as tu_position_name,
+  		t.dept_name as tu_dept_deptName,
+  		t.photoUrl as tu_user_photoUrl
+    from 
+    	ss_reward r
+   	left join
+   		view_userinfo f
+   	on
+   		r.payFrom = f.user_id
+	left join
+   		view_userinfo t
+   	on
+   		r.payTo = t.user_id
+  </sql>
+  <!-- 返回一个list的写法 -->
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by r.payTime desc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" /> where r.id = #{id,jdbcType=INTEGER}
+  </select>
+   <select id="selByPayFrom" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where f.user_id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selByPayTo" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where t.user_id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selByPayToUserName"  resultMap="BaseResultMap" parameterType="java.lang.String" >
+    <include refid="associateQuery" /> 
+    where t.user_name like "%"#{keywords,jdbcType=VARCHAR}"%"
+    order by r.payTime desc
+  </select>
+  <select id="selRewardsForUser" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where f.user_id = #{id,jdbcType=INTEGER} 
+    	or t.user_id = #{id,jdbcType=INTEGER}
+    order by r.payTime desc
+  </select>
+  <!--  根据表名和id获取对应实体类的map -->
+  <select id="selFromTableAndId" resultType="java.util.HashMap" statementType="STATEMENT" >
+    select * from ${table}
+    <if test="table == 'ss_dailyReport'
+    		or table == 'ss_weeklyReport'
+    		or table == 'ss_monthlyReport'
+    		or table == 'ss_deptWeekReport'
+    		or table == 'ss_dailyreport'
+    		or table == 'ss_weeklyreport'
+    		or table == 'ss_monthlyreport'
+    		or table == 'ss_deptweekreport'">
+	    where report_id = ${id}
+    </if>
+    <if test="table == 'ss_weekPlan'">
+	    where plan_id = ${id}
+    </if>
+    <if test="table == 'ss_blog'">
+	    where id = ${id}
+    </if>
+    limit 0,1
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_reward
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.Reward" >
+    insert into ss_reward (id, payFrom, payTo, 
+      payNum, payTime, modelName,`table`, rid, description)
+    values (#{id,jdbcType=INTEGER}, #{payFrom.userId,jdbcType=INTEGER}, #{payTo.userId,jdbcType=INTEGER}, 
+       #{payNum,jdbcType=DECIMAL},#{payTime,jdbcType=VARCHAR}, #{modelName,jdbcType=VARCHAR}, 
+       #{table,jdbcType=VARCHAR},#{rid,jdbcType=INTEGER},#{description,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.Reward" >
+  	<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+    </selectKey>
+    insert into ss_reward
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="payFrom != null and payFrom.userId != null" >
+        payFrom,
+      </if>
+      <if test="payTo != null and payTo.userId != null" >
+        payTo,
+      </if>
+      <if test="payNum != null" >
+        payNum,
+      </if>
+      	payTime,
+      <if test="modelName != null" >
+        modelName,
+      </if>
+      <if test="table != null" >
+        `table`,
+      </if>
+      <if test="rid != null " >
+        rid,
+      </if>
+      <if test="description != null " >
+        description,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="payFrom != null and payFrom.userId != null" >
+        #{payFrom.userId,jdbcType=INTEGER},
+      </if>
+      <if test="payTo != null and payTo.userId != null" >
+        #{payTo.userId,jdbcType=INTEGER},
+      </if>
+      <if test="payNum != null" >
+        #{payNum,jdbcType=DECIMAL},
+      </if>
+      <if test="payTime == null or payTime == ''" >
+        now(),
+      </if>
+      <if test="payTime != null and payTime != ''" >
+        #{payTime,jdbcType=VARCHAR},
+      </if>
+      <if test="modelName != null" >
+        #{modelName,jdbcType=VARCHAR},
+      </if>
+      <if test="table != null" >
+        #{table,jdbcType=VARCHAR},
+      </if>
+      <if test="rid != null" >
+        #{rid,jdbcType=INTEGER},
+      </if>
+      <if test="description != null" >
+        #{description,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.Reward" >
+    update ss_reward
+    <set >
+      <if test="payFrom != null and payFrom.userId != null" >
+        payFrom = #{payFrom.userId,jdbcType=INTEGER},
+      </if>
+      <if test="payTo != null and payTo.userId != null" >
+        payTo = #{payTo.userId,jdbcType=INTEGER},
+      </if>
+      <if test="payNum != null" >
+        payNum = #{payNum,jdbcType=DECIMAL},
+      </if>
+      <if test="payTime != null and payTime != ''" >
+        payTime = #{payTime,jdbcType=VARCHAR},
+      </if>
+      <if test="modelName != null" >
+        modelName = #{modelName,jdbcType=VARCHAR},
+      </if>
+      <if test="table != null" >
+        `table` = #{table,jdbcType=VARCHAR},
+      </if>
+      <if test="rid != null" >
+        rid = #{rid,jdbcType=INTEGER},
+      </if>
+      <if test="description != null" >
+        description = #{description,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.Reward" >
+    update ss_reward
+    set payFrom = #{payFrom.userId,jdbcType=INTEGER},
+   	  payTo = #{payTo.userId,jdbcType=INTEGER},
+      payNum = #{payNum,jdbcType=DECIMAL},
+      payTime = #{payTime,jdbcType=VARCHAR}
+      modelName = #{modelName,jdbcType=VARCHAR},
+      `table` = #{table,jdbcType=VARCHAR},
+      rid = #{rid,jdbcType=INTEGER},
+      description = #{description,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by r.payTime desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by r.payTime desc
+  </select>
+</mapper>

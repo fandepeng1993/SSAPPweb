@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.mes.dao.IWeightVehiclesDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.mes.pojo.WeightVehicles" >
+    <id column="L_ID" property="id" jdbcType="INTEGER" />
+    <result column="L_Driver" property="driver" jdbcType="VARCHAR" />
+    <result column="L_PlateNumber" property="plateNumber" jdbcType="VARCHAR" />
+    <result column="L_type" property="type" jdbcType="VARCHAR" />
+    <result column="L_material" property="meterial" jdbcType="VARCHAR" />
+    <result column="L_Frist_Time1" property="fristTime1" jdbcType="VARCHAR" />
+    <result column="L_Frist_Time" property="firstTime" jdbcType="VARCHAR" />
+    <result column="L_Frist_grossWeight" property="grossWeight" jdbcType="VARCHAR" />
+    <result column="L_Frist_tareWeight" property="tareWeight" jdbcType="VARCHAR" />
+    <result column="L_Frist_netWeight" property="netWeight" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="query">
+  	select 
+  		L_ID,
+  		L_Driver,
+  		L_PlateNumber,
+  		L_type,
+  		L_material,
+  		L_Frist_Time1,
+  		L_Frist_Time,
+  		L_Frist_grossWeight,
+  		L_Frist_tareWeight,
+  		L_Frist_netWeight
+  	from
+  		L_Vehicles
+  </sql>
+  <cache 
+  	eviction="FIFO" 
+  	flushInterval="900000" 
+	size="512" 
+	readOnly="true"/> 
+  <select id="getViewEntitys" resultMap="BaseResultMap" >
+     <include refid="query" /> order by L_Frist_Time desc
+  </select>
+  <select id="getWeightsByPageNoAndSize" resultMap="BaseResultMap" >
+    <include refid="query" /> order by L_Frist_Time desc
+    limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER} 
+  </select>
+</mapper>

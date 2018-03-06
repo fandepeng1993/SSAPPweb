@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>考核项目管理</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	 <link href="../../css/plugins/jsTree/style.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome.min.css" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css"> 	
+ 	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/plugins/jsTree/jstree.min.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+    <script type="text/javascript">
+    	
+    	/*展开与收缩*/
+    	function showAndShrink() {
+			$("#right").click(function(){
+				if($(this).hasClass("glyphicon-backward")){
+					$(this).removeClass("glyphicon-backward");
+					$(this).addClass("glyphicon-forward");
+					$("#left").css("width","30px");
+					$(".content-right").width("calc(100% - 30px - 280px)"); 
+					$("#left .content-left-top span:eq(0)").hide();
+					$("#left table").hide();
+				}else{
+					$(this).removeClass("glyphicon-forward");
+					$(this).addClass("glyphicon-backward");
+					$("#left").css("width","280px");
+					$(".content-right").width("calc(100% - 280px - 280px)");
+					$("#left .content-left-top span:eq(0)").show();
+					$("#left table").show();
+				}
+			});
+		}
+
+	  	//当前页面所属菜单的menuCode
+	    var menuCode;
+		//根据权限渲染页面
+		$(document).ready(function(){
+			showAndShrink();
+			menuCode = Request["menuCode"];
+			$.ajax({
+			      url: "../../sessionAdmin/getPri",
+			      datatype: "json",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+			    	  var pathname = window.location.pathname;
+			    	  var url = pathname.substring(pathname.indexOf("/", 1) + 1, pathname.length);
+			    	  $.each(eval("(" + data + ")"), function(index, item) {
+			      			if(item.menuUrl == url) {
+			      				if(item.menuName == "查看所有") {
+			      					init('1');
+			      					
+			      					$("#deptTable").show();
+			      					$("#checkTable").show();
+			      					$("#mainMenu").show();
+			      					$("#kaohe").show();
+				      				//初始选中默认部门
+				  			    	  fillPosTable(1);
+			      					
+			      				} else if(item.menuName == "增加") {
+			      					$("#add-g").show();
+			      				} else if(item.menuName == "修改") {
+			      					$("#update-g").show();
+			      				} else if(item.menuName == "删除") {
+			      					$("#delete-g").show();
+			      				} else if(item.menuName == "设置岗位考核项") {
+			      					$("#kaohe").show();
+			      				}
+			      			}
+			    	  });
+			      } 
+			});
+		});
+
+		//定义当前选中的岗位Id
+		var positionId = 0;
+		//定义当前选中的部门Id
+		var deptId = 0;
+		
+	   	var flag = true;
+	    function chkRadio(id) {
+		    id.checked = flag;
+		    flag = !flag;
+	    }
+		
+		
+	    /**
+	     *	统一根据父级菜单Id填充其children
+	     */
+	     function fillChildrenByMenuPid(menuPid, childrenArr) {
+	     	for(var index in allMenuData){
+	     		var RpDeptName;
+	     		if(allMenuData[index].deptName){
+	     			RpDeptName=(allMenuData[index].deptName).replace(/├/g, "");
+	     		}
+	     		
+	 			var childData= {
+	   		            "text":RpDeptName,
+	   		            "children": [],
+	   		            "state": {
+	   		                "opened": false
+	   		            },
+	   		            "menuID":allMenuData[index].deptId
+	 			};
+	   		  	if(childData.text && allMenuData[index].parentDept && allMenuData[index].parentDept.deptId==menuPid){
+	   		  	
+	   		  		if(allMenuData[index].isLeaf == 0 ) {
+	 	  		  		fillChildrenByMenuPid(childData.menuID,childData.children);
+	   		  		}
+	 				childrenArr.push(childData);
+	 			}
+	   		    
+	 		}
+	   
+	     }
+	     
+	    var allMenuData;
+	    var stateValue=2;
+	     
+	 	function init(id) {
+	 		$.ajax({
+	 		      url: "../../deptAdmin/depts",
+	 		      datatype: "json",
+	 		      type: "get",
+	 		      data: {},
+	 		      success: function (data, status, xhr) {
+	 		    	  depts=data;
+	 		    	  allMenuData=JSON.parse(data);
+	 		    	 
+	 		    	  var mydata= {
+	 		    			    "data": [{
+	 		    			        "text": "上上德胜集团",
+	 		    			        "state": {"opened": true},
+	 		    			        "children":[],
+	 		    			        "menuID":1
+	 		    			    }]
+	 		    			}
+	 		    	  
+	 		    	     fillChildrenByMenuPid(1, mydata.data[0].children);
+	 		    	
+	 		    		 $("#using_json").jstree({
+	 			    		  'core': mydata,
+	 			    		  "plugins": ["types", "dnd"],
+	 			    		 "types": {
+				                  "default": {"icon": "fa fa-folder"},
+				                  "html": {"icon": "fa fa-file-code-o"},
+				                  "svg": {"icon": "fa fa-file-picture-o"},
+				                  "css": {"icon": "fa fa-file-code-o"},
+				                  "img": {"icon": "fa fa-file-image-o"},
+				                  "js": {"icon": "fa fa-file-text-o"}
+				              }
+	 			    		  
+	 		   	     	 }).on('changed.jstree', function (e, data) {
+	 						
+	 						if(typeof(data.node) != "undefined") {
+		 						var tempValue=data.node.original.menuID;
+		 						fillPosTable(data.node.original.menuID)
+		 						
+		 						/* if(tempValue!=1 && tempValue!=stateValue){
+		 							stateValue=data.node.original.menuID;
+		 							fillTable(data.node.original.menuID);
+		 						}else{
+		 							
+		 						} */
+	 						}
+	 		   	    	
+	 		   	      }).on('loaded.jstree', function(e, data){  
+	 		   	    		var inst = data.instance;
+			 		   	    var obj = inst.get_node(e.target.lastChild.lastChild.lastChild.firstChild);  
+			 		   	    inst.select_node(obj);  
+			 		  })
+						//$('.jstree-node').eq(1).attr("aria-selected","true").find('.jstree-anchor').addClass('jstree-clicked');
+	 		      }
+	 		});
+	 	}
+		    
+		/* function display(id, grade) {
+			eval("var div=div"+id);
+			eval("var img=img"+id);
+			eval("var im=im"+id);
+			//判断是否为加号，若为加号，则取其孩子，列在div中。
+			//alert(div.style.display);
+			if(div.style.display=="none") {
+				ajax(id, grade);
+			}
+			div.style.display=div.style.display=="block"?"none":"block";
+			img.src=div.style.display=="block"?"../../images/jian.png":"../../images/add.png";
+			im.src=div.style.display=="block"?"../../images/home.png":"../../images/home.png";
+			img.alt=div.style.display=="block"?"关闭":"展开";
+		}
+		
+		function ajax(id, grade) {
+			$.ajax({
+			      url: "../../deptAdmin/getDeptByPid/" + id,
+			      datatype: "json",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+			    	  $("#div" + id).empty();
+			    	  $.each(eval("(" + data + ")"), function(index, item) {
+			    	  	  var str = "";
+			    	  	  if(item.isLeaf == 0) {
+				    	  	  str = str + "<div>";
+				    	  	  for(var i=0;i<grade;i++) {
+				    	  		  str = str + "<img src=\"../../images/white.gif\">";
+				    	  	  }
+							  str = str + "<img alt=\"展开\" style=\"cursor:hand;\" onClick=\"display('" + item.deptId + "'," + (grade+1) + ");\" id=\"img" + item.deptId + "\" src=\"../../images/2_clos.gif\">" + 
+										"<img id=\"im" + item.deptId + "\" src=\"../../images/home.png\">" + 
+										"<button onclick=\"fillPosTable(" + item.deptId + ")\" class=\"btn btn-link\" target=\"clientDispAreaFrame\" style=\"font-size:13px;padding-left:0px;padding-bottom:0px;outline:none;\">" + item.deptName + 
+										"<span id=\"hand" + item.deptId + "\" class=\"glyphicon glyphicon-hand-right hand\" style=\"display:none;padding-left:3px;\"></span></button>" + 
+										"<div style=\"display:none;\" id=\"div" + item.deptId + "\">" +
+										"</div>";
+			    	  	  } else if (item.isLeaf == 1) {
+							  str = str + "<div class=\"zzjg-height\">";
+							  for(var i=0;i<grade;i++) {
+				    	  		  str = str + "<img src=\"../../images/white.gif\">";
+				    	  	  }
+							  str = str + "<img alt=\"展开\" style=\"cursor:hand;\" onClick=\"display('" + item.deptId + "'," + (grade+1) + ");\" id=\"img" + item.deptId + "\" src=\"../../images/3_none.gif\">" + 
+										"<img id=\"im" + item.deptId + "\" src=\"../../images/yellow.png\">" + 
+										"<button onclick=\"fillPosTable(" + item.deptId + ")\" class=\"btn btn-link\" target=\"clientDispAreaFrame\" style=\"font-size:13px;padding-left:0px;padding-bottom:0px;outline:none;\">" + item.deptName + 
+										"<span id=\"hand" + item.deptId + "\" class=\"glyphicon glyphicon-hand-right hand\" style=\"display:none;padding-left:3px;\"></span></button>" + 
+									"</div>";
+			    	  	  }
+			      		  $("#div" + id).append(str);
+			      		  
+			      	  });
+			    	  //初始选中默认部门
+			    	  fillPosTable(1);
+			      } 
+			});
+		} */
+		
+		var poses = null;
+		/**
+		 * 填充右侧岗位table表单展现
+		 */
+		function fillPosTable(id) {
+			positionId = 0;
+			$.ajax({
+				url: "../../posAdmin/PosesFromDeptId/" + id,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					initPosList(data);
+					//添加手型选中
+		  			$("#deptTable").find("span").hide();
+		  			$("#hand" + id).show();
+		  			//更新右侧考核项目列表
+					deptId = id;
+					fillCheckTable(id, true);
+				} 
+			});
+		}
+		
+		/**
+		 *	更新岗位菜单
+		 */
+		function initPosList(poses) {
+			$("#mainMenu").empty();
+			var str = "";
+			$.each(eval("(" + poses + ")"), function(index, item) {
+		 		str = str + "<div class=\"positionActive\" style=\"margin-left:10px;margin-top:5px;\"><img class=\"imgBlank\" src=\"../../images/gangwei.png\">" + 
+		 			"<button onclick=\"fillCheckTable(" + item.positionId + ", false)\" class=\"btn btn-link dark\" target=\"clientDispAreaFrame\" style=\"font-size:13px;padding-left:0px;padding-bottom:0px;outline:none;\">" + item.positionName + 
+		 			"<span id=\"hand_pos_" + item.positionId + "\" class=\"glyphicon glyphicon-hand-right hand\" style=\"display:none;padding-left:3px;\"></span></button>" + 
+		 			"</div>";
+			});
+			$("#mainMenu").append(str);
+		}
+		
+		var checks;
+		
+		/**
+		 * 填充右侧考核项目列表table表单展现
+		 */
+		function fillCheckTable(id, isDept) {
+			var url;
+			$("#salary").remove();
+			if(isDept) {
+				url = "../../checkAdmin/checksFromDeptId/" + id;
+				$("#update-g").show();
+				$("#delete-g").show();
+			} else {
+				$("#name").after("<th id=\"salary\" fieldType=\"text\" fieldName=\"salary\">金额</th>");
+				url = "../../checkAdmin/checksFromPosId/" + id;
+				$("#update-g").hide();
+				$("#delete-g").hide();
+			}
+			$.ajax({
+				url: url,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					$("#checkTable").empty();
+					checks = eval("(" + data + ")");
+					totalRecords = checks.length;
+					//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+					if(totalRecords % pageSize != 0) {
+						totalPages = Math.floor(totalRecords / pageSize) + 1;
+					} else {
+						totalPages = totalRecords / pageSize;
+					}
+					//根据totalPages初始化页码插件
+					$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+					$("#Pagination").pagination(totalPages);
+					//添加手型选中
+		  			$("#mainMenu").find("span").hide();
+		  			$("#hand_pos_" + id).show();
+		  			$(".positionActive").removeClass("active");
+		  			$("#hand_pos_" + id).parent().parent().addClass("active");
+		  			$(".imgBlank").attr("src","../../images/gangwei.png");
+		  			$("#hand_pos_" + id).parent().prev().attr("src","../../images/gangweibai.png");
+		  			/* if(isDept) {
+						url = "../../checkAdmin/checksFromDeptId/" + id;
+					} else {
+						url = "../../checkAdmin/checksFromPosId/" + id;
+					} */
+		  			if(!isDept) positionId = id;
+				} 
+			});
+		}
+		
+		var pageSize = 10;
+		var pageNo = 1;//当前的页码
+		var totalRecords = 0;
+		var totalPages = 0;
+		
+		function circleInfos() {
+			 $("#checkTable").empty();
+			 $.each(checks, function(index, item) {
+				if(index >= ((pageNo-1)*pageSize) && index < (pageNo*pageSize)) {
+					 //addWReportInfo(index, item);
+					 new UserCommon().fillTable("checkTable",item,index);
+				} else if(index > (pageNo*pageSize)) {
+					 return;
+				}
+				
+				//为checkbox添加监听事件
+				new UserCommon().checkboxListener();
+		    });
+		}
+		
+		/**
+		 * 根据id填充单个考核项目表单
+		 */
+		function fillDetail(id) {
+			$.each(checks, function(index, item) {
+				if(item.id == id) {
+					if(positionId == 0) {
+						admin_role_add('<strong>考核项目查看</strong>',"viewCheck.html?menuCode=" + menuCode + "&id=" + item.id,'500');
+					} else {
+						admin_role_add('<strong>考核项目查看</strong>',"viewCheck.html?menuCode=" + menuCode + "&id=" + item.id + "&positionId=" + positionId,'500');
+					}
+				}
+		    });
+		}
+		
+		/**
+	     * 定义考核规则
+	     */
+		function setCheckRule(id) {
+
+			$.each(checks, function(index, item) {
+				if(item.id == id) {
+					admin_role_add('<strong>定义考核规则</strong>',"setCheckRule.html?menuCode=" + menuCode + "&id=" + item.id,'500');
+				}
+		    });
+		}
+		
+		function deleteChecks() {
+			var str = "";
+			$("input[name='selectFlag']").each(function(){
+				if($(this).is(':checked')) str += $(this).val() + ",";
+			});
+			if(str != null && str.trim() != "") {
+				str = str.substring(0, str.length-1);
+				layer.confirm('要删除么？',function(index){
+					$.ajax({
+					      url: "../../checkAdmin/check/" + str,
+					      datatype: "text",
+					      type: "delete",
+					      data: {},
+					      success: function (data) {
+					    	  var json = eval("(" + data + ")");
+					    	  if(json.status == 1) {
+					    		  new UserCommon().check("success",json.msg,null,"success");
+					    	  } else {
+					    		  new UserCommon().check("success",json.msg,null,"fail");
+					    	  }
+					    	  //局部更新
+				    		  var arr = str.split(",");
+				    		  for(var i=checks.length-1; i>=0; i--) {
+				    			  if(arr.contains(checks[i].id)) {
+				    				  checks.splice(i,1);
+				    			  }
+				    		  }
+				    		  circleInfos();
+				    		  layer.close(index);
+					      }
+					});
+				});
+			} else {
+				new UserCommon().check("success","请选择要删除的考核项目！",null,"warning");
+			}
+		}
+		
+	    /**
+	     * 选择修改后填充相关信息
+	     */
+	    function fillUpdateSelect() {
+	    	var but = $("input[name='selectFlag']");
+	    	var selCheckId;
+	    	var num = 0;
+	    	for(var i=0; i<but.length; i++) {
+	    		if(but[i].checked) { 
+	    			if(num == 0) {
+	    				selCheckId = but[i].value;
+	    			}
+	    			num += 1;
+	    		}
+	    	} 
+	    	if(num == 1) {
+	    		$.each(checks, function(index, item) {
+	    			if(item.id == selCheckId) {
+	    				admin_role_add('<strong>考核项目修改</strong>',"editCheck.html?menuCode=" + menuCode + "&id=" + item.id,'540');
+	    			}
+	    	    });
+	    	} else {
+	    		new UserCommon().check("success","请选择一个考核项目！",null,"warning");
+	    	}
+	    }
+	    
+	    /**
+	     * 设置岗位考核项
+	     */
+	    function setPosCheck() {
+			if(positionId != 0) {
+				admin_role_add('<strong>设置岗位考核项</strong>',"setPosCheck.html?menuCode=" + menuCode + "&deptId=" + deptId + "&positionId=" + positionId, iframeJson.width*0.8, iframeJson.height*0.9);
+			} else {
+				new UserCommon().check("success","请在岗位列表选择一个岗位！",null,"warning");
+			}
+	    }
+	    
+	    /*管理员-角色-添加*/
+		function admin_role_add(title,url,w,h){
+			if(typeof(h) == "undefined") {
+				new UserCommon().layer_show(title,url,w);
+			} else {
+				new UserCommon().layer_showBySize(title,url,w,h);
+			}
+		}
+		function fillAddSelect() {
+			admin_role_add('<strong>新增考核项目</strong>',"addCheck.html?menuCode=" + menuCode,'540');
+		}
+    </script>
+</head>
+<body>
+	<div class="content">
+		<div class="content-left">
+			<div class="content-left-top">
+				<span>组织架构</span>
+			</div>
+			<div id="using_json"></div>
+<!-- 			<table class="content-left-table" id="deptTable">
+				<tr>
+					<td valign="top" nowrap="nowrap">
+						<div>
+							<img alt="展开" style="cursor:hand;" onClick="display('1',1);" id="img1" src="../../images/add.png">
+							<img id="im1" src="../../images/home.png">
+							<button onclick="fillPosTable(1)" class="btn btn-link" target="clientDispAreaFrame" style="font-size:13px;padding-left:0px;padding-bottom:0px;outline:none;">
+								上上德盛集团<span id="hand1" class="glyphicon glyphicon-hand-right hand" style="display:none;padding-left:3px;"></span>
+							</button> 
+							<div style="display:none;margin-top:3px;" id="div1">
+							</div>
+						</div>
+					</td>
+				</tr>
+			</table> -->
+		</div>
+		<div class="content-left"  id="left">
+			<div class="content-left-top">
+				<span>岗位列表</span>
+				<span class="glyphicon glyphicon-backward bt-div-in-icon" id="right"></span>
+			</div>
+			<table class="content-left-table">
+				<tr>
+					<td valign="top" nowrap="nowrap">
+						<div id="mainMenu" class="hid"></div>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div class="content-right" >
+			<div class="bt-div" >
+				<div class="bt-div-in">
+					<button type="button" class="btn btn-default btn-xs bt-one" id="add-g" onclick="fillAddSelect()">
+						<span class="glyphicon glyphicon-plus color-add"></span> 添加
+					</button>
+					<button type="button" class="btn btn-default btn-xs bt-two" id="update-g" onclick="fillUpdateSelect()">
+						<span class="glyphicon glyphicon-edit color-edit"></span> 修改
+					</button>
+					<button type="button" class="btn btn-default btn-xs bt-three" id="delete-g" onclick="deleteChecks()">
+						<span class="glyphicon glyphicon glyphicon-trash color-del"></span> 删除
+					</button>
+					<button type="button" class="btn btn-default btn-xs bt-big" id="kaohe" onclick="setPosCheck()" style="width:120px;">
+						<span class="glyphicon glyphicon-pencil color-lb"></span> 设置岗位考核项
+					</button>
+				</div>
+			</div>
+			<!-- <div class="bg-container">
+				<div class="ibox">
+					<div class="jqGrid_wrapper">
+		                <table id="table_list_1"></table>
+		                <div id="pager_list_1"></div>
+		            </div>
+				</div>
+			</div> -->
+			<div class="bt-div-two-table">
+				<div class="table-responsive centerTable ">
+		            <table class="table table-data-bottom text-center tableHidden">
+			            <thead>
+							<tr class="table-first-tr" fieldType="controlCB" fieldName="id">
+								<th fieldType="checkbox" fieldName="id"><input type="checkbox" name="ifAll" class="all"></th>
+								<th fieldType="num" fieldName="">序号</th>
+								<th id="name" fieldType="text" fieldName="name">考核项目名称</th>
+								<!-- <th fieldType="text" fieldName="checkRule">考核规则</th> -->
+								<th fieldType="isExtends" fieldName="dept.deptId">是否来自继承</th>
+								<th fieldType="datetime" fieldName="createDate">创建时间</th>
+								<th fieldType="detailInfo" fieldName="id">操作</th>
+							</tr>
+						</thead>
+			            <tbody id="checkTable" class="hid">
+			            </tbody>
+		            </table> 
+		        </div>
+			</div>
+			<div class="pages">
+			        <div id="Pagination"></div>
+			        <div class="searchPage">
+			          <span class="page-sum" id="sumPage"></span>
+			          <span class="page-go">跳转<input type="text">页</span>
+			          <a href="javascript:;" class="page-btn">GO</a>
+			        </div>
+	   		</div>
+		</div>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+</body>
+</html>

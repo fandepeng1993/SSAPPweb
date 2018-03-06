@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>上上智能管理系统</title>
+    <meta name="keywords" content="不锈钢管,不锈钢无缝管,不锈钢焊管,不锈钢管件,不锈钢无缝管生产商 ">
+    <meta name="description" content="上上不锈钢拥有20年大型工程供货经验,提供不锈钢管,不锈钢无缝管,不锈钢焊管,不锈钢管件等,质量高标准,是您首选的不锈钢无缝管生产商-咨询热线:400-7676-208">
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="../css/shouye.css">
+	<link rel="stylesheet" href="../css/icon/iconfont.css">
+	<link rel="stylesheet" href="../css/plugins/iCheck/custom.css">
+	<link rel="stylesheet" type="text/css" href="../css/plugins/jqgrid/ui.jqgrid.css" >
+	<link rel="stylesheet" type="text/css" href="../css/common.css">
+	<link rel="stylesheet" type="text/css" href="../css/plugins/iCheck/custom.css">
+	<style>
+		ul.rowe li{
+		margin-bottom:20px;}
+		
+	</style>	
+	<script src="../js/jquery-1.11.1.min.js"></script>
+	<script src="../js/plugins/iCheck/icheck.min.js"></script>
+	<script src="../js/bootstrap.min.js"></script>
+	<script src="../js/UserUtil.js"></script>	
+	<script type="text/javascript" src="../js/plugins/jqgrid/i18n/grid.locale-cn.js"></script>
+    <script type="text/javascript" src="../js/plugins/jqgrid/jquery.jqGrid.min.js"></script>
+    <script type="text/javascript" src="../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../js/UserCommon.js"></script>
+    <script type="text/javascript" src="../js/checkUser.js"></script>
+    <script type="text/javascript" src="../js/underscore.js"></script>
+	<script type="text/javascript" src="../js/homePagePanel.js"></script>
+</head>
+<style>
+	ul{
+		list-style: none;
+		margin-bottom: 0px;
+	}
+	h4{
+		display: inline-block;
+		margin-bottom: 0px;
+	}
+	.searchBox input::-webkit-input-placeholder, textarea::-webkit-input-placeholder {
+		color:white;
+	}
+	.searchBox input:-moz-placeholder, textarea:-moz-placeholder {
+		color:white;
+	}
+	.searchBox input:-ms-input-placeholder, textarea:-ms-input-placeholder {
+		color:white;
+	}
+
+	@media only screen and (max-width: 477px) {
+		.searchBox{display: none; }
+
+	}
+</style>
+<script type="text/javascript">
+	var viewPri;
+	var panelElements = [];
+	$(document).ready(function (){
+		$.ajax({
+		      url: projectName + "/sessionAdmin/getUser",
+		      datatype: "json",
+		      type: "get",
+		      data: {},
+		      success: function (data, status, xhr) {
+		    	  
+		    	  if(data.status == 1) {
+		    		  var obj = eval("(" + data.msg + ")");
+		    		  currentUserId = obj.userId;
+		    		  currentUserNo = obj.userNo;
+		    		  currentUserName = obj.userName;
+		    		  currentUserPos = obj.positionId;
+		    		  currentDeptId = obj.deptId;
+		    		 
+		    	  } else {
+		    		  window.top.location.href = projectName + data.msg;
+		    	  }
+				  getViewPri();
+		      } 
+		});
+	});
+	
+	/**
+	*	获取面板html代码
+	*/
+	/* function getPanel(type, viewPanelElements) {
+		
+		$.ajax({
+		      url: "panelDiv/" + type + ".html",
+		      datatype: "text",
+		      type: "get",
+		      data: {},
+		      success: function (data) {
+		    	  $.each(viewPanelElements, function(index, item) {
+		    		  if(item.panelData.type == type) {
+		    			  $("#" + item.panelData.panelDivId).show();
+		    			  //说明对应面板使用type类型。
+		    			  initTable(item, item.panelData.gridId, item.panelData.pagerId);
+		    		  }
+		    	  });
+		      }
+		});
+	} */
+	
+	/**
+	*	根据index对面板进行排序
+	*/
+	function sortPanel() {
+		
+		var viewPanelElements = _.sortBy(panelElements, function(item) {
+			
+			return item.panelData.index;
+		});
+		
+		//getPanel("table1", result);
+		
+		$.each(viewPanelElements, function(index, item) {
+			if(item.panelData.type == "table1") {
+				$("#" + item.panelData.panelDivId).show();
+				//说明对应面板使用type类型。
+				new JqGridUtil().initTableForLazy(item, item.panelData.gridId, item.panelData.pagerId);
+			}
+		});
+	}
+	
+	function getViewPri() {
+	 	$.ajax({
+		      url: "../sessionAdmin/getViewPri",//addUserForm
+		      datatype: "TEXT",
+		      type: "GET",
+		      data: {},
+		      success: function (data) {
+		    	  viewPri = data;
+		    	  
+		    	  
+		    	  $.jgrid.defaults.styleUI = "Bootstrap";
+		    	  
+		    	  //根据权限，列出可查看面板。
+	    		  $.each(homePagePanelJson, function(panelIndex, panelItem) {
+	    			 
+	    			  var panelElement = {
+			    			  "panelData": {},
+			    			  "priData":{}
+			    	  };
+	    			  var hasPri = false;
+			    	  $.each(data, function(index, item) {
+			    		  
+		    			  if(panelItem.menuCode == item.menuCode) {
+		    				  panelElement.panelData = panelItem;
+		    				  panelElement.priData = item;
+		    				  hasPri = true;
+		    			  }
+		    		  });
+			    	  if(hasPri) panelElements.push(panelElement);
+		    	  });
+	    		 
+	    		  sortPanel();
+	    		  
+		      }
+		});
+	}
+	
+	function reportMgr(type) {
+		var href = "";
+		switch(type) {
+		case "dReport":
+			href = "../manage/dReportMgr/dReportMgr.html?menuCode=C00_01";
+			break;
+		case "wReport":
+			href = "../manage/wReportMgr/wReportMgr.html?menuCode=C00_02";
+			break;
+		case "mReport":
+			href = "../manage/mReportMgr/mReportMgr.html?menuCode=C00_03";
+			break;
+		case "dwReport":
+			href = "../manage/dwReportMgr/dwReportMgr.html?menuCode=C00_04";
+			break;
+		case "wPlan":
+			href = "../manage/wPlanMgr/wPlanMgr.html?menuCode=C00_06";
+			break;
+		}
+		
+		window.parent.clickMenuItem(href);
+	}
+	
+	function startProcess() {
+		window.parent.clickMenuItem("../manage/processMgr/processStart.html?menuCode=J00_01");
+	}
+</script>
+<body style="background: #f7f7f7;">
+<div class="panel_contain">
+	<div class="tittle_head clearfix">
+		<div class="tittle_head_left">
+		<h3>待办事项</h3>
+		<p>BACKLOG</p>	
+		</div>
+		
+		<div  class="tittle_head_right">
+			<div class="tittle_date clearfix">
+				<div class="fdp-left Fonsize" id="Tdday"></div>
+				<div class="fdp-left">
+					<span id="Tdweek">
+						周一
+					</span>
+				<br>
+					<span id="TdMonth">
+						Feb
+					</span>	
+				
+				</div>	
+			</div>
+			<div class="tittle_time Fonsize"><span id="TdHour"></span>:<span id="Tdmin"></span></div>
+		</div>
+	</div>
+
+	<div class="shoyeContent">
+		<ul class="rowe">
+			<li class="col-md-6" id="panel_list_0" style="display:none;">
+				<div class="shouye_box">
+					<div>
+						<h4>问卷调查</h4>
+							<br>
+						<span>Questionnaire Investigation</span>
+					</div>
+					<div>
+						<div class="bg-container">
+							<div class="ibox">
+								<div class="jqGrid_wrapper">
+					                  <table id="table_list_0"></table>
+					                  <div id="pager_list_0"></div>
+					            </div>
+							</div>
+						</div>
+					</div>
+					<div class="openSwitch">
+						<i class=" Sy_slideUp glyphicon glyphicon-minus"></i>
+						<i class=" Sy_closed glyphicon glyphicon-remove"></i>
+					</div>
+				</div>
+
+			</li>
+			<li class="col-md-6" id="panel_list_1" style="display:none;">
+				<div class="shouye_box">
+					<div>
+						<h4>入网证书</h4>
+						<br>
+						<span>Registration certificate</span>
+					</div>
+					<!-- <div>
+						<table  class="table enterNetBook">
+							<tr>
+								<th>日期</th>
+								<th>入网单位</th>
+	
+							</tr>
+						</table>
+					</div>	 -->
+					<div>
+						<div class="bg-container">
+							<div class="ibox">
+								<div class="jqGrid_wrapper">
+					                  <table id="table_list_1"></table>
+					                  <div id="pager_list_1"></div>
+					            </div>
+							</div>
+						</div>
+					</div>
+					<div class="openSwitch">
+						<i class=" Sy_slideUp glyphicon glyphicon-minus"></i>
+						<i class=" Sy_closed glyphicon glyphicon-remove"></i>
+					</div>
+				</div>
+
+			</li>
+			<li class="col-md-6" id="panel_list_2" style="display:none;">
+				<div class="shouye_box">
+					<div>
+						<h4>出差报告</h4>
+						<br>
+						<span>Business trip report</span>
+					</div>
+					<!-- <div>
+						<table  class="table  businessTrip">
+							<tr>
+								<th>日期</th>
+								<th>拜访单位</th>
+								<th>拜访人</th>
+							</tr>
+						</table>
+					</div> -->
+					<div>
+						<div class="bg-container">
+							<div class="ibox">
+								<div class="jqGrid_wrapper">
+					                  <table id="table_list_2"></table>
+					                  <div id="pager_list_2"></div>
+					            </div>
+							</div>
+						</div>
+					</div>
+					<div class="openSwitch">
+						<i class=" Sy_slideUp glyphicon glyphicon-minus"></i>
+						<i class=" Sy_closed glyphicon glyphicon-remove"></i>
+					</div>
+				</div>
+
+			</li>
+			<li class="col-md-6" id="panel_list_3" style="display:none;">
+				<div class="shouye_box">
+					<div>
+						<h4>周例会</h4>
+						<br>
+						<span>Weekly meeting</span>
+					</div>
+					<!-- <div>
+						<table  class="table weekMeet">
+							<tr>
+								<th>日期</th>
+								<th>主题</th>
+								<th>主持人</th>
+							</tr>
+						</table>
+					</div> -->
+					<div>
+						<div class="bg-container">
+							<div class="ibox">
+								<div class="jqGrid_wrapper">
+					                  <table id="table_list_3"></table>
+					                  <div id="pager_list_3"></div>
+					            </div>
+							</div>
+						</div>
+					</div>
+					<div class="openSwitch">
+						<i class=" Sy_slideUp glyphicon glyphicon-minus"></i>
+						<i class=" Sy_closed glyphicon glyphicon-remove"></i>
+					</div>
+				</div>
+
+			</li>
+
+			<li class="col-md-5" id="panel_list_4" style="display:none">
+				<div class="shouye_box">
+					<div>
+						<h4>扣分记录</h4>
+						<br>
+						<span>Points record</span>
+					</div>
+					<!-- <div>
+						<table class="table PointsRecord">
+							<tr>
+								<th>日期</th>
+								<th>事项</th>
+								<th>详细</th>
+							</tr>
+							<tr>
+								<td>
+									<div class="nameDepart">
+											<span>
+												8月8日
+											</span>
+										<br>
+											<span class="departMent">
+												周一
+											</span>
+									</div>
+								</td>
+								<td><a href="#">周工作计划未完成</a></td>
+								<td><span class="badge badge-danger">-5分</span></td>
+	
+							</tr>
+						</table>
+					</div> -->
+					<div>
+						<div class="bg-container">
+							<div class="ibox">
+								<div class="jqGrid_wrapper">
+					                  <table id="table_list_4"></table>
+					                  <div id="pager_list_4"></div>
+					            </div>
+							</div>
+						</div>
+					</div>
+					<div class="openSwitch">
+						<i class=" Sy_slideUp glyphicon glyphicon-minus"></i>
+						<i class=" Sy_closed glyphicon glyphicon-remove"></i>
+					</div>
+				</div>
+
+			</li>
+			<li class="col-md-7" id="panel_list_5" style="display:none">
+				<div class="shouye_box">
+					<div>
+						<h4>考勤管理</h4>
+						<br>
+						<span>Attendance management</span>
+					</div>
+					<!-- <div>
+						<table class="table Attendance">
+								<tr>
+									<th>员工</th>
+									<th>日期</th>
+									<th>签到</th>
+									<th>签退</th>
+									<th>备注</th>
+									<th>详细</th>
+								</tr>
+								<tr>
+									<td>
+										<div>
+											<img src="photo.png" alt="">
+											<div class="nameDepart">
+												<span>
+													王鹏翔
+												</span>
+												<br>
+												<span class="departMent">
+													电商部
+												</span>
+											</div>
+										</div>
+									</td>
+									<td>
+										<div class="nameDepart">
+												<span>
+													8月8日
+												</span>
+											<br>
+												<span class="departMent">
+													周一
+												</span>
+										</div>
+									</td>
+									<td>8:00</td>
+									<td>18:00</td>
+									<td class="hasNOVote">请假</td>
+									<td class="hasVote">正常</td>
+		
+								</tr>
+						</table>
+					</div> -->
+					<div>
+						<div class="bg-container">
+							<div class="ibox">
+								<div class="jqGrid_wrapper">
+					                  <table id="table_list_5"></table>
+					                  <div id="pager_list_5"></div>
+					            </div>
+							</div>
+						</div>
+					</div>
+					<div class="openSwitch">
+						<i class=" Sy_slideUp glyphicon glyphicon-minus"></i>
+						<i class=" Sy_closed glyphicon glyphicon-remove"></i>
+					</div>
+				</div>
+
+			</li>
+		</ul>
+		<ul class="row">
+			<!-- <li class="col-md-4 weekActive ">
+				<div class="shouye_box NeedPading">
+					<div class="nameDepart">
+						<span>近一周收入</span>
+						<br>
+						<span class="BigColor">222</span>
+						
+					</div>
+					<img src="../images/index/shoye_1.png" alt="">
+				</div>
+
+			</li> -->
+			<li class="col-md-4 weekActive ">
+				<div class="shouye_box NeedPading">
+					<div class="nameDepart">
+						<span class="BigFonts dailyReport">日报</span>
+						<br>
+						<a onclick="reportMgr('dReport')">点击查看详情</a>
+					</div>
+					<img src="../images/index/shoye_2.png" alt="">
+				</div>
+
+			</li>
+			<li class="col-md-4 weekActive ">
+				<div class="shouye_box NeedPading">
+					<div class="nameDepart">
+						<span class="BigFonts weekReport">周报</span>
+						<br>
+						<a onclick="reportMgr('wReport')">点击查看详情</a>
+
+					</div>
+					<img src="../images/index/shoye_3.png" alt="">
+				</div>
+
+			</li>
+			<li class="col-md-4 weekActive">
+				<div class="shouye_box NeedPading">
+					<div class="nameDepart">
+						<span class="BigFonts monthReport">月度总结</span>
+						<br>
+						<a onclick="reportMgr('mReport')">点击查看详情</a>
+
+					</div>
+					<img src="../images/index/shoye_4.png" alt="">
+				</div>
+
+			</li>
+			<li class="col-md-4 weekActive">
+				<div class="shouye_box NeedPading">
+					<div class="nameDepart">
+						<span class="BigFonts weekPlan">周工作计划</span>
+						<br>
+						<a onclick="reportMgr('wPlan')">点击查看详情</a>
+
+					</div>
+					<img src="../images/index/shoye_5.png" alt="">
+				</div>
+
+			</li>
+			<li class="col-md-4 weekActive">
+				<div class="shouye_box NeedPading">
+					<div class="nameDepart">
+						<span class="BigFonts departWeek">部门周报</span>
+						<br>
+						<a onclick="reportMgr('dwReport')">点击查看详情</a>
+
+					</div>
+					<img src="../images/index/shoye_6.png" alt="">
+				</div>
+
+			</li>
+
+		</ul>
+		<ul>
+			<li id="panel_list_6" style="display:none;">
+			<div class="row shopUrgency_head">
+				<div class="shopUrgency col-md-12 clearfix ">
+					<div class="shopUrgency_left clearfix">
+						<span class="BigFonts18">
+							紧急求购
+						</span>
+						<br>
+						<span class="departMent">
+							Urgently buy
+						</span>
+					</div>
+					<div class="searchBox clearfix">
+						<input type="text" placeholder="搜索">
+						<i class="search_Icon iconfont icon-sousuo-sousuo"></i>
+	
+					</div>
+					<div class="openSwitch" >
+							<i class=" Sy_slideUP glyphicon glyphicon-minus"></i>
+							<i class=" Sy_closED glyphicon glyphicon-remove"></i>
+					</div>
+				</div>
+	
+			</div>
+			<div class="emergencyPurchase">
+			<!-- <div class="row" style="text-align: center; margin: 10px 0px 10px 0px;border-left:1px solid #f1f1f2;border-right:1px solid #f1f1f2; ">
+				<div class="col-md-2">
+	
+					<label class="btn btn-default allchecked">
+						<input type="checkbox" />
+						<span id="Accive">全选</span>
+					</label>
+	
+				</div>
+				<div class="col-md-2">
+	
+					<label class="btn btn-default satrtB">
+					星标
+					</label>
+				</div>
+				<div class="col-md-2 moreOperate col-md-offset-4">
+					<label class="btn btn-default satrtB  dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						更多 <i class="iconfont icon-xiangxiajiantou" style="  display: inline-block; height: 20px; "></i>
+						
+					</label>
+					<ul class="dropdown-menu">
+						<li><a href="#">Action</a></li>
+						<li><a href="#">Another action</a></li>
+						<li><a href="#">Something else here</a></li>
+						<li role="separator" class="divider"></li>
+						<li><a href="#">Separated link</a></li>
+					</ul>
+	
+				</div>
+			</div> -->
+				<div class="shouye_box" style="margin-bottom: 20px;">
+					<!-- <table class="table table-hover">
+						<tr>
+							<th>采购单位</th>
+							<th>品名</th>
+							<th>规格</th>
+							<th>数量</th>
+							<th>日期</th>
+						</tr>
+						<tr>
+							<td>
+								<input type="checkbox">
+								<i class="iconfont icon-satrhover redColor "></i>
+								<span>上海上上不锈钢管有限公司</span>
+							</td>
+							<td>焊管</td>
+							<td>3mm*100mm</td>
+							<td>100T</td>
+							<td>2017/10/10</td>
+						</tr>
+					</table> -->
+					<div style="padding-left: 0px;">
+						<div class="bg-container">
+							<div class="ibox">
+								<div class="jqGrid_wrapper">
+					                  <table id="table_list_6"></table>
+					                  <div id="pager_list_6"></div>
+					            </div>
+							</div>
+						</div>
+					</div>
+				</div>
+			
+			</div>		
+			</li>
+		</ul>
+		<ul class=" row" style="margin-top:20px;">
+			<li class="col-md-8">
+				<div class="shouye_box" id="panel_list_7" style="display:none;">
+					<div>
+						<h4>客户管理</h4>
+						<br>
+						<span>Client management</span>
+					</div>
+					<!-- <div>
+						<table class="table clientManagement">
+							<tr>
+								<th>客户姓名</th>
+								<th>客户来源</th>
+								<th>客户类型</th>
+								<th>业务员</th>
+								<th>日期</th>
+							</tr>
+							<tr>
+								<td><a href="#">上海上上不锈钢管有限公司</a></td>
+								<td>电联</td>
+								<td>顾问类型/新客户</td>
+								<td>王鹏翔</td>
+								<td>2017/10/10</td>
+	
+							</tr>
+						</table>
+					</div> -->
+					<div>
+						<div class="bg-container">
+							<div class="ibox">
+								<div class="jqGrid_wrapper">
+					                  <table id="table_list_7"></table>
+					                  <div id="pager_list_7"></div>
+					            </div>
+							</div>
+						</div>
+					</div>
+					<div class="openSwitch">
+						<i class=" Sy_slideUp glyphicon glyphicon-minus"></i>
+						<i class=" Sy_closed glyphicon glyphicon-remove"></i>
+					</div>
+				</div>
+				<div class="shouye_box FormMarign" id="panel_list_8" style="display:none;">
+					<div>
+						<h4>项目管理</h4>
+						<br>
+						<span>Project management</span>
+					</div>
+					<!-- <div>
+						<table class="table ProjectManagement">
+							<tr>
+								<th>项目名称</th>
+								<th>项目区域</th>
+								<th>项目领域</th>
+								<th>业务员</th>
+								<th>日期</th>
+							</tr>
+							<tr>
+								<td><a href="#">上海上上不锈钢管有限公司</a></td>
+								<td>华北地区</td>
+								<td>石油/石化</td>
+								<td>王鹏翔</td>
+								<td>2017/10/10</td>
+	
+							</tr>
+						</table>
+					</div>	 -->
+					<div>
+						<div class="bg-container">
+							<div class="ibox">
+								<div class="jqGrid_wrapper">
+					                  <table id="table_list_8"></table>
+					                  <div id="pager_list_8"></div>
+					            </div>
+							</div>
+						</div>
+					</div>
+					<div class="openSwitch">
+						<i class=" Sy_slideUp glyphicon glyphicon-minus"></i>
+						<i class=" Sy_closed glyphicon glyphicon-remove"></i>
+					</div>
+				</div>
+			</li>
+			<li class="col-md-4">
+				<div class="shouye_box">
+					<div style="border-bottom:1px solid #ddd ;">
+						<h4>工作流</h4>
+						<br>
+						<span>Workflow</span>
+					</div>
+					<ul>
+						<li>
+							<div class="Workflow_item" onclick="startProcess()">
+								<div style="position: relative;display: inline-block;">
+									<i class="iconfont icon-caiwu Color_org"></i>
+									<!-- <span class="badge badge-danger i_Badge">42</span> -->
+								</div>
+								<div class="workflow_Info">
+									<span>财务管理</span>
+									<br>
+									<span class="departMent">Financial management</span>
+								</div>
+							</div>
+						</li>
+						<li>
+							<div class="Workflow_item" onclick="startProcess()">
+								<div style="position: relative;display: inline-block;">
+									<i class="iconfont icon-kaoqin Color_skyBlue"></i>
+								<!--	<span class="badge badge-danger i_Badge">42</span>-->
+								</div>
+								<div class="workflow_Info">
+									<span>考勤管理</span>
+									<br>
+									<span class="departMent">Attendance management</span>
+								</div>
+							</div>
+						</li>
+						<li>
+							<div class="Workflow_item" onclick="startProcess()">
+								<div style="position: relative;display: inline-block;">
+									<i class="iconfont icon-icon-users-bold Color_green"></i>
+
+								</div>
+								<div class="workflow_Info">
+									<span>人事管理</span>
+									<br>
+									<span class="departMent">Personnel management</span>
+								</div>
+							</div>
+						</li>
+						<li>
+							<div class="Workflow_item" onclick="startProcess()">
+								<div style="position: relative;display: inline-block;">
+									<i class="iconfont icon-shengchan1 Color_seaBlue"></i>
+
+								</div>
+								<div class="workflow_Info">
+									<span>生产管理</span>
+									<br>
+									<span class="departMent">Production management</span>
+								</div>
+							</div>
+						</li>
+						<li>
+							<div class="Workflow_item" onclick="startProcess()">
+								<div style="position: relative;display: inline-block;">
+									<i class="iconfont icon-hangzheng Color_purple"></i>
+								</div>
+								<div class="workflow_Info">
+									<span>行政管理</span>
+									<br>
+									<span class="departMent">Administrative management</span>
+								</div>
+							</div>
+						</li>
+						<li>
+							<div class="Workflow_item" onclick="startProcess()">
+								<div style="position: relative;display: inline-block;">
+									<i class="iconfont icon-xiaoshou Color_pink"></i>
+								</div>
+								<div class="workflow_Info">
+									<span>销售管理</span>
+									<br>
+									<span class="departMent">Sales management</span>
+								</div>
+							</div>
+						</li>
+					</ul>
+					<div class="openSwitch">
+						<i class=" Sy_slideUp   glyphicon glyphicon-minus"></i>
+						<i class=" Sy_closed glyphicon glyphicon-remove"></i>
+					</div>
+
+				</div>
+			</li>
+		</ul>
+
+
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+
+</div>	
+	
+	
+	
+	
+	
+	
+</body>
+<script>
+
+	function Formate(Mon,week){
+		var mons=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+		var weeks=['周日','周一','周二','周三','周四','周五','周六'];
+		date_Mons=mons[Mon];
+		date_weeks=weeks[week];
+	}
+	function clock(){
+		var Ddate=new Date();
+		var date_week=Ddate.getDay();
+		var date_day=Ddate.getDate();
+		var date_Mon=Ddate.getMonth();
+		var date_Hour=Ddate.getHours();
+		var date_Min=Ddate.getMinutes();
+		if(date_Min<10){
+			date_Min='0'+date_Min;
+		}
+		Formate(date_Mon,date_week);
+		$('#Tdweek').text(date_weeks);
+		$('#TdMonth').text(date_Mons);
+		$('#Tdday').text(date_day);
+		$('#TdHour').text(date_Hour);
+		$('#Tdmin').text(date_Min);
+	}
+	clock();
+	(function ($){
+		$(window).load(function(){
+			setInterval("clock()", 1000);
+			new UserCommon().checkboxListener();
+			$('.Sy_slideUp').click(function(){
+				$(this).stop().toggleClass('glyphicon-plus glyphicon-minus').parent().prev().stop().slideToggle();
+			});
+			$('.Sy_slideUP').click(function(){
+				$(this).stop().toggleClass('glyphicon-plus glyphicon-minus').parents(".shopUrgency_head").next().stop().slideToggle();
+			});
+			$('.Sy_closed').click(function(){
+				$(this).parent().parent().parent().fadeOut().remove();
+			});
+			$('.Sy_closED').click(function(){
+				$(this).parent().parent().parent().fadeOut().remove();
+				$('.emergencyPurchase').fadeOut().remove();
+			})
+			
+			
+/* 			$('label.allchecked,label.allchecked .iCheck-helper').click(function(){
+				var checked=$('label.allchecked .icheckbox_square-green').hasClass('checked');
+				if(checked){
+					$('.shouye_box .table-hover tr td .icheckbox_square-green').each(function(i){
+						if(!$(this).hasClass('checked')){
+							$(this).addClass('checked');
+						}else{
+							return
+						}
+					})
+					$('#Accive').text('取消')
+				}else{
+					$('.shouye_box .table-hover tr td .icheckbox_square-green').each(function(i){
+						if($(this).hasClass('checked')){
+							$(this).removeClass('checked');
+						}else{
+							return
+						}
+					})
+					$('#Accive').text('全选')
+				};
+			});
+			$('.icon-satrhover').click(function(){
+				$(this).toggleClass('redColor');
+			}) */
+			
+		});
+
+	})(jQuery)
+</script>
+</html>
+
+
+
+
+
+
+
+
+

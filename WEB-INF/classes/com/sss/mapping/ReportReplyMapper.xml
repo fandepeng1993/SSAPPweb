@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IReportReplyDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.ReportReply" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="reportId" property="reportId" jdbcType="INTEGER" />
+    <result column="category" property="category" jdbcType="INTEGER" />
+    <result column="content" property="content" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    
+    <association property="user" javaType="com.sss.pojo.User">
+		<id column="ru_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="ru_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="ru_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="ru_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="ru_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="ru_user_status" property="status" jdbcType="VARCHAR" />
+	    <result column="ru_user_email" property="email" jdbcType="VARCHAR" />
+	    <result column="ru_user_birthDate" property="birthdate" jdbcType="VARCHAR" />
+	    <result column="ru_user_entryDate" property="entrydate" jdbcType="VARCHAR" />
+	    <result column="ru_user_lastlogindate" property="lastlogindate" jdbcType="VARCHAR" />
+	    <result column="ru_user_telephone" property="telephone" jdbcType="VARCHAR" />
+	    <result column="ru_user_address" property="address" jdbcType="VARCHAR" />
+	    <result column="ru_user_eduBackground" property="edubackground" jdbcType="VARCHAR" />
+	    <result column="ru_user_major" property="major" jdbcType="VARCHAR" />
+	    <result column="ru_user_school" property="school" jdbcType="VARCHAR" />
+	    <result column="ru_user_photoUrl" property="photoUrl" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		r.*,
+  		u.user_id as ru_user_id,
+  		u.user_name as ru_user_name,
+  		u.user_no as ru_user_no,
+  		u.position_id as ru_position_id,
+  		u.sex as ru_user_sex,
+  		u.status as ru_user_status,
+  		u.email as ru_user_email,
+  		u.birthdate as ru_user_birthDate,
+  		u.entrydate as ru_user_entryDate,
+  		u.lastlogindate as ru_user_lastlogindate,
+  		u.telephone as ru_user_telephone,
+  		u.address as ru_user_address,
+  		u.edubackground as ru_user_eduBackground,
+  		u.major as ru_user_major,
+  		u.school as ru_user_school,
+  		u.photoUrl as ru_user_photoUrl
+    from 
+    	ss_reportreply r
+   	left join
+   		ss_user u
+   	on
+   		r.userId = u.user_id
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where r.id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectByReportIdAndCate" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where r.reportId = #{reportId,jdbcType=INTEGER} and r.category = #{category,jdbcType=INTEGER} 
+    order by r.createdate desc
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_reportreply
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.ReportReply" >
+    insert into ss_reportreply (id, reportId, userId, 
+      category, createdate, content
+      )
+    values (#{id,jdbcType=INTEGER}, #{reportId,jdbcType=INTEGER}, #{user.userId,jdbcType=INTEGER}, 
+      #{category,jdbcType=INTEGER}, #{createdate,jdbcType=VARCHAR}, #{content,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.ReportReply" >
+  	<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+    </selectKey>
+    insert into ss_reportreply
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="reportId != null" >
+        reportId,
+      </if>
+      <if test="user.userId != null" >
+        userId,
+      </if>
+      <if test="category != null" >
+        category,
+      </if>
+      <if test="content != null" >
+        content,
+      </if>
+      	createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="reportId != null" >
+        #{reportId,jdbcType=INTEGER},
+      </if>
+      <if test="user.userId != null" >
+        #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="category != null" >
+        #{category,jdbcType=INTEGER},
+      </if>
+      <if test="content != null" >
+        #{content,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.ReportReply" >
+    update ss_reportreply
+    <set >
+      <if test="reportId != null" >
+        reportId = #{reportId,jdbcType=INTEGER},
+      </if>
+      <if test="user.userId != null" >
+        userId = #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="category != null" >
+        category = #{category,jdbcType=INTEGER},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null" >
+        content = #{content,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.ReportReply" >
+    update ss_reportreply
+    set reportId = #{reportId,jdbcType=INTEGER},
+      userId = #{user.userId,jdbcType=INTEGER},
+      category = #{category,jdbcType=INTEGER},
+      createdate = #{createdate,jdbcType=VARCHAR},
+      content = #{content,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+  </select>
+</mapper>

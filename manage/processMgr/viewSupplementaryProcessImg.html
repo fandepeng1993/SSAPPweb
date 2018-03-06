@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>流程追踪</title>
+<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+<script src="../../js/json/LAreaData2.js" type="text/javascript"></script>
+<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+<script type="text/javascript" src="../../js/bootstrap.autocomplete.js"></script>
+<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+<script type="text/javascript" src="../../js/checkUser.js"></script>
+<script type="text/javascript" src="../../js/UserUtil.js"></script>
+<script type="text/javascript" src="../../js/UserCommon.js"></script>
+<script type="text/javascript" src="../../js/oaProcessJson.js"></script>
+<script type="text/javascript">
+
+	var menuCode;
+	var taskVariables;
+	var taskComments;
+	var taskId;
+	var processDefinitionKey;
+	//初始化页面
+	$(document).ready(function() {
+		initTab();
+		taskId = Request["taskId"];
+		processDefinitionKey = Request["processDefinitionKey"];
+		getProcessJson(function() {
+			menuCode = eval("processJson." + processDefinitionKey + ".menuCode");
+			getTaskVariables(taskId);
+			getComments(taskId);
+			src = Request["src"];
+		 	$("#imgObj").attr("src", src);
+			initLayerSize(true);
+		});
+		
+	});
+	
+	var aH3;
+	var aDiv;
+	function initTab() {
+		aH3=$("#cen_right_top").children("h3");
+		aDiv=$("#cen_right_top").children("div");
+		for(var i=0;i<aH3.length;i++)
+		{
+			aH3[i].index=i;
+			aH3[i].onclick=function() {
+				for(var i=0;i<aH3.length;i++) {
+					aH3[i].className="";
+					aDiv[i].style.display="none";
+				}
+				this.className="white";
+				aDiv[this.index].style.display="block";
+			}
+		}
+	}
+
+	//构建form表单
+	function initForm() {
+		$.ajax({
+			url : "../../formAdmin/formsByMenuCode/" + menuCode,
+			datatype : "json",
+			type : "get",
+			data : {},
+			success : function(data, status, xhr) {
+				element = eval("(" + data + ")");
+				new UserCommon().createForm("addProForm", element, 4);
+				new UserCommon().fillForm("addProForm", taskVariables);
+				//初始化层的大小
+				initLayerSize();
+				//为checkbox添加监听事件
+				new UserCommon().checkboxListener();
+				new UserCommon().radioListener();
+			}
+		});
+	}
+	
+	//根据id填充表单
+	function getTaskVariables(taskId) {
+		$.ajax({
+			url : "../../OAProcessMgrAdmin/getTaskVariables/" + taskId,
+			datatype : "json",
+			type : "get",
+			data : {},
+			success : function(data, status, xhr) {
+				taskVariables = data.formObjJson;
+				var tableObjJson = data.tableObjJson;
+				$.each(tableObjJson, function(index, item) {
+					new UserCommon().fillTable("processTable", item, index);
+				});
+				initForm();
+			}
+		});
+	}
+	
+	//根据taskId取得各级审批批注
+	function getComments(taskId){
+		$.ajax({
+			url : "../../OAProcessMgrAdmin/getProcessComments/" + taskId,
+			datatype : "json",
+			type : "get",
+			data : {},
+			success : function(data, status, xhr) {
+				taskComments = data;
+				console.log(taskComments);
+				$("#processTable1").empty();
+				$.each(taskComments, function(index, item) {
+					new UserCommon().fillTable("processTable1", item, index);
+					new UserCommon().checkboxListener();
+				});
+			}
+		});
+	}
+
+	function admin_role_add(title, url, w) {
+		new UserCommon().layer_show(title, url, w);
+	}
+
+</script>
+</head>
+<body>
+	<div id="cen_right_top"  style="height:500px">
+		<h3 class="white">基本信息</h3>
+		<h3>流程追踪</h3>
+		<div class="div" style="display: block">
+			<div class="bt-div-two-table" id="pro1">
+				<div class="edit-in">
+					<form id="addProForm"></form>
+				</div>
+				<div>
+					<p style="background-color: gray">明细资料</p>
+				</div>
+				
+				<div class="table-responsive" style="height: 300px">
+					<table class="table table-data-bottom" id=tableTd border="1px">
+						<thead>
+							<tr class="table-first-tr"  >
+								<td colspan="5" ><h4>成品订单情况</h4></td>
+								<td colspan="3" ><h4>已投料情况</h4></td>
+								<td colspan="3" ><h4>申请补料情况</h4></td>
+							</tr>
+							<tr fieldType="controlCB" fieldName="id">
+								<th fieldType="text" fieldName="contractNo">合同号</th>
+								<th fieldType="text" fieldName="texture">材质</th>
+								<th fieldType="text" fieldName="trimmedSize">成品规格</th>
+								<th fieldType="text" fieldName="indent">订单量</th>
+								<th fieldType="text" fieldName="actualWeight">理论重量</th>
+								<th fieldType="text" fieldName="specification1">规格</th>
+								<th fieldType="text" fieldName="number1">支数</th>
+								<th fieldType="text" fieldName="weight1">重量</th>
+								<th fieldType="text" fieldName="specification2">规格</th>
+								<th fieldType="text" fieldName="number2">支数</th>
+								<th fieldType="text" fieldName="weight2">重量</th>
+							</tr>
+						</thead>
+						<tbody id="processTable"></tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+		<div class="div" style="height:500px">
+			<!--已完成表单 -->
+			<div class="bt-div-two-table" id="pro2" >
+				<div class="bt-div-two-table" id="pro1" style="background:#F2F1D7; ">
+					<img  id="imgObj" src=""/> 
+				</div>
+				<div class="bt-div-two-table" id="desc" style="background:#F2F1D7;height:50px">
+					<span>活动状态：</span>	
+					<img src="../../images/processPhotos/green.png" style="height: 39px;width: 63px;" /> <span>已完成</span>&nbsp;&nbsp;
+					<img src="../../images/processPhotos/red.png" style="height: 39px;width: 63px;"/> <span>处理中</span>
+				</div>
+				<div class="table-responsive" style= "display: block;float: left;width: 100%;">
+					<table class="table table-data-bottom">
+						<thead>
+							<tr class="table-first-tr" fieldType="controlCB" fieldName="id">
+								<th fieldType="num" fieldName="">序号</th>
+								<th fieldType="text" fieldName="proId">流程实例Id</th>
+								<th fieldType="text" fieldName="taskId">任务Id</th>
+								<th fieldType="text" fieldName="userName">处理人</th>
+								<th fieldType="text" fieldName="taskName">任务节点</th>
+								<th fieldType="text" fieldName="message">审批意见</th>
+								<th fieldType="datetimeForMillis" fieldName="time">处理时间</th>
+							</tr>
+						</thead>
+						<tbody id="processTable1">
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+
+</body>
+</html>

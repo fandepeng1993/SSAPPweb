@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IVoteDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.Vote">
+	<id column="id" property="id" jdbcType="INTEGER" />
+	<result column="title" property="title" jdbcType="VARCHAR" />
+	<result column="enddate" property="enddate" jdbcType="VARCHAR" />
+	<result column="votePri" property="votePri" jdbcType="VARCHAR" />
+	<result column="createdate" property="createdate" jdbcType="VARCHAR" />		
+  </resultMap>
+  <sql id="associateQuery">
+	select 
+		v.*,
+		q.questionName AS q_questionName,
+		q.isMultiselect AS q_isMultiselect,
+		i.optionName AS i_optionName,
+		i.questionId AS i_quId,
+		i.id AS i_itemId,
+		r.itemId AS r_itemId,
+		r.userId AS r_userId
+	FROM
+		ss_vote v 
+	LEFT JOIN
+		ss_votequestion q
+	ON
+		v.id = q.voteId
+	LEFT JOIN
+		ss_votequesitem i
+	ON
+		q.id = i.questionId
+	INNER JOIN
+		ss_voterecord r
+	ON
+		i.id = r.itemId
+  </sql>
+  <sql id="associateQuery1">
+	select
+		distinct 
+		v.id as voteId,
+		v.title as title,
+		DATE_FORMAT(v.enddate,'%Y-%m-%d %H:%i:%s') as enddate,
+		DATE_FORMAT(v.createdate,'%Y-%m-%d %H:%i:%s') as voteCreatedate,
+		q.id as questionId,
+		q.questionName as questionName,
+		q.isMultiselect as isMultiselect,
+		i.id as itemId,
+		i.optionName as optionName
+	FROM
+		ss_vote v 
+	LEFT JOIN
+		ss_votequestion q
+	ON
+		v.id = q.voteId
+	LEFT JOIN
+		ss_votequesitem i
+	ON
+		q.id = i.questionId
+  </sql>
+  <select id="selectList" resultMap="BaseResultMap" >
+		select * from ss_vote order by createdate desc
+  </select>
+  <select id="selectListCount" resultType="java.lang.Integer" >
+		select count(*) from ss_vote
+  </select>
+  <select id="selectListLazy" resultMap="BaseResultMap" >
+		select * from ss_vote order by createdate desc
+		limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="selRecordById" resultMap="BaseResultMap" >
+	<include refid="associateQuery" />
+		where r.userId = #{userId,jdbcType=INTEGER} and v.id = #{voteId,jdbcType=INTEGER}
+  </select>
+  <select id="selUserVoteRecord" resultType="java.lang.Integer" >
+  	select 
+		v.id
+	FROM
+		ss_vote v 
+	LEFT JOIN
+		ss_votequestion q
+	ON
+		v.id = q.voteId
+	LEFT JOIN
+		ss_votequesitem i
+	ON
+		q.id = i.questionId
+	LEFT JOIN
+		ss_voterecord r
+	ON
+		i.id = r.itemId
+	where r.userId = #{userId,jdbcType=INTEGER}
+	group by v.id
+  </select>
+  <!-- 通过ID查询整个问卷详情 -->
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+   		select * from ss_vote where id = #{id,jdbcType=INTEGER}
+  </select>
+  	<!-- APP通过ID查询整个问卷详情 -->
+  <select id="selectByVoteId" resultType="java.util.Map" parameterType="java.lang.Integer" >
+   		<include refid="associateQuery1" />
+   		where v.id = #{voteId,jdbcType=INTEGER} order by v.createdate desc
+  </select>
+	<select id="selectByTitle"  resultType="com.sss.pojo.Vote" parameterType="java.lang.String" >
+		select * from ss_vote where title like "%"#{title,jdbcType=VARCHAR}"%"
+	</select>
+	<select id="selectByVotePri" resultMap="BaseResultMap">
+		select * from ss_vote where votePri in
+		<foreach item="item" index="index" collection="votePris" open="(" separator="," close=")">  
+		  #{item}  
+		</foreach> 
+	</select>
+	<select id="selectCountByVotePri" resultType="java.lang.Integer">
+		select count(*) from ss_vote where votePri in
+		<foreach item="item" index="index" collection="votePris" open="(" separator="," close=")">  
+		  #{item}  
+		</foreach> 
+	</select>
+	<select id="selectByVotePriLazy" resultMap="BaseResultMap">
+		select * from ss_vote where votePri in
+		<foreach item="item" index="index" collection="votePris" open="(" separator="," close=")">  
+		  #{item}  
+		</foreach> 
+		limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+	</select>
+	<select id="selUserCountByVoteId" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+		select COUNT(*) from (
+	<include refid="associateQuery" />
+		where v.id = #{voteId,jdbcType=INTEGER} group by r.userId) temp
+	</select>
+	<select id="getAllCountByVoteId" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+		select COUNT(*) from (
+	<include refid="associateQuery" />
+		where v.id = #{voteId,jdbcType=INTEGER}) temp
+	</select>
+  <select id="selItemRecordsById" parameterType="java.lang.Integer"  resultType="java.util.Map">
+	SELECT
+		q.id AS questionId,
+		q.questionName AS qname,
+		i.id AS itemId,
+		i.optionName AS oname,
+		sum(IF(vr.id, 1, 0)) AS count
+	FROM
+		ss_vote v
+	LEFT JOIN
+		ss_votequestion q
+	ON
+		v.id = q.voteId
+	LEFT JOIN
+		ss_votequesitem i
+	ON
+		q.id = i.questionId
+	LEFT JOIN
+		ss_voterecord vr
+	ON
+		i.id = vr.itemId
+	where v.id =  #{voteId,jdbcType=INTEGER}
+
+	group by i.id order by v.createdate desc
+
+
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_vote
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.Vote" >
+    insert into ss_vote (id, title, enddate, 
+      votePri,createdate)
+    values (#{id,jdbcType=INTEGER}, #{title,jdbcType=VARCHAR}, #{enddate,jdbcType=VARCHAR}, 
+      #{votePri,jdbcType=VARCHAR}, now())
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.Vote" >
+    <selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+    </selectKey>
+    insert into ss_vote
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="title != null" >
+        title,
+      </if>
+      <if test="enddate != null" >
+        enddate,
+      </if>
+      <if test="votePri != null" >
+        votePri,
+      </if>   
+      	createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="title != null" >
+        #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="enddate != null" >
+        #{enddate,jdbcType=VARCHAR},
+      </if>
+      <if test="votePri != null" >
+        #{votePri,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.Vote" >
+    update ss_vote
+    <set >
+      <if test="title != null" >
+        title = #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="enddate != null and enddate != ''" >
+        enddate = #{enddate,jdbcType=VARCHAR},
+      </if>
+	  <if test="votePri != null" >
+        votePri= #{votePri,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate= #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.Vote" >
+    update ss_vote
+    set title = #{title,jdbcType=VARCHAR},
+      enddate = #{enddate,jdbcType=VARCHAR},
+      votePri = #{votePri,jdbcType=VARCHAR},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+  	select * from ss_vote
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    select * from ss_vote
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by createdate desc
+  </select>
+</mapper>

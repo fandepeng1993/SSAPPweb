@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IRoleUserDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.RoleUser" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    
+    <association property="user" javaType="com.sss.pojo.User">
+		<id column="ru_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="ru_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="ru_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="ru_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="ru_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="ru_user_status" property="status" jdbcType="VARCHAR" />
+	    <result column="ru_user_email" property="email" jdbcType="VARCHAR" />
+	    <result column="ru_user_birthDate" property="birthdate" jdbcType="VARCHAR" />
+	    <result column="ru_user_entryDate" property="entrydate" jdbcType="VARCHAR" />
+	    <result column="ru_user_lastlogindate" property="lastlogindate" jdbcType="VARCHAR" />
+	    <result column="ru_user_telephone" property="telephone" jdbcType="VARCHAR" />
+	    <result column="ru_user_address" property="address" jdbcType="VARCHAR" />
+	    <result column="ru_user_eduBackground" property="edubackground" jdbcType="VARCHAR" />
+	    <result column="ru_user_major" property="major" jdbcType="VARCHAR" />
+	    <result column="ru_user_school" property="school" jdbcType="VARCHAR" />
+	</association>
+	<association property="role" javaType="com.sss.pojo.Role">
+		<id column="ru_role_id" property="roleId" jdbcType="INTEGER" />
+	    <result column="ru_role_name" property="roleName" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		ru.id,
+  		u.user_id as ru_user_id,
+  		u.user_name as ru_user_name,
+  		u.user_no as ru_user_no,
+  		u.position_id as ru_position_id,
+  		u.sex as ru_user_sex,
+  		u.status as ru_user_status,
+  		u.email as ru_user_email,
+  		u.birthdate as ru_user_birthDate,
+  		u.entrydate as ru_user_entryDate,
+  		u.lastlogindate as ru_user_lastlogindate,
+  		u.telephone as ru_user_telephone,
+  		u.address as ru_user_address,
+  		u.edubackground as ru_user_eduBackground,
+  		u.major as ru_user_major,
+  		u.school as ru_user_school,
+  		r.role_id as ru_role_id,
+  		r.role_name as ru_role_name
+    from 
+    	ss_role_user ru
+   	left join
+   		ss_user u
+   	on
+   		ru.user_id = u.user_id
+   	left join 
+   		ss_role r
+   	on 
+   		ru.role_id = r.role_id
+  </sql>
+  <!-- 返回一个list的写法 -->
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" />
+  </select>
+  <select id="selectListByRoleId"  resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where ru.role_id = #{roleId,jdbcType=INTEGER}
+  </select>
+  <select id="selectListByUserId"  resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where ru.user_id = #{userId,jdbcType=INTEGER}
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where ru.id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_role_user
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteRU" parameterType="com.sss.pojo.RoleUser" >
+    delete from ss_role_user
+    where user_id = #{user.userId,jdbcType=INTEGER} and role_id = #{role.roleId,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByRoleId" parameterType="java.lang.Integer" >
+    delete from ss_role_user
+    where role_id = #{roleId,jdbcType=INTEGER} and role_id != 1
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.RoleUser" >
+    insert into ss_role_user (id, user_id, role_id
+      )
+    values (#{id,jdbcType=INTEGER}, #{user.userId,jdbcType=INTEGER}, #{role.roleId,jdbcType=INTEGER}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.RoleUser" >
+    insert into ss_role_user
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="user.userId != null" >
+        user_id,
+      </if>
+      <if test="role.roleId != null" >
+        role_id,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="user.userId != null" >
+        #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="role.roleId != null" >
+        #{role.roleId,jdbcType=INTEGER},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.RoleUser" >
+    update ss_role_user
+    <set >
+      <if test="user.userId != null" >
+        user_id = #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="role.roleId != null" >
+        role_id = #{role.roleId,jdbcType=INTEGER},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.RoleUser" >
+    update ss_role_user
+    set user_id = #{user.userId,jdbcType=INTEGER},
+      role_id = #{role.roleId,jdbcType=INTEGER}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+  </select>
+</mapper>

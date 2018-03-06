@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IContactDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.Contact" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="sex" property="sex" jdbcType="VARCHAR" />
+    <result column="deptName" property="deptName" jdbcType="VARCHAR" />
+    <result column="position" property="position" jdbcType="VARCHAR" />
+    <result column="officeTel" property="officeTel" jdbcType="VARCHAR" />
+    <result column="telephone" property="telephone" jdbcType="VARCHAR" />
+    <result column="fax" property="fax" jdbcType="VARCHAR" />
+    <result column="qq" property="qq" jdbcType="VARCHAR" />
+    <result column="msn" property="msn" jdbcType="VARCHAR" />
+    <result column="tradePass" property="tradePass" jdbcType="VARCHAR" />
+    <result column="wangwang" property="wangwang" jdbcType="VARCHAR" />
+    <result column="email" property="email" jdbcType="VARCHAR" />
+    <result column="birthday" property="birthday" jdbcType="VARCHAR" />
+    <result column="postcode" property="postcode" jdbcType="VARCHAR" />
+    <result column="address" property="address" jdbcType="VARCHAR" />
+    <result column="note" property="note" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    
+    <association property="customer" javaType="com.sss.pojo.Customer">
+		<id column="cc_customer_id" property="id" jdbcType="INTEGER" />
+		<result column="cc_salesman_userId" property="salesman.userId" jdbcType="INTEGER" />
+	    <result column="cc_customer_name" property="customerName" jdbcType="VARCHAR" />
+	    <result column="cc_customer_area" property="area" jdbcType="VARCHAR" />
+	    <result column="cc_customer_industry" property="industry" jdbcType="VARCHAR" />
+	    <result column="cc_customer_website" property="website" jdbcType="VARCHAR" />
+	    <result column="cc_customer_source" property="source" jdbcType="VARCHAR" />
+	    <result column="cc_customer_type" property="type" jdbcType="VARCHAR" />
+	    <result column="cc_customer_note" property="note" jdbcType="VARCHAR" />
+	    <result column="cc_customer_createdate" property="createdate" jdbcType="VARCHAR" />
+	</association>
+	<association property="creator" javaType="com.sss.pojo.User">
+		<id column="cu_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="cu_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="cu_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="cu_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="cu_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="cu_user_status" property="status" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		con.*,
+  		cus.id as cc_customer_id,
+  		cus.customer_name as cc_customer_name,
+  		cus.area as cc_customer_area,
+  		cus.industry as cc_customer_industry,
+  		cus.website as cc_customer_website,
+  		cus.source as cc_customer_source,
+  		cus.type as cc_customer_type,
+  		cus.note as cc_customer_note,
+  		cus.createdate as cc_customer_createdate,
+  		cus.salesman as cc_salesman_userId,
+  		u.user_id as cu_user_id,
+  		u.user_name as cu_user_name,
+  		u.user_no as cu_user_no,
+  		u.position_id as cu_position_id,
+  		u.sex as cu_user_sex,
+  		u.status as cu_user_status
+    from 
+    	ss_contact con
+   	left join
+   		ss_customer cus
+   	on
+   		con.customer_id = cus.id
+   	left join 
+   		ss_user u
+   	on 
+   		con.creator = u.user_id
+  </sql>
+  <!-- 返回一个list的写法 -->
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by con.createdate desc
+  </select>
+  <select id="selectByCusId"  resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" /> 
+    where con.customer_id = #{cusId,jdbcType=INTEGER}
+    order by con.createdate desc
+  </select>
+  <select id="getConsByUIds" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where con.creator in 
+    <foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>  
+    order by con.createdate desc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where con.id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="getCountByUIdAndDate" resultType="java.lang.Integer">
+    select count(*) from ss_contact
+    where createdate &gt;= #{fromdate,jdbcType=VARCHAR} and 
+    		creator = #{userId,jdbcType=INTEGER}
+  </select>
+  <select id="getCountByUIdsAndDate" resultType="java.lang.Integer">
+    select count(*) from ss_contact
+    where creator in 
+	    <foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+		  #{item}  
+		</foreach>  
+    	and createdate &gt;= #{fromdate,jdbcType=VARCHAR} 
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_contact
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.Contact" >
+    insert into ss_contact (id, customer_id, creator, name, 
+      sex, deptName, position, 
+      officeTel, telephone, fax, 
+      qq, msn, tradePass, 
+      wangwang, email, birthday, 
+      postcode, address, note, 
+      createdate)
+    values (#{id,jdbcType=INTEGER}, #{customer.id,jdbcType=INTEGER}, #{creator.userId,jdbcType=INTEGER}, #{name,jdbcType=VARCHAR}, 
+      #{sex,jdbcType=VARCHAR}, #{deptName,jdbcType=VARCHAR}, #{position,jdbcType=VARCHAR}, 
+      #{officeTel,jdbcType=VARCHAR}, #{telephone,jdbcType=VARCHAR}, #{fax,jdbcType=VARCHAR}, 
+      #{qq,jdbcType=VARCHAR}, #{msn,jdbcType=VARCHAR}, #{tradePass,jdbcType=VARCHAR}, 
+      #{wangwang,jdbcType=VARCHAR}, #{email,jdbcType=VARCHAR}, #{birthday,jdbcType=VARCHAR}, 
+      #{postcode,jdbcType=VARCHAR}, #{address,jdbcType=VARCHAR}, #{note,jdbcType=VARCHAR}, 
+      #{createdate,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.Contact" >
+    <selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+    </selectKey>
+    insert into ss_contact
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="customer != null and customer.id != 0" >
+        customer_id,
+      </if>
+      <if test="creator != null and creator.userId != 0" >
+        creator,
+      </if>
+      <if test="name != null" >
+        name,
+      </if>
+      <if test="sex != null" >
+        sex,
+      </if>
+      <if test="deptName != null" >
+        deptName,
+      </if>
+      <if test="position != null" >
+        position,
+      </if>
+      <if test="officeTel != null" >
+        officeTel,
+      </if>
+      <if test="telephone != null" >
+        telephone,
+      </if>
+      <if test="fax != null" >
+        fax,
+      </if>
+      <if test="qq != null" >
+        qq,
+      </if>
+      <if test="msn != null" >
+        msn,
+      </if>
+      <if test="tradePass != null" >
+        tradePass,
+      </if>
+      <if test="wangwang != null" >
+        wangwang,
+      </if>
+      <if test="email != null" >
+        email,
+      </if>
+      <if test="birthday != null and birthday != ''" >
+        birthday,
+      </if>
+      <if test="postcode != null" >
+        postcode,
+      </if>
+      <if test="address != null" >
+        address,
+      </if>
+      <if test="note != null" >
+        note,
+      </if>
+        createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="customer != null and customer.id != 0" >
+        #{customer.id,jdbcType=INTEGER},
+      </if>
+      <if test="creator != null and creator.userId != 0" >
+        #{creator.userId,jdbcType=INTEGER},
+      </if>
+      <if test="name != null" >
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="sex != null" >
+        #{sex,jdbcType=VARCHAR},
+      </if>
+      <if test="deptName != null" >
+        #{deptName,jdbcType=VARCHAR},
+      </if>
+      <if test="position != null" >
+        #{position,jdbcType=VARCHAR},
+      </if>
+      <if test="officeTel != null" >
+        #{officeTel,jdbcType=VARCHAR},
+      </if>
+      <if test="telephone != null" >
+        #{telephone,jdbcType=VARCHAR},
+      </if>
+      <if test="fax != null" >
+        #{fax,jdbcType=VARCHAR},
+      </if>
+      <if test="qq != null" >
+        #{qq,jdbcType=VARCHAR},
+      </if>
+      <if test="msn != null" >
+        #{msn,jdbcType=VARCHAR},
+      </if>
+      <if test="tradePass != null" >
+        #{tradePass,jdbcType=VARCHAR},
+      </if>
+      <if test="wangwang != null" >
+        #{wangwang,jdbcType=VARCHAR},
+      </if>
+      <if test="email != null" >
+        #{email,jdbcType=VARCHAR},
+      </if>
+      <if test="birthday != null and birthday != ''" >
+        #{birthday,jdbcType=VARCHAR},
+      </if>
+      <if test="postcode != null" >
+        #{postcode,jdbcType=VARCHAR},
+      </if>
+      <if test="address != null" >
+        #{address,jdbcType=VARCHAR},
+      </if>
+      <if test="note != null" >
+        #{note,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.Contact" >
+    update ss_contact
+    <set >
+      <if test="customer != null and customer.id != 0" >
+        customer_id = #{customer.id,jdbcType=INTEGER},
+      </if>
+      <if test="creator != null and creator.userId != 0" >
+        creator = #{creator.userId,jdbcType=INTEGER},
+      </if>
+      <if test="name != null" >
+        name = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="sex != null" >
+        sex = #{sex,jdbcType=VARCHAR},
+      </if>
+      <if test="deptName != null" >
+        deptName = #{deptName,jdbcType=VARCHAR},
+      </if>
+      <if test="position != null" >
+        position = #{position,jdbcType=VARCHAR},
+      </if>
+      <if test="officeTel != null" >
+        officeTel = #{officeTel,jdbcType=VARCHAR},
+      </if>
+      <if test="telephone != null" >
+        telephone = #{telephone,jdbcType=VARCHAR},
+      </if>
+      <if test="fax != null" >
+        fax = #{fax,jdbcType=VARCHAR},
+      </if>
+      <if test="qq != null" >
+        qq = #{qq,jdbcType=VARCHAR},
+      </if>
+      <if test="msn != null" >
+        msn = #{msn,jdbcType=VARCHAR},
+      </if>
+      <if test="tradePass != null" >
+        tradePass = #{tradePass,jdbcType=VARCHAR},
+      </if>
+      <if test="wangwang != null" >
+        wangwang = #{wangwang,jdbcType=VARCHAR},
+      </if>
+      <if test="email != null" >
+        email = #{email,jdbcType=VARCHAR},
+      </if>
+      <if test="birthday != null and birthday != ''" >
+        birthday = #{birthday,jdbcType=VARCHAR},
+      </if>
+      <if test="postcode != null" >
+        postcode = #{postcode,jdbcType=VARCHAR},
+      </if>
+      <if test="address != null" >
+        address = #{address,jdbcType=VARCHAR},
+      </if>
+      <if test="note != null" >
+        note = #{note,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.Contact" >
+    update ss_contact
+    set customer_id = #{customer.id,jdbcType=INTEGER},
+      creator = #{creator.userId,jdbcType=INTEGER},
+      name = #{name,jdbcType=VARCHAR},
+      sex = #{sex,jdbcType=VARCHAR},
+      deptName = #{deptName,jdbcType=VARCHAR},
+      position = #{position,jdbcType=VARCHAR},
+      officeTel = #{officeTel,jdbcType=VARCHAR},
+      telephone = #{telephone,jdbcType=VARCHAR},
+      fax = #{fax,jdbcType=VARCHAR},
+      qq = #{qq,jdbcType=VARCHAR},
+      msn = #{msn,jdbcType=VARCHAR},
+      tradePass = #{tradePass,jdbcType=VARCHAR},
+      wangwang = #{wangwang,jdbcType=VARCHAR},
+      email = #{email,jdbcType=VARCHAR},
+      birthday = #{birthday,jdbcType=VARCHAR},
+      postcode = #{postcode,jdbcType=VARCHAR},
+      address = #{address,jdbcType=VARCHAR},
+      note = #{note,jdbcType=VARCHAR},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by con.createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by con.createdate desc
+  </select>
+</mapper>

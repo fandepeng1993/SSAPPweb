@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<!-- 已知属性：mainPojo -->
+<mapper namespace="com.sss.dao.INickelINTPriceDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.NickelINTPrice" >
+			<id column="id" property="id" jdbcType="INTEGER"/>
+			<result column="cash" property="cash" jdbcType="VARCHAR"/>
+			<result column="threeMonths" property="threeMonths" jdbcType="VARCHAR"/>
+			<result column="dateOnWeb" property="dateOnWeb" jdbcType="VARCHAR"/>
+			<result column="createdate" property="createdate" jdbcType="VARCHAR"/>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		master.*
+    from 
+    	ss_nickelINTPrice master
+  </sql>
+  <!-- 分页相关，分页实体类 -->
+  <resultMap id="PageResultMap" type="com.sss.pojo.dto.PageModel" >
+    <result column="pageNo" property="pageNo" jdbcType="INTEGER" />
+    <result column="pageSize" property="pageSize" jdbcType="INTEGER" />
+    <result column="countNum" property="countNum" jdbcType="INTEGER" />
+    <collection property="results" resultMap="BaseResultMap"></collection>
+  </resultMap>
+  <!-- 分页相关方法，特殊需求主要修改部分为"数据总条数查询countNumQuery"和"数据信息查询sql，如associateQuery和complexAdvancedSearchQuery" -->
+  <!-- 条数信息：数据总条数 -->
+  <sql id="countNumQuery">
+  	select count(*) from ss_nickelINTPrice
+  </sql>
+  <!-- 条数信息：复杂高级搜索数据总条数 -->
+  <sql id="countAdvancedSearchNumQuery">
+  	select count(*)
+  	from 
+    	ss_nickelINTPrice master
+  	where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+  </sql>
+  <!--  条数信息：复杂高级搜索查询，无分页 -->
+  <sql id="complexAdvancedSearchQuery">
+  	<include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by master.createdate desc
+  </sql>
+  <!-- 条数信息：普通所有数据分页查询 -->
+  <select id="selectAllDataLazy"  resultMap="PageResultMap" parameterType="com.sss.pojo.dto.PageModel" >
+    select ${pageNo} as pageNo,
+    	${pageSize} as pageSize,
+    	(<include refid="countNumQuery" />) as countNum,
+    	pageResults.*
+    from
+	(
+	    <include refid="associateQuery" /> order by master.createdate desc
+	    limit ${(pageNo-1)*pageSize}, ${pageSize}
+	) pageResults
+  </select>
+  <!-- 条数信息：复杂高级搜索分页测试 -->
+  <select id="complexAdvancedSearchLazy"  resultMap="PageResultMap" >
+    select ${pageModel.pageNo} as pageNo,
+    	${pageModel.pageSize} as pageSize,
+    	(<include refid="countAdvancedSearchNumQuery" />) as countNum,
+    	pageResults.*
+    from
+	(
+	    <include refid="complexAdvancedSearchQuery" />
+	    limit ${(pageModel.pageNo-1)*pageModel.pageSize}, ${pageModel.pageSize}
+	) pageResults
+  </select>
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" />
+  </select>
+  <!-- 懒加载查询所有的接口 -->
+  <select id="selectListLazy" resultMap="BaseResultMap" >
+	select * from ss_nickelINTPrice 
+	limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="selectListByDate" resultMap="BaseResultMap" >
+	select * from ss_nickelINTPrice 
+	where dateOnWeb &gt;= #{fromdate,jdbcType=VARCHAR} 
+			and dateOnWeb &lt;= #{enddate,jdbcType=VARCHAR} 
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where master.id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="getEntityByWebDate" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    <include refid="associateQuery" />
+    where master.dateOnWeb = #{dateOnWeb,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_nickelINTPrice
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <!-- 批量删除接口 -->
+  <delete id="deleteByPrimaryKeys" parameterType="java.util.List">
+    delete from ss_nickelINTPrice
+    where id in 
+    <foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.NickelINTPrice" >
+    insert into ss_nickelINTPrice 
+		(
+			id,
+			cash,
+			threeMonths,
+			dateOnWeb,
+			createdate
+		)
+    values 
+		(
+			#{id,jdbcType=INTEGER},
+			#{cash,jdbcType=VARCHAR},
+			#{threeMonths,jdbcType=VARCHAR},
+			#{dateOnWeb,jdbcType=VARCHAR},
+			now()
+		)
+  </insert>
+  <!-- 批量添加接口 -->
+  <insert id="insertEntitys" parameterType="java.util.List">
+	insert into ss_nickelINTPrice 
+		(
+			id,
+			cash,
+			threeMonths,
+			dateOnWeb,
+			createdate
+		)
+	values
+	<foreach collection="list" item="item" index="index" separator=",">
+		(
+				null,
+				#{item.cash,jdbcType=VARCHAR},
+				#{item.threeMonths,jdbcType=VARCHAR},
+				#{item.dateOnWeb,jdbcType=VARCHAR},
+				now()
+		)
+	</foreach>
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.NickelINTPrice" >
+  	<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+    </selectKey>
+    insert into ss_nickelINTPrice
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+				<if test="id != null and id != 0">
+					id,
+				</if>
+				<if test="cash != null and cash != ''">
+					cash,
+				</if>
+				<if test="threeMonths != null and threeMonths != ''">
+					threeMonths,
+				</if>
+				<if test="dateOnWeb != null and dateOnWeb != ''">
+					dateOnWeb,
+				</if>
+				createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+				<if test="id != null and id != 0">
+					#{id,jdbcType=INTEGER},
+				</if>
+				<if test="cash != null and cash != ''">
+					#{cash,jdbcType=VARCHAR},
+				</if>
+				<if test="threeMonths != null and threeMonths != ''">
+					#{threeMonths,jdbcType=VARCHAR},
+				</if>
+				<if test="dateOnWeb != null and dateOnWeb != ''">
+					#{dateOnWeb,jdbcType=VARCHAR},
+				</if>
+				<if test="createdate == null or createdate == ''">
+					now(),
+				</if>
+				<if test="createdate != null and createdate != ''">
+					#{createdate,jdbcType=VARCHAR},
+				</if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.NickelINTPrice" >
+    update ss_nickelINTPrice
+    <set >
+			<if test="id != null and id != 0">
+				id = #{id,jdbcType=INTEGER},
+			</if>
+			<if test="cash != null and cash != ''">
+				cash = #{cash,jdbcType=VARCHAR},
+			</if>
+			<if test="threeMonths != null and threeMonths != ''">
+				threeMonths = #{threeMonths,jdbcType=VARCHAR},
+			</if>
+			<if test="dateOnWeb != null and dateOnWeb != ''">
+				dateOnWeb = #{dateOnWeb,jdbcType=VARCHAR},
+			</if>
+			<if test="createdate != null and createdate != ''">
+				createdate = #{createdate,jdbcType=VARCHAR},
+			</if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.NickelINTPrice" >
+    update ss_nickelINTPrice
+    set 
+			id = #{id,jdbcType=INTEGER},
+			cash = #{cash,jdbcType=VARCHAR},
+			threeMonths = #{threeMonths,jdbcType=VARCHAR},
+			dateOnWeb = #{dateOnWeb,jdbcType=VARCHAR},
+			createdate = #{createdate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="complexAdvancedSearchQuery" />
+  </select>
+</mapper>

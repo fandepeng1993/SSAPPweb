@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IPPTAvgDAO" >
+  
+  <!--	参数匹配方式1
+  <parameterMap type="java.util.Map" id="param_map">
+     <parameter property="topicId" jdbcType="INTEGER" mode="IN"/> 
+    <parameter property="raterId" jdbcType="INTEGER" mode="IN"/> 
+    <parameter property="competitorId" jdbcType="INTEGER" mode="IN"/>
+    <parameter property="sumScore" jdbcType="INTEGER" mode="IN"/> 
+    <parameter property="pptAvg" jdbcType="DOUBLE" mode="OUT"/> 
+  </parameterMap>
+ 
+  <select id="getAvg" parameterMap="param_map" statementType="CALLABLE">
+     { call pptAvg(?, ?, ?, ?, ?) }
+  </select> -->
+  
+  
+  
+  <!--	参数匹配方式2，不需要指定返回值的类型，statementType="CALLABLE"这项是必填的 -->
+  <select id="getAvg" parameterType="java.util.Map" statementType="CALLABLE">
+  	{
+  		call pptAvg(
+  			#{topicId,jdbcType=INTEGER,mode=IN},
+  			#{raterId,jdbcType=INTEGER,mode=IN},
+  			#{competitorId,jdbcType=INTEGER,mode=IN},
+  			#{sumScore,jdbcType=INTEGER,mode=IN},
+  			#{pptAvg,jdbcType=DOUBLE,mode=OUT}
+  		)
+  	}
+  </select>
+  
+</mapper>

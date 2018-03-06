@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.mes.dao.IViewScrapReportDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.mes.pojo.ViewScrapReport" >
+    <result column="D_ParentId" property="dParentid" jdbcType="INTEGER" />
+    <result column="D_Date" property="dDate" jdbcType="VARCHAR" />
+    <result column="D_type" property="dType" jdbcType="VARCHAR" />
+    <result column="N_Quantity" property="nQuantity" jdbcType="INTEGER" />
+    <result column="N_Unit" property="nUnit" jdbcType="VARCHAR" />
+    <result column="N_Weight" property="nWeight" jdbcType="DECIMAL" />
+    <result column="N_Numbers" property="nNumbers" jdbcType="DECIMAL" />
+    <result column="N_Remark" property="nRemark" jdbcType="VARCHAR" />
+    <result column="ContractNo" property="contractno" jdbcType="VARCHAR" />
+    <result column="CardNo" property="cardno" jdbcType="VARCHAR" />
+    <result column="D_Steel" property="dSteel" jdbcType="VARCHAR" />
+    <result column="D_Spec1" property="dSpec1" jdbcType="VARCHAR" />
+    <result column="D_Spec2" property="dSpec2" jdbcType="VARCHAR" />
+    <result column="D_Standards" property="dStandards" jdbcType="VARCHAR" />
+    <result column="D_FurnaceNo" property="dFurnaceno" jdbcType="VARCHAR" />
+    <result column="P_Type" property="pType" jdbcType="INTEGER" />
+    <result column="FeedingDate" property="feedingdate" jdbcType="VARCHAR" />
+    <result column="DeliveryDate" property="deliverydate" jdbcType="VARCHAR" />
+    <result column="D_Weights" property="dWeights" jdbcType="DECIMAL" />
+    <result column="D_Quantity" property="dQuantity" jdbcType="INTEGER" />
+    <result column="D_TotalWeight" property="dTotalweight" jdbcType="DECIMAL" />
+    <result column="ProduceM_Name" property="producemName" jdbcType="VARCHAR" />
+    <result column="D_ID" property="dId" jdbcType="INTEGER" />
+    <result column="D_User" property="dUser" jdbcType="VARCHAR" />
+    <result column="D_Typed" property="dTyped" jdbcType="VARCHAR" />
+    <result column="D_Quantity1" property="dQuantity1" jdbcType="INTEGER" />
+    <result column="D_Weight" property="dWeight" jdbcType="DECIMAL" />
+    <result column="D_Numbers" property="dNumbers" jdbcType="DECIMAL" />
+    <result column="NCardNo" property="ncardno" jdbcType="VARCHAR" />
+  </resultMap>
+  <resultMap id="ResultMapWithBLOBs" type="com.sss.mes.pojo.ViewScrapReport" extends="BaseResultMap" >
+    <result column="D_Remark" property="dRemark" jdbcType="LONGVARCHAR" />
+  </resultMap>
+  <resultMap id="BaseResultMap1" type="com.sss.pojo.dto.ProNWeiAndQua" >
+    <result column="ProduceM_Name" property="ProduceM_Name" jdbcType="VARCHAR" />
+    <result column="totalWeight" property="totalWeight" jdbcType="DECIMAL" />
+    <result column="totalQuantity" property="totalQuantity" jdbcType="INTEGER" />
+  </resultMap>
+  <cache 
+  	eviction="FIFO" 
+  	flushInterval="900000" 
+	size="512" 
+	readOnly="true"/> 
+  <select id="getViewEntitys" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select CardNo,ContractNo,ProduceM_Name,D_Quantity1,D_Weight,D_Numbers,D_User,D_Date from view_scrap_report 
+    where D_Date>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <select id="getVsrsByPageNoAndSize" resultMap="BaseResultMap" >
+    select CardNo,ContractNo,ProduceM_Name,D_Quantity1,D_Weight,D_Numbers,D_User,D_Date from view_scrap_report 
+    where D_Date>=#{startTime,jdbcType=VARCHAR} limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="getEntitysCount" resultType="java.lang.Integer" parameterType="java.lang.String" >
+    select count(*) from view_scrap_report 
+    where D_Date>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <select id="getTotalWeight" resultType="java.math.BigDecimal" parameterType="java.lang.String" >
+    select sum(D_Weight) from view_scrap_report 
+    where D_Date>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <select id="getTotalQuantity" resultType="java.math.BigDecimal" parameterType="java.lang.String" >
+    select sum(D_Quantity1) from view_scrap_report 
+    where D_Date>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <select id="getProNWeiAndQuas" resultMap="BaseResultMap1" parameterType="java.lang.String" >
+    select ProduceM_Name,sum(D_Weight) totalWeight,sum(D_Quantity1) totalQuantity from view_scrap_report 
+	where D_Date>'2016-09-01' group by ProduceM_Name
+  </select>
+</mapper>

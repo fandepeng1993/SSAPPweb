@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IBlogVoteDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.BlogVote" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="blog_id" property="blogId" jdbcType="INTEGER" />
+    <result column="user_id" property="userId" jdbcType="INTEGER" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    <result column="state" property="state" jdbcType="TINYINT" />
+  </resultMap>
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    select * from ss_blogvote order by createdate desc
+  </select>
+  <select id="selByBlogId"  resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select * from ss_blogvote 
+    where blog_id = #{blogId,jdbcType=INTEGER} 
+    order by createdate desc
+  </select>
+  <select id="selByUserId"  resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select * from ss_blogvote 
+    where user_id = #{userId,jdbcType=INTEGER} 
+    order by createdate desc
+  </select>
+  <select id="selCountByBlogId" resultType="java.lang.Integer" parameterType="java.lang.Integer" >
+    select count(*) from ss_blogvote 
+	where blog_id = #{blogId,jdbcType=INTEGER} and state = 1
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select * from ss_blogvote
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selByBlogAndUser" resultMap="BaseResultMap" >
+    select * from ss_blogvote
+    where blog_id = #{blogId,jdbcType=INTEGER} and user_id = #{userId,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_blogvote
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.BlogVote" >
+    insert into ss_blogvote (id, blog_id, user_id, 
+      createdate, state)
+    values (#{id,jdbcType=INTEGER}, #{blogId,jdbcType=INTEGER}, #{userId,jdbcType=INTEGER}, 
+      #{createdate,jdbcType=VARCHAR}, #{state,jdbcType=TINYINT})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.BlogVote" >
+    insert into ss_blogvote
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="blogId != null" >
+        blog_id,
+      </if>
+      <if test="userId != null" >
+        user_id,
+      </if>
+      <if test="state != null" >
+        state,
+      </if>
+      	createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="blogId != null" >
+        #{blogId,jdbcType=INTEGER},
+      </if>
+      <if test="userId != null" >
+        #{userId,jdbcType=INTEGER},
+      </if>
+      <if test="state != null" >
+        #{state,jdbcType=TINYINT},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.BlogVote" >
+    update ss_blogvote
+    <set >
+      <if test="blogId != null" >
+        blog_id = #{blogId,jdbcType=INTEGER},
+      </if>
+      <if test="userId != null" >
+        user_id = #{userId,jdbcType=INTEGER},
+      </if>
+      <if test="state != null" >
+        state = #{state,jdbcType=TINYINT},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.BlogVote" >
+    update ss_blogvote
+    set blog_id = #{blogId,jdbcType=INTEGER},
+      user_id = #{userId,jdbcType=INTEGER},
+      state = #{state,jdbcType=TINYINT},
+	  createdate = #{createdate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IJPushDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.JPush" >
+    <id column="jpush_id" property="jpushId" jdbcType="INTEGER" />
+    <result column="title" property="title" jdbcType="VARCHAR" />
+    <result column="content" property="content" jdbcType="VARCHAR" />
+    <result column="tag" property="tag" jdbcType="VARCHAR" />
+    <result column="alias" property="alias" jdbcType="VARCHAR" />
+    <result column="sendTime" property="sendtime" jdbcType="VARCHAR" />
+    <result column="category" property="category" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    jpush_id, title, content, tag, alias, sendTime, category
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from ss_jpush
+    where jpush_id = #{jpushId,jdbcType=INTEGER}
+  </select>
+  <select id="selectList"  resultMap="BaseResultMap"  >
+  	select * from ss_jpush
+  </select>
+  
+  <select id="searchJPushByDTO"  resultMap="BaseResultMap" parameterType="com.sss.pojo.dto.SearchJPushDTO" >
+	select * from ss_jpush
+	where title like "%"#{title,jdbcType=VARCHAR}"%"
+	  <if test="tag != null and tag != ''" >
+	      AND tag = #{tag,jdbcType=VARCHAR}
+	  </if>
+	  <if test="alias != null and alias != ''" >
+	     AND alias = #{alias,jdbcType=VARCHAR}
+	  </if>
+	   <if test="category != null and category != ''" >
+	     AND category = #{category,jdbcType=VARCHAR}
+	  </if>
+	  <if test="fromDate != null and fromDate != ''" >
+	      AND sendTime &gt; #{fromDate,jdbcType=VARCHAR}
+	  </if>
+	  <if test="endDate != null and endDate != ''" >
+	      AND sendTime &lt; #{endDate,jdbcType=VARCHAR}
+	  </if>
+  </select>
+  
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_jpush
+    where jpush_id = #{jpushId,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.JPush" >
+    insert into ss_jpush (jpush_id, title, content, 
+      tag, alias, sendTime, 
+      category)
+    values (#{jpushId,jdbcType=INTEGER}, #{title,jdbcType=VARCHAR}, #{content,jdbcType=VARCHAR}, 
+      #{tag,jdbcType=VARCHAR}, #{alias,jdbcType=VARCHAR}, #{sendtime,jdbcType=VARCHAR}, 
+      #{category,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.JPush" >
+    <selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="jpushId"> 
+        SELECT LAST_INSERT_ID() AS jpushId   
+    </selectKey>
+    insert into ss_jpush
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="jpushId != null" >
+        jpush_id,
+      </if>
+      <if test="title != null" >
+        title,
+      </if>
+      <if test="content != null" >
+        content,
+      </if>
+      <if test="tag != null" >
+        tag,
+      </if>
+      <if test="alias != null" >
+        alias,
+      </if>
+      <if test="category != null" >
+        category,
+      </if>
+      sendTime,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="jpushId != null" >
+        #{jpushId,jdbcType=INTEGER},
+      </if>
+      <if test="title != null" >
+        #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null" >
+        #{content,jdbcType=VARCHAR},
+      </if>
+      <if test="tag != null" >
+        #{tag,jdbcType=VARCHAR},
+      </if>
+      <if test="alias != null" >
+        #{alias,jdbcType=VARCHAR},
+      </if>
+      <if test="category != null" >
+        #{category,jdbcType=VARCHAR},
+      </if>
+      <if test="sendtime == null or sendtime == ''" >
+        now(),
+      </if>
+      <if test="sendtime != null and sendtime != ''" >
+        #{sendtime,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.JPush" >
+    update ss_jpush
+    <set >
+      <if test="title != null" >
+        title = #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null" >
+        content = #{content,jdbcType=VARCHAR},
+      </if>
+      <if test="tag != null" >
+        tag = #{tag,jdbcType=VARCHAR},
+      </if>
+      <if test="alias != null" >
+        alias = #{alias,jdbcType=VARCHAR},
+      </if>
+      <if test="category != null" >
+        category = #{category,jdbcType=VARCHAR},
+      </if>
+      <if test="sendtime != null and sendtime != ''" >
+        sendTime = #{sendtime,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where jpush_id = #{jpushId,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.JPush" >
+    update ss_jpush
+    set title = #{title,jdbcType=VARCHAR},
+      content = #{content,jdbcType=VARCHAR},
+      tag = #{tag,jdbcType=VARCHAR},
+      alias = #{alias,jdbcType=VARCHAR},
+      sendTime = #{sendtime,jdbcType=VARCHAR},
+      category = #{category,jdbcType=VARCHAR}
+    where jpush_id = #{jpushId,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	select * from ss_jpush
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    select * from ss_jpush
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+  </select>
+</mapper>

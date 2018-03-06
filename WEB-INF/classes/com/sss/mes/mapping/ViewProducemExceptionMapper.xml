@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.mes.dao.IViewProducemExceptionDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.mes.pojo.ViewProducemException" >
+    <result column="D_ID" property="dId" jdbcType="INTEGER" />
+    <result column="D_ParentId" property="dParentid" jdbcType="INTEGER" />
+    <result column="D_Date" property="dDate" jdbcType="VARCHAR" />
+    <result column="D_type" property="dType" jdbcType="VARCHAR" />
+    <result column="N_Quantity" property="nQuantity" jdbcType="INTEGER" />
+    <result column="N_Unit" property="nUnit" jdbcType="VARCHAR" />
+    <result column="N_Weight" property="nWeight" jdbcType="DECIMAL" />
+    <result column="N_Numbers" property="nNumbers" jdbcType="DECIMAL" />
+    <result column="N_Remark" property="nRemark" jdbcType="VARCHAR" />
+    <result column="N_Step" property="nStep" jdbcType="INTEGER" />
+    <result column="D_State" property="dState" jdbcType="INTEGER" />
+    <result column="IsPrint" property="isprint" jdbcType="INTEGER" />
+    <result column="IsNumber" property="isnumber" jdbcType="INTEGER" />
+    <result column="ProduceM_Name" property="producemName" jdbcType="VARCHAR" />
+    <result column="ProduceM_RouteNo" property="producemRouteno" jdbcType="INTEGER" />
+    <result column="ProduceM_Spec" property="producemSpec" jdbcType="VARCHAR" />
+    <result column="ProduceM_UserNames" property="producemUsernames" jdbcType="VARCHAR" />
+    <result column="ContractNo" property="contractno" jdbcType="VARCHAR" />
+    <result column="CardNo" property="cardno" jdbcType="VARCHAR" />
+    <result column="D_Steel" property="dSteel" jdbcType="VARCHAR" />
+    <result column="D_Standards" property="dStandards" jdbcType="VARCHAR" />
+    <result column="D_FurnaceNo" property="dFurnaceno" jdbcType="VARCHAR" />
+    <result column="D_Spec1" property="dSpec1" jdbcType="VARCHAR" />
+    <result column="D_Spec2" property="dSpec2" jdbcType="VARCHAR" />
+    <result column="P_Type" property="pType" jdbcType="INTEGER" />
+    <result column="state" property="state" jdbcType="INTEGER" />
+  </resultMap>
+  <resultMap id="BaseResultMap1" type="com.sss.pojo.dto.KeyValueDTO" >
+    <result column="keywords" property="key" jdbcType="VARCHAR" />
+    <result column="value" property="value" jdbcType="DECIMAL" />
+  </resultMap>
+  <cache 
+  	eviction="FIFO" 
+  	flushInterval="900000" 
+	size="512" 
+	readOnly="true"/> 
+  <select id="getViewEntitys" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select ContractNo,CardNo,ProduceM_Name,D_type,D_Date,N_Quantity,N_Numbers,N_Weight,D_State from view_producem_exception 
+    where D_Date>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <select id="getVpesByPageNoAndSize" resultMap="BaseResultMap" >
+    select ContractNo,CardNo,ProduceM_Name,D_type,D_Date,N_Quantity,N_Numbers,N_Weight,D_State from view_producem_exception 
+    where D_Date>=#{startTime,jdbcType=VARCHAR} limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="getEntitysCount" resultType="java.lang.Integer" parameterType="java.lang.String" >
+    select count(*) from view_producem_exception 
+    where D_Date>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <select id="getCountsFromProduceM_Name" resultMap="BaseResultMap1" parameterType="java.lang.String" >
+    select count(*) value, ProduceM_Name keywords from view_producem_exception 
+    where D_Date>=#{startTime,jdbcType=VARCHAR} group by ProduceM_Name
+  </select>
+  <select id="getWeightsFromProduceM_Name" resultMap="BaseResultMap1" parameterType="java.lang.String" >
+    select sum(N_Weight) value, ProduceM_Name keywords from view_producem_exception 
+    where D_Date>=#{startTime,jdbcType=VARCHAR} group by ProduceM_Name
+  </select>
+  <select id="getWeightsFromD_Type" resultMap="BaseResultMap1" parameterType="java.lang.String" >
+    select sum(N_Weight) value, D_Type keywords from view_producem_exception 
+    where D_Date>=#{startTime,jdbcType=VARCHAR} group by D_Type
+  </select>
+  <select id="getTotalWeight" resultType="java.math.BigDecimal" parameterType="java.lang.String" >
+    select sum(N_Weight) from view_producem_exception 
+    where D_Date>=#{startTime,jdbcType=VARCHAR}
+  </select>
+</mapper>

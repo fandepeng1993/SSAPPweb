@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IViewUserInfoDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.ViewUserInfo" >
+    <result column="user_id" property="userId" jdbcType="INTEGER" />
+    <result column="user_no" property="userNo" jdbcType="VARCHAR" />
+    <result column="user_name" property="userName" jdbcType="VARCHAR" />
+    <result column="password" property="password" jdbcType="VARCHAR" />
+    <result column="sex" property="sex" jdbcType="VARCHAR" />
+    <result column="status" property="status" jdbcType="VARCHAR" />
+    <result column="email" property="email" jdbcType="VARCHAR" />
+    <result column="birthDate" property="birthdate" jdbcType="VARCHAR" />
+    <result column="entryDate" property="entrydate" jdbcType="VARCHAR" />
+    <result column="lastLoginDate" property="lastlogindate" jdbcType="VARCHAR" />
+    <result column="telephone" property="telephone" jdbcType="VARCHAR" />
+    <result column="address" property="address" jdbcType="VARCHAR" />
+    <result column="eduBackground" property="edubackground" jdbcType="VARCHAR" />
+    <result column="major" property="major" jdbcType="VARCHAR" />
+    <result column="school" property="school" jdbcType="VARCHAR" />
+    <result column="photoUrl" property="photoUrl" jdbcType="VARCHAR" />
+    <result column="phoneId" property="phoneId" jdbcType="VARCHAR" />
+    <result column="openId" property="openId" jdbcType="VARCHAR" />
+    <result column="audit" property="audit" jdbcType="INTEGER" />
+    <result column="disable" property="disable" jdbcType="INTEGER" />
+    <!-- <result column="role_id" property="roleId" jdbcType="INTEGER" />
+    <result column="role_name" property="roleName" jdbcType="VARCHAR" /> -->
+    <result column="position_id" property="positionId" jdbcType="INTEGER" />
+    <result column="position_name" property="positionName" jdbcType="VARCHAR" />
+    <result column="dept_id" property="deptId" jdbcType="INTEGER" />
+    <result column="dept_name" property="deptName" jdbcType="VARCHAR" />
+    <result column="resp_people" property="respPeople" jdbcType="INTEGER" />
+    <result column="keyboardLock" property="keyboardLock" jdbcType="VARCHAR" />
+    <result column="officeTel" property="officeTel" jdbcType="VARCHAR" />
+    <result column="useGesture" property="useGesture" jdbcType="INTEGER" />
+    <result column="signature" property="signature" jdbcType="VARCHAR" />
+    <result column="basePay" property="basePay" jdbcType="DECIMAL" />
+    <result column="overtimePay" property="overtimePay" jdbcType="DECIMAL" />
+    <result column="probationPeriod" property="probationPeriod" jdbcType="INTEGER" />
+    <result column="probationWage" property="probationWage" jdbcType="INTEGER" />
+    <result column="trialCusId" property="trialCusId" jdbcType="INTEGER" />
+  </resultMap>
+  <cache 
+  	eviction="FIFO" 
+  	flushInterval="900000" 
+	size="512" 
+	readOnly="true"/> 
+  <!-- 返回一个list的写法 -->
+  <select id="selectList" useCache="false" resultMap="BaseResultMap">
+    select * from View_UserInfo where status = "在职" and user_no != 'admin'
+  </select>
+  <!-- 包含超级管理员 -->
+  <select id="selectListWithAdmin" useCache="false" resultMap="BaseResultMap">
+    select v.*, t.roleIds as roleIds from View_UserInfo v 
+    left join 
+		(select user_id, GROUP_CONCAT(role_id separator ',') as roleIds from ss_role_user group by user_id) t
+	on v.user_id = t.user_id
+	where v.status = "在职"
+  </select>
+  <select id="selectAllList" useCache="false" resultMap="BaseResultMap">
+    select * from View_UserInfo where user_no != 'admin'
+  </select>
+  <select id="selectListForBook" resultMap="BaseResultMap">
+    select * from View_UserInfo where status = "在职" and user_no != 'admin'
+  </select>
+  <select id="selectListByKey" useCache="false" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select * from View_UserInfo
+    where status = "在职" 
+    and user_no != 'admin'
+    and (user_no like "%"#{key,jdbcType=VARCHAR}"%" or user_name like "%"#{key,jdbcType=VARCHAR}"%")
+  </select> 
+  <!-- 包含超级管理员 -->
+  <select id="selectListByKeyWithAdmin" useCache="false" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select * from View_UserInfo
+    where status = "在职" 
+    and (user_no like "%"#{key,jdbcType=VARCHAR}"%" or user_name like "%"#{key,jdbcType=VARCHAR}"%")
+  </select> 
+  <select id="selectAllListByKey" useCache="false" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select * from View_UserInfo
+    where (user_no like "%"#{key,jdbcType=VARCHAR}"%" or user_name like "%"#{key,jdbcType=VARCHAR}"%")
+    and user_no != 'admin'
+  </select> 
+  <!-- 包含超级管理员 -->
+  <select id="selectListByRoleId" useCache="false"  resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select * from View_UserInfo v
+	left join ss_role_user ru
+	on v.user_id = ru.user_id
+	where v.status = "在职" 
+		and ru.role_id = #{roleId,jdbcType=INTEGER}
+  </select>
+  <select id="selectListByDeptId" useCache="false"  resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select * from View_UserInfo
+    where status = "在职" 
+    and user_no != 'admin'
+    and dept_id = #{deptId,jdbcType=INTEGER}
+  </select>
+  <!-- 包含超级管理员 -->
+  <select id="selByRoleAndKey" useCache="false" resultMap="BaseResultMap" >
+    select * from View_UserInfo v
+    left join ss_role_user ru
+	on v.user_id = ru.user_id
+    where v.status = "在职"  
+    	and (v.user_no like "%"#{keyWords,jdbcType=VARCHAR}"%" or v.user_name like "%"#{keyWords,jdbcType=VARCHAR}"%")
+  		and ru.role_id = #{roleId,jdbcType=INTEGER}
+  </select>
+  <!-- 包含超级管理员 -->
+  <select id="getUserByNo" useCache="false" resultMap="BaseResultMap" parameterType="java.lang.String">
+    select * from View_UserInfo
+    where status = "在职" and user_no = #{userNo,jdbcType=VARCHAR}
+  </select>
+  <!-- 包含超级管理员 -->
+  <select id="getUserByUserId" useCache="false" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+    select * from View_UserInfo
+    where user_id = #{userId,jdbcType=INTEGER}
+  </select>
+  <select id="getUserByName" useCache="false" resultMap="BaseResultMap" parameterType="java.lang.String">
+    select * from View_UserInfo
+    where user_name = #{userName,jdbcType=VARCHAR}
+    	and status = "在职"
+    	and user_no != 'admin'
+  </select>
+  <select id="getUserByNameAndDept" useCache="false" resultMap="BaseResultMap">
+    select * from View_UserInfo
+    where user_name = #{userName,jdbcType=VARCHAR}
+    	and dept_name = #{deptName,jdbcType=VARCHAR}
+    	and user_no != 'admin'
+  </select>
+ 
+  <!-- 展示PPT用户 -->
+  <select id="showPPTUsers" resultMap="BaseResultMap">
+  	select 
+  		user_id,user_no,user_name,sex,position_name,dept_name
+  	from 
+  		View_UserInfo
+    where 
+    	status = "在职" 
+    and 
+    	user_no != 'admin'
+  </select>
+ 
+ 
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    select * from View_UserInfo
+    where user_no != 'admin' 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+  </select>
+</mapper>

@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.ISaleChanRecordDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.SaleChanceRecord" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <!-- <result column="pid" property="pid" jdbcType="INTEGER" /> -->
+    <result column="rootId" property="rootId" jdbcType="INTEGER" />
+    <result column="progresscontent" property="progressContent" jdbcType="LONGVARCHAR" />
+    <result column="isleaf" property="isleaf" jdbcType="INTEGER" />
+    <result column="photoUrls" property="photoUrls" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    
+    <association property="saleChance" javaType="com.sss.pojo.SaleChance">
+		<id column="sc_sale_id" property="id" jdbcType="INTEGER" />
+	    <result column="sc_sale_name" property="chanceName" jdbcType="VARCHAR" />
+	    <result column="sc_sale_money" property="exceptedMoney" jdbcType="DECIMAL" />
+	    <result column="sc_sale_time" property="exceptedtime" jdbcType="VARCHAR" />
+	    <result column="sc_sale_progress" property="salesProgress" jdbcType="VARCHAR" />
+	    <result column="sc_sale_grade" property="chanceGrade" jdbcType="VARCHAR" />
+	</association>
+	
+	<association property="user" javaType="com.sss.pojo.User">
+		<id column="cu_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="cu_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="cu_position_name" property="position.positionName" jdbcType="VARCHAR" />
+	    <result column="cu_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="cu_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="cu_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="cu_user_status" property="status" jdbcType="VARCHAR" />
+	    <result column="cu_user_photoUrl" property="photoUrl" jdbcType="VARCHAR" />
+	</association>
+	
+	<association property="parentRecord" javaType="com.sss.pojo.SaleChanceRecord">
+		<id column="cu_reco_id" property="id" jdbcType="INTEGER" />
+	    <result column="cu_reco_content" property="progressContent" jdbcType="VARCHAR" />
+	    <result column="cu_reco_rootId" property="rootId" jdbcType="INTEGER" />
+	    <result column="cu_reco_isleaf" property="isleaf" jdbcType="INTEGER" />
+	    <result column="cu_reco_createdate" property="createdate" jdbcType="VARCHAR" />
+	    <association property="user" javaType="com.sss.pojo.User">
+			<id column="ccu_user_id" property="userId" jdbcType="INTEGER" />
+		    <result column="ccu_user_name" property="userName" jdbcType="VARCHAR" />
+		</association>
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+		SELECT
+			salc.*,
+			salr.id as sc_sale_id,
+			salr.chance_name as sc_sale_name,
+			salr.salesprogress as sc_sale_progress,
+			u.user_id as cu_user_id,
+	  		u.user_name as cu_user_name,
+	  		u.photoUrl as cu_user_photoUrl,
+  			pos.position_Name as cu_position_name,
+	  		salcc.id as cu_reco_id,
+	  		salcc.progressContent as cu_reco_content,
+	  		salcc.rootId as cu_reco_rootId,
+	  		salcc.isleaf as cu_reco_isleaf,
+	  		salcc.createdate as cu_reco_createdate,
+	  		uu.user_id as ccu_user_id,
+  			uu.user_name as ccu_user_name
+		FROM
+			ss_salchanrecord salc
+		LEFT JOIN
+			ss_salechance salr
+		ON
+			salc.chance_id = salr.id
+		LEFT JOIN
+			ss_user u
+		ON
+			salc.userId = u.user_id
+		LEFT JOIN
+			ss_salchanrecord salcc
+		ON
+			salcc.id = salc.pid
+		LEFT JOIN
+			ss_user uu
+		ON
+			salcc.userId = uu.user_id
+		left join 
+	   		ss_position pos
+	   	on 
+	   		u.position_id = pos.position_id
+  </sql>
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> 
+    where salc.id != 1 and salc.rootId = 1
+    order by salc.createdate desc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" /> 
+    where salc.id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectByUIdsAndChance"  resultMap="BaseResultMap"  >
+  	<include refid="associateQuery" />
+  	where u.user_id in 
+  		<foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+		  #{item}  
+		</foreach> 
+		and salr.id = #{chanceId,jdbcType=VARCHAR}
+  	order by salc.createdate desc
+  </select>
+  <select id="getSalchanRecosByUIds" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where salc.userId in 
+    <foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>  
+    order by salc.createdate desc
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_salchanrecord
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.SaleChanceRecord" >
+    insert into ss_salchanrecord (id, chance_id, pid, 
+      rootId, userId, isleaf, 
+      photoUrls, createdate, progresscontent
+      )
+    values (#{id,jdbcType=INTEGER}, #{saleChance.id,jdbcType=INTEGER}, #{parentRecord.id,jdbcType=INTEGER}, 
+      #{rootId,jdbcType=INTEGER}, #{user.userId,jdbcType=INTEGER}, #{isleaf,jdbcType=INTEGER}, 
+      #{photoUrls,jdbcType=VARCHAR}, #{createdate,jdbcType=VARCHAR}, #{progressContent,jdbcType=LONGVARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.SaleChanceRecord" >
+  	<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+    </selectKey>
+    insert into ss_salchanrecord
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="saleChance != null and saleChance.id != null" >
+        chance_id,
+      </if>
+      <if test="parentRecord != null and parentRecord.id != null " >
+        pid,
+      </if>
+      <if test="rootId != null" >
+        rootId,
+      </if>
+      <if test="user != null and user.userId != null" >
+        userId,
+      </if>
+      <if test="isleaf != null" >
+        isleaf,
+      </if>
+      <if test="photoUrls != null" >
+        photoUrls,
+      </if>
+     	createdate,
+      <if test="progressContent != null" >
+        progresscontent,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="saleChance != null and saleChance.id != null" >
+        #{saleChance.id,jdbcType=INTEGER},
+      </if>
+      <if test="parentRecord != null and parentRecord.id != null " >
+        #{parentRecord.id,jdbcType=INTEGER},
+      </if>
+      <if test="rootId != null" >
+        #{rootId,jdbcType=INTEGER},
+      </if>
+      <if test="user != null and user.userId != null" >
+        #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="isleaf != null" >
+        #{isleaf,jdbcType=INTEGER},
+      </if>
+      <if test="photoUrls != null" >
+        #{photoUrls,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+      <if test="progressContent != null" >
+        #{progressContent,jdbcType=LONGVARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.SaleChanceRecord" >
+    update ss_salchanrecord
+    <set >
+      <if test="saleChance != null and saleChance.id != null" >
+        chance_id = #{saleChance.id,jdbcType=INTEGER},
+      </if>
+      <if test="parentRecord != null and parentRecord.id != null " >
+        pid = #{parentRecord.id,jdbcType=INTEGER},
+      </if>
+      <if test="rootId != null" >
+        rootId = #{rootId,jdbcType=INTEGER},
+      </if>
+      <if test="user != null and user.userId != null" >
+        userId = #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="isleaf != null" >
+        isleaf = #{isleaf,jdbcType=INTEGER},
+      </if>
+      <if test="photoUrls != null" >
+        photoUrls = #{photoUrls,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate != null" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+      <if test="progressContent != null" >
+        progresscontent = #{progressContent,jdbcType=LONGVARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.SaleChanceRecord" >
+    update ss_salchanrecord
+    set chance_id = #{saleChance.id,jdbcType=INTEGER},
+      pid = #{parentRecord.id,jdbcType=INTEGER},
+      rootId = #{rootId,jdbcType=INTEGER},
+      userId = #{user.userId,jdbcType=INTEGER},
+      isleaf = #{isleaf,jdbcType=INTEGER},
+      photoUrls = #{photoUrls,jdbcType=VARCHAR},
+      progresscontent = #{progressContent,jdbcType=VARCHAR},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by salc.createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by salc.createdate desc
+  </select>
+</mapper>

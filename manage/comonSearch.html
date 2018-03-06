@@ -1,0 +1,30 @@
+<div class="block-car-container" id="J_block_car_container"  tabindex ="0" onkeydown="keySearch(event)">
+	<div class="clearfix car-top">
+		<span class="top-back fa fa-angle-right" onclick="cancelRight()"></span>		
+	</div>
+	<div>
+		<p style="padding:10px 0px 10px 20px;background:#4fd0be;color:white;margin:0px;"><span class="fa  fa-filter" style="font-size: 18px;vertical-align: text-top;padding-right: 10px;"></span>筛选条件</p>
+	</div>
+	
+	<div style="overflow-y:scroll;overflow-x: hidden;max-height:85%;min-height:20%;">
+		<div style="padding:0px 10px 0px 10px;min-height:200px;">
+
+			<div id="Content-AddCondition">
+				<button class="btn btn-info" style="margin-top: 10px;" onclick="AddGroup()"><span class="glyphicon glyphicon-plus-sign"></span> 增加分组</button>
+				<button class="btn btn-info" style="margin-top: 10px;" onclick="DeleteGroup()"><span class="glyphicon glyphicon-remove-sign"></span> 删除分组</button>	
+			</div>
+			<div style="width:120%;height:1px;background:#d9d9d9;margin-top:10px;margin-left:-10%"></div>
+			<div class="addCondition">
+				<!-- <select class="selectKey">
+					<option>并且</option>
+					<option>或者</option>
+				</select> -->
+				<!-- <button class="btn btn-info btn-xs" onclick="AddCheck()">增加条件</button> -->
+			</div>
+			
+		</div>
+		<div>
+			<button class="btn" onclick="AdvancedSearch()" style="width:80%;margin-top:20px;margin-left: 10%;background: #4fd0be;color:#fff">搜索</button>	
+		</div>					
+	</div>
+</div>

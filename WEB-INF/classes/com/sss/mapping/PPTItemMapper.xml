@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IPPTItemDAO" >
+
+  <resultMap id="BaseResultMap" type="com.sss.pojo.PPTItem">
+	<id column="item_id" property="itemId" jdbcType="INTEGER" />
+	<result column="item_name" property="itemName" jdbcType="VARCHAR" />
+	<result column="item_project_id" property="itemProjectId" jdbcType="INTEGER"/>
+	<result column="item_createTime" property="itemCreateTime" jdbcType="VARCHAR" />
+	
+	<association property="pptProject" javaType="com.sss.pojo.PPTProject">
+		<id column="project_id" property="projectId" jdbcType="INTEGER"/>
+		<result column="project_name" property="projectName" jdbcType="VARCHAR"/>
+		<result column="project_topic_id" property="projectTopicId" jdbcType="INTEGER"/>
+		<result column="project_createTime" property="projectCreateTime" jdbcType="VARCHAR"/>
+	</association>
+  </resultMap>
+  
+  <!-- 查询 -->
+  <select id="selectList" resultMap="BaseResultMap">
+  	select 
+  		item_id,item_name,item_project_id,item_createTime,project_id,project_name,project_topic_id,project_createTime 
+  	from 
+  		ss_ppt_item 
+  	left join 
+  		ss_ppt_project
+  	on 
+  		item_project_id = project_id
+  </select>
+  
+   <!-- 根据ProjectId查询 -->
+  <select id="getPPTItemsByProjectId" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+  	select 
+  		item_id,item_name,item_project_id,item_createTime,project_id,project_name,project_topic_id,project_createTime 
+  	from 
+  		ss_ppt_item 
+  	left join 
+  		ss_ppt_project
+  	on 
+  		item_project_id = project_id
+  	where
+  		item_project_id = #{projectId, jdbcType=INTEGER}
+  </select>
+  
+  <!-- 单条添加 -->
+  <insert id="insert" parameterType="com.sss.pojo.PPTItem">
+  	insert into ss_ppt_item where 1=1
+  	<trim prefix="(" suffix=")" suffixOverrides=",">
+  		<if test="itemId!=null">
+  			item_id,
+  		</if>
+  		<if test="itemName!=null">
+  			item_name,
+  		</if>
+  		<if test="pptProject!=null">
+  			item_project_id,
+  		</if>
+  		<if test="itemCreateTime!=null">
+  			item_createTime,
+  		</if>
+  	</trim>
+  	<trim prefix="values (" suffix=")" suffixOverrides=",">
+  		<if test="itemId!=null">
+  			#{itemId,jdbcType=INTEGER},
+  		</if>
+  		<if test="itemName!=null">
+  			#{itemName,jdbcType=VARCHAR},
+  		</if>
+  		<if test="pptProject!=null">
+  			#{pptProject.project_id,jdbcType=INTEGER},
+  		</if>
+  		<if test="itemCreateTime!=null">
+  			#{itemCreateTime,jdbcType=VARCHAR},
+  		</if>
+  	</trim>
+  </insert>
+  
+  <!-- 根据主键修改 -->
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.PPTItem">
+  	update ss_ppt_item 
+  	<set>
+  		<if test="itemName!=null">
+  			item_name = #{itemName,jdbcType=VARCHAR},
+  		</if>
+  		<if test="pptProject!=null">
+  			item_project_id = #{pptProject.project_id,jdbcType=INTEGER},
+  		</if>
+  		<if test="itemCreateTime!=null">
+  			item_createTime = #{itemCreateTime,jdbcType=VARCHAR},
+  		</if>
+  	</set>
+  	where item_id = #{itemId,jdbcType=INTEGER}
+  </update>
+  
+  <!-- 根据主键删除 -->
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_ppt_item
+    where item_id = #{itemId,jdbcType=INTEGER}
+  </delete>
+  
+  <!-- 将pptItem对象插入数据库 -->
+  <insert id="insertPPTItem" parameterType="com.sss.pojo.PPTItem">
+  	insert into ss_ppt_item (item_name,item_project_id,item_createTime) values(#{itemName, jdbcType=VARCHAR},#{itemProjectId, jdbcType=INTEGER},now())
+  </insert>
+  
+  <!-- 根据PPTItem更新数据库 -->
+  <update id="updatePPTItem" parameterType="com.sss.pojo.PPTItem">
+  	update ss_ppt_item 
+  	<set>
+  		<if test="itemName!=null">
+  			item_name = #{itemName,jdbcType=VARCHAR},
+  		</if>
+  			item_createTime = now(),
+  	</set>
+  	where item_id = #{itemId,jdbcType=INTEGER}
+  </update>
+</mapper>

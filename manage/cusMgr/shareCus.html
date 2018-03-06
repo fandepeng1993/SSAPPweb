@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>客户共享</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		var allData = null;
+		var users = null;
+		var selPri;
+		var userId;
+		//判断赋值页面。默认--兄弟页面赋值；parent--父子页面赋值；
+		var cusId;
+		
+		$(document).ready(function(){
+			selPri = Request["selPri"];
+			userId = Request["userId"];
+			cusId = Request["cusId"];
+			
+			if(typeof(selPri) != "undefined" && typeof(userId) != "undefined") {
+				//根据权限取员工	
+				$.ajax({
+					url: "../../userAdmin/getUsersByPri/" + userId + "," + selPri,
+					datatype: "json",
+					type: "get",
+					data: {},
+					success: function (data, status, xhr) {
+						$("#userTable").empty();
+						allData = eval("(" + data + ")");
+						users = allData;
+						initTablePage();
+					} 
+				});
+			} else {
+				//取全部员工
+				$.ajax({
+					url: "../../userAdmin/users",
+					datatype: "json",
+					type: "get",
+					data: {},
+					success: function (data, status, xhr) {
+						$("#userTable").empty();
+						allData = eval("(" + data + ")");
+						users = allData;
+						initTablePage();
+					} 
+				});
+			}
+		});
+		
+		function fillCheckBox() {
+			$.ajax({
+				url: "../../shareCusAdmin/selectByCusId/" + cusId,
+				datatype: "text",
+				type: "get",
+				data: {},
+				success: function (data) {
+					$.each(data, function(index, item) {
+						$("input[name='selectFlag'][value=" + item.authorizedPerson + "]").attr('checked', true);
+					});
+				}
+			});
+		}
+		
+		function initTablePage() {
+			totalRecords = users.length;
+			
+			//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+			if(totalRecords % pageSize != 0) {
+				totalPages = Math.floor(totalRecords / pageSize) + 1;
+			} else {
+				totalPages = totalRecords / pageSize;
+			}
+			
+			//根据totalPages初始化页码插件
+			$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+			$("#Pagination").pagination(totalPages);
+		}
+		
+		var pageSize = 10;
+		var pageNo = 1;//当前的页码
+		var totalRecords = 0;
+		var totalPages = 0;
+		
+		function circleInfos() {
+			$("#userTable").empty();
+			$.each(users, function(index, item) {
+				if(index >= ((pageNo-1)*pageSize) && index < (pageNo*pageSize)) {
+					addUserInfo(index, item);
+				} else if(index > (pageNo*pageSize)) {
+					return;
+				}
+		    });
+
+			//初始化层的大小
+			initLayerSize();
+			fillCheckBox();
+		}
+		/**
+		 * 填充查看所有用户的列表
+		 */
+		function addUserInfo(index, item) {
+			var str = "";
+			if(index%2 == 0) {
+				str = str + "<tr class=\"light\" style=\"font-size:12px;\" onclick=\"checkRadio(" + item.userId + ")\">";
+			} else {
+				str = str + "<tr class=\"active\" style=\"font-size:12px;\" onclick=\"checkRadio(" + item.userId + ")\">";
+			}
+			str = str + "<input name=\"userId\" type=\"hidden\" value=" + item.userId + " >" + 
+							"<input name=\"userName\" type=\"hidden\" value=" + item.userName + ">" + 
+							"<input name=\"positionId\" type=\"hidden\" value=" + item.positionId + ">" + 
+							"<td><input name=\"selectFlag\" readonly type=\"checkbox\" id=\"checkbox" + item.userId + "\" value=" + item.userId + " onclick=\"checkRadio(" + item.userId + ")\"></td>" +
+							"<td>" + (index+1) + "</td>" + 
+						    "<td>" + item.userNo + "</td>" + 
+							"<td><span name=\"add-g1\" ><a onclick=\"fillUserDetail(" + item.userId + ")\" style=\"cursor:pointer\">" + item.userName + "</a></span></td>" + 
+							"<td>" + item.sex + "</td>" +
+						    "<td>" + item.telephone + "</td>" +
+						    "<td>" + item.positionName + "</td>" +
+						    "<td>" + item.deptName + "</td>" +
+						    "</tr>"; 
+			$("#userTable").append(str);
+		}
+		
+		function checkRadio(id) {
+			var checked = document.getElementById("checkbox" + id).checked;
+			document.getElementById("checkbox" + id).checked = checked ? false: true;
+		}
+		
+		/* function clickCheckBox(id) {
+			var checked = document.getElementById("checkbox" + id).checked;
+			document.getElementById("checkbox" + id).checked = checked ? false: true;
+		} */
+		
+		function fillUserDetail(userId) {
+			admin_role_add('<strong>人员查看</strong>','viewUser.html?userId=' + userId,'700','360');
+		}
+		
+		function getUserByKey() {
+			var keyWords = $("#keyWords").val();
+			var posKey = $("#posKey").val();
+			users = new Array();
+			$.each(allData, function(index, item) {
+				if((item.userName.indexOf(keyWords) != -1 || item.userNo.indexOf(keyWords) != -1) && item.positionName.indexOf(posKey) != -1) {
+					users.push(item);
+				}
+			});
+			
+			initTablePage();
+		} 
+		
+		/**
+		 * 选定后，填充打开页面相关属性
+		 */
+		function selectOk() {
+			var shareCuses =[]; 
+			$('input[name="selectFlag"]:checked').each(function() {
+				var obj = {
+						"authorizer": userId,
+						"authorizedPerson": $(this).val(),
+						"cusId": cusId
+				};
+				shareCuses.push(obj);
+			});
+			$.ajax({
+				url: "../../shareCusAdmin/updateShareCus/" + cusId,
+				datatype: "text",
+				type: "put",
+				data: JSON.stringify(shareCuses),
+				success: function (data) {
+					var json = eval("(" + data + ")");
+					if(json.status == 1) {
+						new UserCommon().check("success", "客户共享成功",null,"success");
+						setTimeout(function() {
+							new UserCommon().layer_close();
+						},1000);
+					} else {
+						new UserCommon().check("success",json.msg,null,"fail");
+					}
+				}
+			});
+		}
+		
+		/*管理员-角色-添加*/
+		function admin_role_add(title,url,w,h){
+			new UserCommon().layer_show(title,url,w,h);
+		}
+</script>
+</head>
+<body>
+<div style="width:100%;position:relative">
+	<div style="width:100%;height:50px;background:#f7f7f7;">
+		<span style="font-size:13px;margin-left:20px;">姓名或工号:</span><input type="text" id="keyWords" style="margin-top:15px;margin-left:10px;">
+		<span style="font-size:13px;margin-left:20px;">岗位名称:</span><input type="text" id="posKey" style="margin-top:15px;margin-left:10px;">
+		<button type="button" class="btn btn-default" style="background:#f7f7f7;border:0px;padding-left:0px;font-size:13px;" onclick="getUserByKey()">
+			<span class="glyphicon glyphicon-search" style="color:#84b03d;"></span> 搜索
+		</button>
+	</div>
+	<div class="table-responsive" >
+		<table class="table" style="text-align:center;border-bottom:1px solid #d6d6d6">
+			<thead>
+				<tr style="background:#ededed;">
+					<th style="text-align:center"></th>
+					<th style="text-align:center">序号</th>
+					<th style="text-align:center">用户工号</th>
+					<th style="text-align:center">姓名</th>
+					<th style="text-align:center">性别</th>
+					<th style="text-align:center">电话</th>
+					<th style="text-align:center">岗位</th>
+					<th style="text-align:center">所在部门</th>
+				</tr>
+			</thead>
+			<tbody id="userTable">
+			</tbody>
+		</table> 
+		<div class="edit-bottom">
+			<button type="button" class="btn btn-xs edit-save btn-primary" onclick="selectOk()"><i class="glyphicon glyphicon-ok"></i>&nbsp;保存</button>
+		</div>
+	</div>
+	<div class="pages">
+        <div id="Pagination"></div>
+        <div class="searchPage">
+          <span class="page-sum" id="sumPage"></span>
+          <span class="page-go">跳转<input type="text">页</span>
+          <a href="javascript:;" class="page-btn">GO</a>
+        </div>
+    </div>
+    <!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+</div>
+</body>
+</html>

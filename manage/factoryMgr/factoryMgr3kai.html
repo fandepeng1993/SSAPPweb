@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>库存管理</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.autocomplete.js"></script>
+	<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript" src="../../js/plugins/suggest/bootstrap-suggest.min.js"></script>
+	
+
+	<script type="text/javascript">
+		//设定查看的权限。1：查看所有；2：查看直属下级；3：查看所有下级；4：查看自己；
+		var selPri = -1;
+		//当前页面所属菜单的menuCode
+	    var menuCode;
+		
+	    var searchDTO = {};
+	    var fieldList;
+		//根据权限渲染页面
+		$(document).ready(function(){
+			//搜索自动匹配下拉框
+			menuCode = Request["menuCode"];
+			$.ajax({
+			      url: "../../sessionAdmin/getPri",
+			      datatype: "json",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+			    	  var pathname = window.location.pathname;
+			    	  var url = pathname.substring(pathname.indexOf("/", 1) + 1, pathname.length);
+			    	  $.each(eval("(" + data + ")"), function(index, item) {
+			      			if(item.menuUrl == url) {
+			      				searchDTO = {
+		      							"proName":"",
+		      							"dSpec":"",
+		      							"dSteel":"",
+		      							"dStandards":"",
+		      					};
+			      				if(item.menuName == "查看") {
+			      					initTable("../../viewWmsProAdmin/vwpsByPageNoAndSize");
+			      					lookShow();
+			      				} else if(item.menuName == "增加") {
+			      					$("#add-g").show();
+			      				} else if(item.menuName == "修改") {
+			      					$("#update-g").show();
+			      				} else if(item.menuName == "删除") {
+			      					$("#delete-g").show();
+			      				}
+			      			}
+		    	  		});
+			      	} 
+				});
+			});
+		
+			function lookShow() {
+				$("#search-g").show();
+				$("#keySpan").show();
+				$("#keyWords").show();
+			}
+			
+			var products = null;
+			function initTable(url) {
+				url = "../../viewWmsProAdmin/countAllNumByDTO";
+				$.ajax({
+					url: url,
+					datatype: "json",
+					type: "post",
+					data: JSON.stringify(searchDTO),
+					success: function (data, status, xhr) {
+						getSearchFieldList();
+						
+						$("#productTable").empty();
+						totalRecords = data;
+						//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+						if(totalRecords % pageSize != 0) {
+							totalPages = Math.floor(totalRecords / pageSize) + 1;
+						} else {
+							totalPages = totalRecords / pageSize;
+						}
+						//根据totalPages初始化页码插件
+						$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+						$("#Pagination").pagination(totalPages);
+					} 
+				});
+			}
+			var pageSize = 10;
+			var pageNo = 1;//当前的页码
+			var totalRecords = 0;
+			var totalPages = 0;
+	
+			function circleInfos() {
+				var url = "../../viewWmsProAdmin/vwpsALLByDTOLazy/" + pageNo + "," + pageSize;
+				$.ajax({
+					url: url,
+					datatype: "json",
+					type: "post",
+					data: JSON.stringify(searchDTO),
+					success: function (data, status, xhr) {
+						$("#productTable").empty();
+						products = data;
+						$.each(data, function(index, item) {
+							new UserCommon().fillTable("productTable", item, (pageNo-1)*pageSize + index);
+							//为checkbox添加监听事件
+							new UserCommon().checkboxListener();
+						});
+					} 
+				});
+			}
+			
+	
+			function getProductsByKey() {
+				pageNo = 1;
+				searchDTO = $("#searchForm").serializeNestedObject();
+				url = "../../viewWmsProAdmin/countAllNumByDTO";
+				$.ajax({
+					url: url,
+					datatype: "json",
+					type: "post",
+					data: JSON.stringify(searchDTO),
+					success: function (data, status, xhr) {
+						$("#productTable").empty();
+						totalRecords = data;
+						//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+						if(totalRecords % pageSize != 0) {
+							totalPages = Math.floor(totalRecords / pageSize) + 1;
+						} else {
+							totalPages = totalRecords / pageSize;
+						}
+						//根据totalPages初始化页码插件
+						$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+						$("#Pagination").pagination(totalPages);
+					}
+				});
+			}
+			
+			function getSearchFieldList(){
+				$.ajax({
+					url: "../../viewWmsProAdmin/getAllSearchFieldList",
+					datatype: "json",
+					type: "get",
+					data: {},
+					success: function (data, status, xhr) {
+						fieldList = data;
+						getFieldList();
+					}
+				});
+			}
+			
+			
+		 	function getFieldList() {
+		 		for(var type in fieldList){
+					dealInput(type);
+					$("#"+type).keyup(function() {
+						if($("#"+type).val() == "") {
+							dealInput(type);
+						}
+				   	}); 
+				}			
+ 			}	
+
+			var testdataBsSuggest;
+			function dealInput(type){
+				var useArr = [];
+				for(var index=0;index<fieldList[type].length;index++){
+					var a = fieldList[type][index];
+					var useObj = {
+							/* "id":index,
+							"word":type, */
+							"description":a
+					}
+					useArr.push(useObj);
+				}
+	        	testdataBsSuggest=$("#"+type).bsSuggest({indexKey: 0,listAlign: "auto","data":{"value":useArr,"defaults":"http://lzw.me"}});
+			}
+	</script>
+</head>
+<body>
+	<div class="bt-div">
+		<div class="bt-div-in" style="">
+			<form id="searchForm">
+	       		<div class="search-select-input">
+	       			<div class="input-group">
+	       			<label  class="control-label">品名： </label>
+	                     <input type="text" class="form-control" name="proName" id="proName">
+	                     <div class="input-group-btn">
+	                         <button type="button" class="btn btn-white dropdown-toggle" data-toggle="dropdown">
+	                             <span class="caret"></span>
+	                         </button>
+	                         <ul class="dropdown-menu dropdown-menu-right" role="menu">
+	                         </ul>
+	                     </div>
+                 	</div>
+	       		</div>
+	       		<div class="search-select-input">
+	       			<div class="input-group">
+	       			<label  class="control-label">规格： </label>
+	                     <input type="text" class="form-control" name="dSpec" id="dSpec">
+	                     <div class="input-group-btn">
+	                         <button type="button" class="btn btn-white dropdown-toggle" data-toggle="dropdown">
+	                             <span class="caret"></span>
+	                         </button>
+	                         <ul class="dropdown-menu dropdown-menu-right" role="menu">
+	                         </ul>
+	                     </div>
+                 	</div>
+	       		</div>
+	       		<div class="search-select-input">
+	       			<div class="input-group">
+	       			<label  class="control-label">钢种： </label>
+	                     <input type="text" class="form-control" name="dSteel" id="dSteel">
+	                     <div class="input-group-btn">
+	                         <button type="button" class="btn btn-white dropdown-toggle" data-toggle="dropdown">
+	                             <span class="caret"></span>
+	                         </button>
+	                         <ul class="dropdown-menu dropdown-menu-right" role="menu">
+	                         </ul>
+	                     </div>
+                 	</div>
+	       		</div>
+	       		<div class="search-select-input-four">
+	       			<div class="input-group">
+	       			<label  class="control-label">产品标准： </label>
+	                     <input type="text" class="form-control" name="dStandards" id="dStandard">
+	                     <div class="input-group-btn">
+	                         <button type="button" class="btn btn-white dropdown-toggle" data-toggle="dropdown">
+	                             <span class="caret"></span>
+	                         </button>
+	                         <ul class="dropdown-menu dropdown-menu-right" role="menu">
+	                         </ul>
+	                     </div>
+                 	</div>
+	       		</div>
+			</form>
+				<button class="btn btn-default bt-div-bt" id="search-g" style="margin-top:1px;margin-left:30px;" onclick="getProductsByKey()">
+					<span class="glyphicon glyphicon-search color-zn"></span> 搜索
+				</button>
+		</div>
+	</div>
+	<div class="bt-div-two-table">
+		 <div id="show_out">
+          <ul class="show_table clearfix">
+             <li>
+                 <caption>已有备货</caption>
+                 <table class="table table-bordered">
+                     <thead>
+					<tr class="table-first-tr" fieldType="controlCB" fieldName="id">
+						<th fieldType="num" fieldName="">序号</th>
+						<th fieldType="text" fieldName="proName">产品名称</th>
+						<th fieldType="text" fieldName="warehousecode">仓库</th>
+						<th fieldType="text" fieldName="dSteel">钢种</th>
+						<th fieldType="text" fieldName="dSpec">规格</th>
+						<th fieldType="text" fieldName="dStandards">标准</th>
+						<th fieldType="text" fieldName="dQuantity">库存数量</th>
+						<th fieldType="text" fieldName="dWeight">库存重量</th>
+					</tr>
+				</thead>
+				<tbody id="allproductTable">
+				</tbody>
+                 </table>
+             </li>
+              <li>
+                  <caption>全部数据</caption>
+                  <table class="table table-bordered">
+                   <thead>
+					<tr class="table-first-tr" fieldType="controlCB" fieldName="id">
+						<th fieldType="num" fieldName="">序号</th>
+						<th fieldType="text" fieldName="proName">产品名称</th>
+						<th fieldType="text" fieldName="warehousecode">仓库</th>
+						<th fieldType="text" fieldName="dSteel">钢种</th>
+						<th fieldType="text" fieldName="dSpec">规格</th>
+						<th fieldType="text" fieldName="dStandards">标准</th>
+						<th fieldType="text" fieldName="dQuantity">库存数量</th>
+						<th fieldType="text" fieldName="dWeight">库存重量</th>
+					</tr>
+				</thead>
+				<tbody id="productTable">
+				</tbody>
+                  </table>
+              </li>
+              <li>
+                  <caption>合同数据</caption>
+                  <table class="table table-bordered">
+                  <thead>
+					<tr class="table-first-tr" fieldType="controlCB" fieldName="id">
+						<th fieldType="num" fieldName="">序号</th>
+						<th fieldType="text" fieldName="proName">产品名称</th>
+						<th fieldType="text" fieldName="warehousecode">仓库</th>
+						<th fieldType="text" fieldName="dSteel">钢种</th>
+						<th fieldType="text" fieldName="dSpec">规格</th>
+						<th fieldType="text" fieldName="dStandards">标准</th>
+						<th fieldType="text" fieldName="dQuantity">库存数量</th>
+						<th fieldType="text" fieldName="dWeight">库存重量</th>
+					</tr>
+				</thead>
+				<tbody id="productTable">
+				</tbody>
+                  </table>
+              </li>
+          </ul>
+        </div>
+		<!-- 分页 -->
+		<div class="pages">
+	        <div id="Pagination"></div>
+	        <div class="searchPage">
+	          <span class="page-sum" id="sumPage"></span>
+	          <span class="page-go">跳转<input type="text">页</span>
+	          <a class="page-btn" href="javascript:;">GO</a>
+	        </div>
+	    </div>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	
+	<script>
+	$('#show_out .show_table li').click(function(){
+	    $(this).css('width','70%').siblings().css('width','10%');
+	})</script>	
+</body>
+</html>

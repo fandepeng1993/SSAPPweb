@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.mes.dao.IViewOnepieceflowDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.mes.pojo.ViewOnepieceflow" >
+    <result column="ProduceM_Id" property="producemId" jdbcType="INTEGER" />
+    <result column="ProduceM_Order" property="producemOrder" jdbcType="INTEGER" />
+    <result column="ProduceM_RouteNo" property="producemRouteno" jdbcType="INTEGER" />
+    <result column="ProduceM_Name" property="producemName" jdbcType="VARCHAR" />
+    <result column="ProduceM_BillNo" property="producemBillno" jdbcType="VARCHAR" />
+    <result column="ProduceM_BeginDate" property="producemBegindate" jdbcType="VARCHAR" />
+    <result column="ProduceM_EndDate" property="producemEnddate" jdbcType="VARCHAR" />
+    <result column="ProduceM_Spec" property="producemSpec" jdbcType="VARCHAR" />
+    <result column="ProduceM_Number" property="producemNumber" jdbcType="INTEGER" />
+    <result column="ProduceM_Weight" property="producemWeight" jdbcType="DECIMAL" />
+    <result column="P_Type" property="pType" jdbcType="INTEGER" />
+    <result column="DeptID" property="deptid" jdbcType="INTEGER" />
+    <result column="ProduceM_StartTime" property="producemStarttime" jdbcType="VARCHAR" />
+    <result column="ProduceM_EndTime" property="producemEndtime" jdbcType="VARCHAR" />
+    <result column="ProduceM_Warehouse" property="producemWarehouse" jdbcType="INTEGER" />
+    <result column="ProduceM_WarehouseName" property="producemWarehousename" jdbcType="VARCHAR" />
+    <result column="RealTime" property="realtime" jdbcType="BIGINT" />
+    <result column="TimeOut" property="timeout" jdbcType="BIGINT" />
+    <result column="ContractNo" property="contractno" jdbcType="VARCHAR" />
+    <result column="DeliveryDate" property="deliverydate" jdbcType="VARCHAR" />
+  </resultMap>
+  <resultMap id="DTOResultMap" type="com.sss.pojo.dto.OnePieceFlowDataDTO" >
+    <result column="processCount" property="processCount" jdbcType="INTEGER" />
+    <result column="totalRealTime" property="totalRealTime" jdbcType="INTEGER" />
+    <result column="totalTimeOut" property="totalTimeOut" jdbcType="INTEGER" />
+  </resultMap>
+  <cache 
+  	eviction="FIFO" 
+  	flushInterval="900000" 
+	size="512" 
+	readOnly="true"/> 
+  <select id="getViewEntitys" resultMap="BaseResultMap" >
+    select ProduceM_BillNo,ContractNo from view_onepieceflow 
+	where ProduceM_BillNo like "%"#{key1,jdbcType=VARCHAR}"%" or ProduceM_BillNo like "%"#{key2,jdbcType=VARCHAR}"%" 
+	group by ProduceM_BillNo
+  </select>
+  <select id="getVofsByPageNoAndSize" resultMap="BaseResultMap" >
+    select ProduceM_BillNo,ContractNo from view_onepieceflow 
+	where ProduceM_BillNo like "%"#{key1,jdbcType=VARCHAR}"%" or ProduceM_BillNo like "%"#{key2,jdbcType=VARCHAR}"%" 
+	group by ProduceM_BillNo limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="getDetailFromProduceM_BillNo" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select ProduceM_Name,ProduceM_Weight,ProduceM_Number,ProduceM_BeginDate,ProduceM_EndDate,ProduceM_StartTime,ProduceM_EndTime,RealTime,TimeOut from view_onepieceflow 
+    where ProduceM_BillNo=#{ProduceM_BillNo,jdbcType=VARCHAR}
+  </select>
+  <select id="getVofDTOsFromPro_B" resultMap="DTOResultMap" parameterType="java.lang.String" >
+    select count(*) processCount, sum(RealTime) totalRealTime, sum(TimeOut) totalTimeOut from view_onepieceflow
+    where ProduceM_BillNo=#{ProduceM_BillNo,jdbcType=VARCHAR}
+  </select>
+  <select id="getEntitysCount" resultType="java.lang.Integer" >
+    select count(*) from 
+    (select ProduceM_BillNo from view_onepieceflow 
+	where ProduceM_BillNo like "%"#{key1,jdbcType=VARCHAR}"%" or ProduceM_BillNo like "%"#{key2,jdbcType=VARCHAR}"%"
+	group by ProduceM_BillNo) t
+  </select>
+  
+  <select id="selectByContractNos" resultMap="BaseResultMap" >
+  	select * from view_onepieceflow 
+		where 
+			substring(ContractNo, 1, LOCATE('-', ContractNo, 7)-1) in 
+		<foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+		  #{item}  
+		</foreach> 
+		group by ProduceM_BillNo
+	limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+</mapper>

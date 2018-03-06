@@ -1,0 +1,35 @@
+<ion-view title="重置密码" ng-controller="ForgetCtrl">
+	<ion-nav-buttons side="right">
+        <a class="button button-clear confirm-top-icon" ng-click="doSomething()" href="#">
+            登录
+        </a>
+    </ion-nav-buttons>
+    <ion-content overflow-scroll="false" scrollbar-y="false">
+    	<div class="list list-inset confirm-top-content-two">
+			<label class="item item-input forgetpw-font"><!-- 加入item-select -->
+				<i class="icon ion-iphone placeholder-icon"></i>
+				<input type="text" placeholder="请输入常用手机号">
+				<!-- 假如加入选项
+				<select>
+					<option selected="">+86</option>
+					<option >+7</option>
+					<option>+1</option>
+				</select> -->
+				<!-- <a href="#/country" class="button button-clear" style="color:#808080;letter-spacing:1px;width:110px;">
+        			+86 <i class="ion-chevron-right" style="color:#ccc"></i>
+      			</a> -->
+			</label>
+        </div>
+        <div class="list list-inset confirm-top-content-two">
+			<label class="item item-input">
+				<i class="icon ion-compose placeholder-icon"></i>
+				<input type="text" placeholder="请输入验证码">
+				<!-- <div side="right" class="forgetpw-true">
+					0 1 9 6 
+				</div> -->
+			</label>
+			<p>请输入您注册时填写的手机号，我们会发给您一条验证码短信，请注意查收。</p>
+			<button class="button confirm-button" ng-click="showConfirm()">下一步</button>
+        </div>
+    </ion-content>
+</ion-view>

@@ -1,0 +1,481 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.ICheckDataDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.CheckData" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="date" property="date" jdbcType="VARCHAR" />
+    <result column="column1" property="column1" jdbcType="DECIMAL" />
+    <result column="column2" property="column2" jdbcType="DECIMAL" />
+    <result column="column3" property="column3" jdbcType="DECIMAL" />
+    <result column="column4" property="column4" jdbcType="DECIMAL" />
+    <result column="column5" property="column5" jdbcType="DECIMAL" />
+    <result column="column6" property="column6" jdbcType="DECIMAL" />
+    <result column="baseSalary" property="baseSalary" jdbcType="DECIMAL" />
+    <result column="actualSalary" property="actualSalary" jdbcType="DECIMAL" />
+    <result column="state" property="state" jdbcType="INTEGER" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    <result column="updatedate" property="updatedate" jdbcType="VARCHAR" />
+    <result column="columnNames" property="columnNames" jdbcType="VARCHAR" />
+    
+    <association property="user" javaType="com.sss.pojo.User">
+		<id column="cdu_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="cdu_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="pu_position_name" property="position.positionName" jdbcType="VARCHAR" />
+	    <result column="cdu_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="cdu_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="cdu_user_photoUrl" property="photoUrl" jdbcType="VARCHAR" />
+	    <result column="cdu_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="cdu_user_status" property="status" jdbcType="VARCHAR" />
+	    <result column="cdu_user_basePay" property="basePay" jdbcType="VARCHAR" />
+	    <result column="cdu_user_overtimePay" property="overtimePay" jdbcType="VARCHAR" />
+		<result column="cdu_user_probationPeriod" property="probationPeriod" jdbcType="INTEGER" />
+		<result column="cdu_user_probationWage" property="probationWage" jdbcType="INTEGER" />
+    	<result column="cdu_user_entrydate" property="entrydate" jdbcType="INTEGER" />
+	</association>		
+  </resultMap>
+  <sql id="associateQuery">
+ 	select 
+  		cd.*,
+  		u.user_id as cdu_user_id,
+  		u.user_name as cdu_user_name,
+  		u.user_no as cdu_user_no,
+  		u.position_id as cdu_position_id,
+  		u.sex as cdu_user_sex,
+  		u.status as cdu_user_status,
+		u.photoUrl as cdu_user_photoUrl,
+		u.basePay as cdu_user_basePay,
+		u.overtimePay as cdu_user_overtimePay,
+		u.probationPeriod as cdu_user_probationPeriod,
+		u.probationWage as cdu_user_probationWage,
+		u.entryDate as cdu_user_entrydate,
+		p.position_name as pu_position_name
+    from 
+    	ss_checkdata cd
+   	left join
+   		ss_user u
+   	on
+   		cd.userId = u.user_id
+   	left join 
+   		ss_position p
+   	on
+   		u.position_id = p.position_id
+  </sql>
+ <!--  销售部导出查询 -->
+  <sql id="associateQuery2">
+  	SELECT
+		cd.id as cd_id,
+		SUBSTRING(cd.date,1,7) as cd_date,
+		u.user_name as ucd_uesrName,
+    	p.position_name as pcd_positionName,
+		cd.column1 as cd1_column1,
+		cd.column2 as cd1_column2,
+		cd.column3 as cd1_column3,
+		cd.column4 as cd1_column4,
+		cd.actualSalary as cd1_actualSalary,
+		cd1.column1 as cd2_column1,
+		cd1.column2 as cd2_column2,
+		cd1.column3 as cd2_column3,
+		cd1.actualSalary as cd2_actualSalary,
+		cd2.column1 as cd3_column1,
+		cd2.actualSalary as cd3_actualSalary,
+		cd3.column1 as cd4_column1,
+		cd3.actualSalary as cd4_actualSalary
+	from 
+		ss_checkdata cd 
+	LEFT JOIN
+    	ss_user u
+	ON 
+		cd.userId =u.user_id
+	LEFT JOIN
+		ss_position p
+	ON
+		u.position_id=p.position_id
+	LEFT JOIN
+		ss_checkdata cd1 
+	ON
+		cd.userId = cd1.userId and cd.date = cd1.date
+	LEFT JOIN 
+		ss_checkdata cd2
+	ON
+		cd1.userId = cd2.userId and cd1.date = cd2.date
+	LEFT JOIN 
+		ss_checkdata cd3 
+	ON
+		cd2.userId = cd3.userId and cd2.date = cd3.date
+	where cd.name = "订单情况" and cd1.name = "利润情况" and cd2.name = "回款情况" AND cd3.name ="出库情况"
+  </sql>
+ 
+  <!-- 返回一个list的写法 -->
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by u.user_name
+  </select>  
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where cd.id = #{id,jdbcType=INTEGER}
+  </select>
+   <select id="selectByUserName" resultMap="BaseResultMap"  >
+    <include refid="associateQuery" />
+    where u.user_name like "%"#{keywords,jdbcType=VARCHAR}"%" order by date desc
+  </select>
+  <select id="selectByUidAndDate" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where cd.userId = #{userId,jdbcType=INTEGER} 
+    	and cd.date &gt;= #{fromdate,jdbcType=VARCHAR}
+    	and cd.date &lt;= #{enddate,jdbcType=VARCHAR}
+    	and (cd.state = #{state,jdbcType=INTEGER} OR cd.state = #{stateAdd,jdbcType=INTEGER}) 
+    	and cd.column1 IS NOT NULL order by name
+  </select>
+  <select id="selectByUidsAndDate" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where cd.userId in 
+	<foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>  
+    	and cd.date &gt;= #{fromdate,jdbcType=VARCHAR}
+    	and cd.date &lt;= #{enddate,jdbcType=VARCHAR}
+    	order by name
+  </select>
+  <select id="selectByDate" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where cd.date &gt;= #{fromdate,jdbcType=VARCHAR}
+    	and cd.date &lt;= #{enddate,jdbcType=VARCHAR}
+  </select>
+<!--   <select id="selMapByUserName"  parameterType="Map" resultType="java.util.LinkedHashMap" >
+    <include refid="associateQuery2" />
+    and u.user_name like "%"#{keywords,jdbcType=VARCHAR}"%" order by cd_date desc
+  </select>
+   <select id="getDatasByUIds"  parameterType="Map" resultType="java.util.LinkedHashMap" >
+    <include refid="associateQuery2" />
+    and cd.userId in 
+    <foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>  
+    order by cd_date desc
+  </select> -->
+   <select id="selAll"  parameterType="Map" resultType="java.util.LinkedHashMap" >
+    <include refid="associateQuery2" /> order by cd.id
+  </select>
+   <select id="selForExcel" parameterType="Map" resultType="java.util.LinkedHashMap" >
+    <include refid="associateQuery2" /> 
+		and p.dept_id=#{deptId,jdbcType=INTEGER} 
+		and cd.date &gt;= #{fromdate,jdbcType=VARCHAR} 
+		and cd.date &lt;= #{enddate,jdbcType=VARCHAR}
+		order by cd.id
+  </select> 
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_checkdata
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.CheckData" >
+    insert into ss_checkdata (id, name, userId, 
+      date, column1, column2, 
+      column3, column4, column5, 
+      column6, baseSalary, actualSalary,
+      state,createdate,updatedate,columnNames
+      )
+    values (#{id,jdbcType=INTEGER}, #{name,jdbcType=VARCHAR}, #{user.userId,jdbcType=INTEGER}, 
+      #{date,jdbcType=VARCHAR}, #{column1,jdbcType=DECIMAL}, #{column2,jdbcType=DECIMAL}, 
+      #{column3,jdbcType=DECIMAL}, #{column4,jdbcType=DECIMAL}, #{column5,jdbcType=DECIMAL}, 
+      #{column6,jdbcType=DECIMAL}, #{baseSalary,jdbcType=DECIMAL}, #{actualSalary,jdbcType=DECIMAL},
+      #{state,jdbcType=INTEGER},now(),now(),#{columnNames,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertEntitys" parameterType="java.util.List">
+	insert into ss_checkdata (id, name, userId, 
+		date, column1, column2, 
+		column3, column4, column5, 
+		column6, baseSalary, actualSalary,
+		state,createdate,updatedate,columnNames
+		)
+	values
+	<foreach collection="list" item="item" index="index" separator=",">
+		(null, #{item.name,jdbcType=VARCHAR}, #{item.user.userId,jdbcType=INTEGER},
+		#{item.date,jdbcType=VARCHAR},#{item.column1,jdbcType=DECIMAL},#{item.column2,jdbcType=DECIMAL},
+		#{item.column3,jdbcType=DECIMAL},#{item.column4,jdbcType=DECIMAL},#{item.column5,jdbcType=DECIMAL},
+		#{item.column6,jdbcType=DECIMAL},#{item.baseSalary,jdbcType=DECIMAL},#{item.actualSalary,jdbcType=DECIMAL},
+		#{item.state,jdbcType=INTEGER},now(),now(),#{item.columnNames,jdbcType=VARCHAR}
+		)
+	</foreach>
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.CheckData" >
+    insert into ss_checkdata
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="name != null" >
+        name,
+      </if>
+      <if test="user != null and user.userId != null" >
+        userId,
+      </if>
+      <if test="date != null" >
+        date,
+      </if>
+      <if test="column1 != null" >
+        column1,
+      </if>
+      <if test="column2 != null" >
+        column2,
+      </if>
+      <if test="column3 != null" >
+        column3,
+      </if>
+      <if test="column4 != null" >
+        column4,
+      </if>
+      <if test="column5 != null" >
+        column5,
+      </if>
+      <if test="column6 != null" >
+        column6,
+      </if>
+      <if test="baseSalary != null" >
+        baseSalary,
+      </if>
+      <if test="actualSalary != null" >
+        actualSalary,
+      </if>
+      <if test="state != null" >
+        state,
+      </if>
+      createdate,
+      updatedate,
+      <if test="columnNames != null" >
+        columnNames,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="name != null" >
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="user != null and user.userId != null" >
+        #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="date != null" >
+        #{date,jdbcType=VARCHAR},
+      </if>
+      <if test="column1 != null" >
+        #{column1,jdbcType=DECIMAL},
+      </if>
+      <if test="column2 != null" >
+        #{column2,jdbcType=DECIMAL},
+      </if>
+      <if test="column3 != null" >
+        #{column3,jdbcType=DECIMAL},
+      </if>
+      <if test="column4 != null" >
+        #{column4,jdbcType=DECIMAL},
+      </if>
+      <if test="column5 != null" >
+        #{column5,jdbcType=DECIMAL},
+      </if>
+      <if test="column6 != null" >
+        #{column6,jdbcType=DECIMAL},
+      </if>
+      <if test="baseSalary != null" >
+        #{baseSalary,jdbcType=DECIMAL},
+      </if>
+      <if test="actualSalary != null" >
+        #{actualSalary,jdbcType=DECIMAL},
+      </if>
+      <if test="state != null" >
+        #{state,jdbcType=INTEGER},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+        now(),
+      <if test="columnNames != null" >
+        #{columnNames,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.CheckData" >
+    update ss_checkdata
+    <set >
+      <if test="name != null" >
+        name = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="user != null and user.userId != null" >
+        userId = #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="date != null" >
+        date = #{date,jdbcType=VARCHAR},
+      </if>
+      <if test="column1 != null" >
+        column1 = #{column1,jdbcType=DECIMAL},
+      </if>
+      <if test="column2 != null" >
+        column2 = #{column2,jdbcType=DECIMAL},
+      </if>
+      <if test="column3 != null" >
+        column3 = #{column3,jdbcType=DECIMAL},
+      </if>
+      <if test="column4 != null" >
+        column4 = #{column4,jdbcType=DECIMAL},
+      </if>
+      <if test="column5 != null" >
+        column5 = #{column5,jdbcType=DECIMAL},
+      </if>
+      <if test="column6 != null" >
+        column6 = #{column6,jdbcType=DECIMAL},
+      </if>
+      <if test="baseSalary != null" >
+        baseSalary = #{baseSalary,jdbcType=DECIMAL},
+      </if>
+      <if test="actualSalary != null" >
+        actualSalary = #{actualSalary,jdbcType=DECIMAL},
+      </if>
+      <if test="state != null" >
+        #{state,jdbcType=INTEGER},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+      <if test="updatedate != null and updatedate != ''" >
+        updatedate = #{updatedate,jdbcType=VARCHAR},
+      </if>
+      <if test="columnNames != null" >
+        #{columnNames,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.CheckData" >
+    update ss_checkdata
+    set name = #{name,jdbcType=VARCHAR},
+      userId = #{user.userId,jdbcType=INTEGER},
+      date = #{date,jdbcType=VARCHAR},
+      column1 = #{cd_column1,jdbcType=DECIMAL},
+      column2 = #{cd_column2,jdbcType=DECIMAL},
+      column3 = #{cd_column3,jdbcType=DECIMAL},
+      column4 = #{column4,jdbcType=DECIMAL},
+      column5 = #{column5,jdbcType=DECIMAL},
+      column6 = #{column6,jdbcType=DECIMAL},
+      baseSalary = #{baseSalary,jdbcType=DECIMAL},
+      actualSalary = #{actualSalary,jdbcType=DECIMAL},
+      state = #{state,jdbcType=INTEGER},
+      createdate = #{createdate,jdbcType=VARCHAR},
+      updatedate = #{updatedate,jdbcType=VARCHAR},
+      columnNames = #{columnNames,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+   <!--修改默认订单量  -->
+	<!--   <update id="updateMonthOrder" parameterType="com.sss.pojo.CheckData" >
+	    update ss_checkdata
+	    set 
+	      column1 = #{order,jdbcType=DECIMAL}
+	    where userId = #{userId,jdbcType=INTEGER} and 
+	    date &gt;= #{fromdate,jdbcType=VARCHAR} and
+	    date &lt;= #{enddate,jdbcType=VARCHAR} and 
+	    name = "订单量"
+	  </update> --> 
+	<!--   修改审核状态 -->
+	<update id="updateState" >
+	    update ss_checkdata
+	    set 
+	      state = #{state,jdbcType=INTEGER},
+	      updatedate = now() 
+	    where userId = #{userId,jdbcType=INTEGER} and 
+	    date &gt;= #{fromdate,jdbcType=VARCHAR} and
+	    date &lt;= #{enddate,jdbcType=VARCHAR} 
+	</update>
+	  
+	<update id="updateReasonId">
+	    update ss_checkdata
+	    set    
+	      state = state - 1
+	    where id in 
+	      <foreach item="item" index="index" collection="dataIds" open="(" separator="," close=")">  
+				#{item}  
+		  </foreach> 
+	</update> 
+	<update id="updateStrong" >
+	    update ss_checkdata
+	    <set >
+	      <if test="cd.name != null" >
+	        name = #{cd.name,jdbcType=VARCHAR},
+	      </if>
+	      <if test="cd != null and cd.user != null and cd.user.userId != null" >
+	        userId = #{cd.user.userId,jdbcType=INTEGER},
+	      </if>
+	      <if test="cd.column1 != null" >
+	        column1 = #{cd.column1,jdbcType=DECIMAL},
+	      </if>
+	      <if test="cd.column2 != null" >
+	        column2 = #{cd.column2,jdbcType=DECIMAL},
+	      </if>
+	      <if test="cd.column3 != null" >
+	        column3 = #{cd.column3,jdbcType=DECIMAL},
+	      </if>
+	      <if test="cd.column4 != null" >
+	        column4 = #{cd.column4,jdbcType=DECIMAL},
+	      </if>
+	      <if test="cd.column5 != null" >
+	        column5 = #{cd.column5,jdbcType=DECIMAL},
+	      </if>
+	      <if test="cd.column6 != null" >
+	        column6 = #{cd.column6,jdbcType=DECIMAL},
+	      </if>
+	      <if test="cd.baseSalary != null" >
+	        baseSalary = #{cd.baseSalary,jdbcType=DECIMAL},
+	      </if>
+	      <if test="cd.actualSalary != null" >
+	        actualSalary = #{cd.actualSalary,jdbcType=DECIMAL},
+	      </if>
+	      <if test="cd.state != null" >
+	        state = #{cd.state,jdbcType=INTEGER},
+	      </if>
+	      <if test="cd.createdate != null and cd.createdate !=''" >
+	        createdate = #{cd.createdate,jdbcType=VARCHAR},
+	      </if>
+	      <if test="cd.updatedate != null and cd.updatedate !=''" >
+	      	updatedate = #{cd.updatedate,jdbcType=VARCHAR},
+	      </if>
+	      <if test="cd.columnNames != null" >
+	        columnNames = #{cd.columnNames,jdbcType=INTEGER},
+	      </if>
+	    </set>
+	    where userId = #{cd.user.userId,jdbcType=INTEGER} and
+		    name = #{cd.name,jdbcType=VARCHAR} and
+		    date &gt;= #{fromdate,jdbcType=VARCHAR} and
+		    date &lt;= #{enddate,jdbcType=VARCHAR}  
+	</update>
+	
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by u.user_name
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by u.user_name
+  </select>
+</mapper>

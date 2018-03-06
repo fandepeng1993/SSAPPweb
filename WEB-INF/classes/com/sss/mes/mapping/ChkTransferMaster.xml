@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.mes.dao.IChkTransferMasterDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.mes.pojo.ChkTransferMaster" >
+    <id column="D_Id" property="dId" jdbcType="INTEGER" />
+    <result column="ContractNo" property="contractno" jdbcType="VARCHAR" />
+    <result column="D_Steel" property="dSteel" jdbcType="VARCHAR" />
+    <result column="D_Spec" property="dSpec" jdbcType="VARCHAR" />
+    <result column="D_Name" property="dName" jdbcType="VARCHAR" />
+    <result column="D_Supply" property="dSupply" jdbcType="VARCHAR" />
+    <result column="D_Quantity" property="dQuantity" jdbcType="INTEGER" />
+    <result column="D_Weight" property="dWeight" jdbcType="DECIMAL" />
+    <result column="D_BoxNo" property="dBoxno" jdbcType="VARCHAR" />
+    <result column="D_StartTime" property="dStarttime" jdbcType="VARCHAR" />
+    <result column="D_TimeOut" property="timeout" jdbcType="INTEGER" />
+  </resultMap>
+  <cache 
+  	eviction="FIFO" 
+  	flushInterval="900000" 
+	size="512" 
+	readOnly="true"/>
+  <select id="getChktfmByPageNoAndSize" resultMap="BaseResultMap" >
+    select ContractNo,D_Steel,D_Spec,D_Name,D_Supply,D_Quantity,D_Weight,D_BoxNo,D_StartTime,DATEDIFF(D_EndTime,D_StartTime) AS D_TimeOut from chk_transfer_master 
+    where DATEDIFF(D_EndTime,D_StartTime) >1 order by D_StartTime desc limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER} 
+  </select>
+</mapper>

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>查看操作权限</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link href="../../css/plugins/jsTree/style.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/plugins/jsTree/jstree.min.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		/*展开与收缩*/
+		function showAndShrink() {
+			$('#shousuo').click(function(){
+	            $('#small').show();
+	            $('#big').hide();
+	            $(".content-right").width("calc(100% - 30px)"); 
+	        });
+			$('#zhankai').click(function(){
+	            $('#big').show();
+	            $('#small').hide();
+	            $(".content-right").width("calc(100% - 280px)");
+	        });
+		}
+		
+		var roleId;
+		//角色权限集
+		var pris;
+		var menuCode;
+		$(document).ready(function(){ 
+			showAndShrink();
+			roleId = Request["roleId"];
+			menuCode = Request["menuCode"];
+			showPri();
+		});
+		
+		
+		function showPri() {
+			$("#priTable").empty();
+			$("#mainMenu").empty();
+			//对角色权限集进行设置
+			$.ajax({
+				url: "../../priAdmin/getRolePri/" + roleId,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					pris = data;
+					var menuStr = "<thead>" +
+					                "<tr>" +
+						          	"<th fieldType=\"checkbox\">&nbsp;</th>" +
+						              "<th fieldType=\"num\">序号</th>" +
+						              "<th>菜单名称</th>" +
+						              "<th>按钮权限</th>" +
+						              "<th>数据权限</th>" +
+							        "</tr>" +
+								  "</thead>";
+					$("#priTable").append(menuStr);
+					init(1);
+					//fillTable(2);
+				} 
+			});
+/* 			
+			$.ajax({
+				url: "../../menuAdmin/getMenuByPid/1",
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					//$("#priTable").empty();
+					//$("#mainMenu").empty();
+					//$("#priTable tbody").empty();
+					
+					
+					$.each(eval("(" + data + ")"), function(index, item) {
+						
+						str = str + "<div>";	
+						if(index == 0) {
+							str = str + "<img id=\"img1\" src=\"../../images/2_none.gif\">"; 
+						} else {
+							str = str + "<img id=\"img1\" src=\"../../images/3_none.gif\">"; 
+						}
+						str = str + "<img id=\"im1\" src=\"../../images/home.png\">" + 
+									"<button onclick=\"showTbody(" + item.menuId + ")\" class=\"btn btn-link\" style=\"font-size:13px;height:20px;padding-left:0px;padding-bottom:0px;\">" + item.menuName + 
+									"<span id=\"hand" + item.menuId + "\" class=\"glyphicon glyphicon-hand-right hand\" style=\"display:none;padding-left:3px;\"></span></button>" + 
+									"</div>";
+								
+						fillTable(item.menuId);
+					});
+					$("#mainMenu").append(str);
+					
+					//setTimeout("init()",200);
+				} 
+			}); */
+		}
+	    /**
+	     *	统一根据父级菜单Id填充其children
+	     */
+	     function fillChildrenByMenuPid(menuPid, childrenArr, grade) {
+	     	for(var index in allMenuData){
+	 			var childData= {
+	   		            "text":allMenuData[index].menuName,
+	   		            "children": [],
+	   		            "state": {
+	   		                "opened": false
+	   		            },
+	   		            "menuID":allMenuData[index].menuId
+	 			};
+	   		  	if(childData.text && allMenuData[index].parentMenu && allMenuData[index].parentMenu.menuId==menuPid){
+	   		  		
+	   		  		if(allMenuData[index].isLeaf == 0 && grade < 1) {
+	 	  		  		fillChildrenByMenuPid(childData.menuID, childData.children, grade+1);
+	   		  		}
+	 				childrenArr.push(childData);
+	 			}
+	   		    
+	 		}
+	     
+	     }
+	     
+	    var allMenuData;
+	    var stateValue=3;
+	     
+	 	function init(id) {
+	 		$.ajax({
+	 		      url: "../../menuAdmin/getMenuByPid/1",
+	 		      datatype: "json",
+	 		      type: "get",
+	 		      data: {},
+	 		      success: function (data, status, xhr) {
+	 		    	  allMenuData=JSON.parse(data);
+	 		    	  $.each(allMenuData, function (index, item) {
+	 		    		 fillTable(item.menuId);
+	 		    	  });
+	 		    	 
+	 		    	  var mydata= {
+	 		    			    "data": [{
+	 		    			        "text": "根菜单",
+	 		    			        "state": {"opened": true},
+	 		    			        "children":[],
+	 		    			        "menuID":1
+	 		    			    }]
+	 		    			}
+	 		    	  
+	 		    	  fillChildrenByMenuPid(1, mydata.data[0].children, 0);
+	 		    	  
+	 		    	  var tree = $("#using_json").jstree({
+	 			    		  'core': mydata,
+	 			    		  "plugins": ["types", "dnd"],
+	 			              "types": {
+	 			                  "default": {"icon": "fa fa-folder"},
+	 			                  "html": {"icon": "fa fa-file-code-o"},
+	 			                  "svg": {"icon": "fa fa-file-picture-o"},
+	 			                  "css": {"icon": "fa fa-file-code-o"},
+	 			                  "img": {"icon": "fa fa-file-image-o"},
+	 			                  "js": {"icon": "fa fa-file-text-o"}
+	 			              }
+	 			    		  
+	 		   	      }).on('changed.jstree', function (e, data) {
+	 						
+	 						 if(typeof(data.node) != "undefined") {
+		 						var tempValue=data.node.original.menuID;
+		 					
+		 						if(tempValue!=1 && tempValue!=stateValue){
+		 							stateValue=data.node.original.menuID;
+		 							showTbody(stateValue);
+		 							//fillTable(stateValue);
+		 						}else{
+		 						}
+	 						}
+	 		   	    	
+	 		   	      }).on('loaded.jstree', function(e, data){  
+	 		   	    		var inst = data.instance;
+			 		   	    var obj = inst.get_node(e.target.lastChild.lastChild.lastChild.firstChild);  
+			 		   	      
+			 		   	    inst.select_node(obj);  
+			 		   		//showTbody(3);
+			 		  });
+						//$('.jstree-node').eq(1).attr("aria-selected","true").find('.jstree-anchor').addClass('jstree-clicked');
+	 		      }
+	 		});
+	 	}
+		
+	/* 	function inits() {
+			showTbody(2);
+			fillCheckbox();
+			//alert("初始化完成！");
+		} */
+		function fillCheckbox() {
+			$.each(eval("(" + pris + ")"), function(index, item) {
+				if ($("#but" + item.menu.menuId).length > 0) { 
+					$("#but" + item.menu.menuId).attr('checked','true');  
+				}
+			});
+
+			//为radio添加监听事件
+			//new UserCommon().checkboxListener();
+		}
+		function showTbody(id) {
+			$("#priTable tbody").hide();
+			//$("#mainMenu").show();
+			$("#tbody" + id).show();
+		}
+		
+		//设置一个独立的id,用于区分子菜单
+		var ifAllId = 0;
+		/**
+		 *	点击系统目录中某项之后 获取相关子菜单及子菜单的子项。并根据权限集对checkbox进行初始化。
+		 */
+		function fillTable(id) {
+			$.ajax({
+			      url: "../../menuAdmin/getMenusMapByPid/" + id,
+			      datatype: "json",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+			    	  //$("#priTable").empty();
+			      	  var menuStr = "<tbody id='tbody" + id + "' style=\"display:none\">";
+			      	  var obj = eval("(" + data + ")");
+		      		  var num = 1;
+			      	  $.each(obj, function(index, item) {
+			      		  var menu = item.menuName;
+			      		  var icon = (item.icon == '' || item.icon == null) ? "fa fa-home": "fa " + item.icon;
+			      	  	  
+						  menuStr = menuStr + "<tr class=\"font-Thirteen vertical\" id=\"tr" + ifAllId + "\">" +
+													"<td align=\"center\"><input type=\"checkbox\" class=\"ifallcheck\" id=\"ifAll" + ifAllId + "\" onclick=\"fillCbById(" + (ifAllId++) + ")\"></td>" + 
+													"<td align=\"center\">" + (num++) + "</td>" + 
+													"<td align=\"center\">" + menu + "</td>";
+						  //按钮权限
+						  menuStr = menuStr + "<td>";
+						  $.each(item.subMenus, function(index1, item1) {
+							  	if(item1.isDataPriButton != 1) {
+									menuStr = menuStr + "<input type=\"checkbox\" class=\"check\"  id=\"but" + item1.menuId + "\" name=\"menuIds\" value=\"" + item1.menuId + "\">" + item1.menuName;
+							  	}
+						  });
+						  menuStr = menuStr + "</td>";
+						  
+						  //数据权限
+						  menuStr = menuStr + "<td>";
+						  $.each(item.subMenus, function(index1, item1) {
+							  	if(item1.isDataPriButton == 1) {
+									menuStr = menuStr + "<input type=\"checkbox\" class=\"check\" id=\"but" + item1.menuId + "\" name=\"menuIds\" value=\"" + item1.menuId + "\">" + item1.menuName;
+							  	}
+						  });
+						  menuStr = menuStr + "</td>" + 
+												"</tr>";
+			      	  });
+					  menuStr = menuStr + "</tbody>";
+					  $("#priTable").append(menuStr);
+					  if(id == stateValue) {
+						  showTbody(stateValue);
+					  }
+					  fillCheckbox();
+					  new UserCommon().PowerListener(id);
+			      } 
+			});
+			
+			//循环pris，根据menu.menuId初始化checkbox
+			
+		    //$("[name = button]:checkbox").attr("checked", true);
+			/* $.each(eval("(" + pris + ")"), function(index, item) {
+				alert($("#but" + item.menu.menuId))
+				if ($("#but" + item.menu.menuId).length > 0) { 
+					$("#but" + item.menu.menuId).attr("checked", true);
+				}
+			}); */
+		}
+		
+		function savePri() {
+			$("#roleId").val(roleId);
+			var formObj = $("#priForm").serializeNestedObject();
+			console.log(formObj);
+			if(formObj.menuIds != null && !(formObj.menuIds instanceof Array)) {
+				console.log(formObj.menuIds);
+				var arr = new Array();
+				arr.push(formObj.menuIds);
+				formObj.menuIds = arr;
+			}
+		 	$.ajax({
+			      url: "../../priAdmin/updateRolePri",
+			      datatype: "text",
+			      type: "put",
+			      data: JSON.stringify(formObj),
+			      success: function (data) {
+			    	  var json = eval("(" + data + ")");
+			    	  if(json.status == 1) {
+			    		  new UserCommon().check("success",json.msg,"roleMgr.html","success");
+			    		  setTimeout(function (){
+			    			  //new UserCommon().layer_close();
+			    			  window.parent.location.href = "roleMgr.html?menuCode=" + menuCode;
+			    		  }, 1000);
+			    	  } else {
+			    		  new UserCommon().check("success",json.msg,null,"fail");
+			    	  }
+			      }
+			});
+		}
+		
+		
+		/* function fillCbById(id) {
+			//var checkStatus = $("#ifAll" + id).is(':checked');
+			//console.log(checkStatus);
+			//$("#tr" + id + " input[name='menuIds']").iCheck(checkStatus ? "check": "uncheck");
+			for(var i=0; i<$("#tr" + id + " input[name='menuIds']").length; i++) {
+				$("#tr" + id + " input[name='menuIds']")[i].checked = $("#ifAll" + id).prop("checked");
+			}
+		} */
+	</script>
+</head>
+<body>
+	<!-- 操作权限 -->
+	<div class="content">
+		<div class="content-left" id="big">
+			<div class="content-left-top">
+				<span>系统目录</span>
+				<span class="glyphicon glyphicon-backward bt-div-in-icon" id="shousuo" title="收缩"></span>
+			</div>
+			<div id="using_json"></div>
+			<!-- <table class="content-left-table">
+				<tr>
+					<td valign="top" nowrap="nowrap" id="mainMenu">
+					</td>
+				</tr>
+			</table> -->	
+		</div>
+		<div class="content-div-left-small" id="small">
+			<div class="content-left-top">
+				<span class="glyphicon glyphicon-forward bt-div-in-icon" id="zhankai" title="展开"></span>
+			</div>
+		</div>			
+		<div class="content-right" style="width:calc(100% - 280px)">
+			<div class="content-right-top">
+				<span>按键</span>
+			</div>
+
+			 <div class="table-auto">
+			 	<form id="priForm" class="centerTable">
+					<input type="hidden" name="roleId" id="roleId">
+		            <table  class="table table-role text-center " id="priTable"></table> 
+	            </form>
+	        </div> 
+		</div>
+		<div class="edit-bottom">
+			<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();"><i class="glyphicon glyphicon-remove"></i>&nbsp;关闭</button>
+			<button type="button" class="btn btn-xs edit-save btn-primary" onclick="savePri()"><i class="glyphicon glyphicon-ok"></i>&nbsp;保存</button>
+		</div>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+</body>
+</html>

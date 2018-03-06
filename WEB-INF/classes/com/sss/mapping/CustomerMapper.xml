@@ -1,0 +1,507 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.ICustomerDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.Customer" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="customer_name" property="customerName" jdbcType="VARCHAR" />
+    <result column="area" property="area" jdbcType="VARCHAR" />
+    <result column="industry" property="industry" jdbcType="VARCHAR" />
+    <result column="website" property="website" jdbcType="VARCHAR" />
+    <result column="source" property="source" jdbcType="VARCHAR" />
+    <result column="type" property="type" jdbcType="VARCHAR" />
+    <result column="grade" property="grade" jdbcType="VARCHAR" />
+    <result column="note" property="note" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    
+    <association property="creator" javaType="com.sss.pojo.User">
+		<id column="cu_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="cu_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="cu_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="cu_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="cu_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="cu_user_status" property="status" jdbcType="VARCHAR" />
+	</association>
+	<association property="salesman" javaType="com.sss.pojo.User">
+		<id column="su_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="su_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="su_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="su_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="su_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="su_user_status" property="status" jdbcType="VARCHAR" />
+	</association>
+	<association property="assignPeople" javaType="com.sss.pojo.User">
+		<id column="au_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="au_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="au_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="au_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="au_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="au_user_status" property="status" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <!-- 新增一个rectVisitdate -->
+  <resultMap id="BaseResultMap2" type="com.sss.pojo.CustomerDTO" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="customer_name" property="customerName" jdbcType="VARCHAR" />
+    <result column="area" property="area" jdbcType="VARCHAR" />
+    <result column="industry" property="industry" jdbcType="VARCHAR" />
+    <result column="website" property="website" jdbcType="VARCHAR" />
+    <result column="source" property="source" jdbcType="VARCHAR" />
+    <result column="type" property="type" jdbcType="VARCHAR" />
+    <result column="grade" property="grade" jdbcType="VARCHAR" />
+    <result column="note" property="note" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    <result column="rectVisitdate" property="rectVisitdate" jdbcType="VARCHAR" />
+    
+    <association property="creator" javaType="com.sss.pojo.User">
+		<id column="cu_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="cu_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="cu_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="cu_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="cu_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="cu_user_status" property="status" jdbcType="VARCHAR" />
+	</association>
+	<association property="salesman" javaType="com.sss.pojo.User">
+		<id column="su_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="su_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="su_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="su_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="su_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="su_user_status" property="status" jdbcType="VARCHAR" />
+	</association>
+	<association property="assignPeople" javaType="com.sss.pojo.User">
+		<id column="au_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="au_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="au_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="au_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="au_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="au_user_status" property="status" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		c.*,
+  		u.user_id as cu_user_id,
+  		u.user_name as cu_user_name,
+  		u.user_no as cu_user_no,
+  		u.position_id as cu_position_id,
+  		u.sex as cu_user_sex,
+  		u.status as cu_user_status,
+  		u1.user_id as su_user_id,
+  		u1.user_name as su_user_name,
+  		u1.user_no as su_user_no,
+  		u1.position_id as su_position_id,
+  		u1.sex as su_user_sex,
+  		u1.status as su_user_status,
+  		u2.user_id as au_user_id,
+  		u2.user_name as au_user_name,
+  		u2.user_no as au_user_no,
+  		u2.position_id as au_position_id,
+  		u2.sex as au_user_sex,
+  		u2.status as au_user_status
+    from 
+    	ss_customer c
+   	left join
+   		ss_user u
+   	on
+   		c.creator = u.user_id
+   	left join
+   		ss_user u1
+   	on
+   		c.salesman = u1.user_id
+ 	left join
+   		ss_user u2
+   	on
+   		c.assignPeople = u2.user_id
+  </sql>
+  <!-- 新增一个rectVisitdate -->
+  <sql id="associateQuery2">
+  	select 
+		t.rectVisitdate,
+		c.*,
+  		u.user_id as cu_user_id,
+  		u.user_name as cu_user_name,
+  		u.user_no as cu_user_no,
+  		u.position_id as cu_position_id,
+  		u.sex as cu_user_sex,
+  		u.status as cu_user_status,
+  		u1.user_id as su_user_id,
+  		u1.user_name as su_user_name,
+  		u1.user_no as su_user_no,
+  		u1.position_id as su_position_id,
+  		u1.sex as su_user_sex,
+  		u1.status as su_user_status,
+  		u2.user_id as au_user_id,
+  		u2.user_name as au_user_name,
+  		u2.user_no as au_user_no,
+  		u2.position_id as au_position_id,
+  		u2.sex as au_user_sex,
+  		u2.status as au_user_status
+	from 
+		ss_customer c
+	left join 
+		(select max(specVisitTime) as rectVisitdate, customerId from ss_visitrecord group by customerId) t 
+	on 
+		c.id = t.customerId
+	left join
+   		ss_user u
+   	on
+   		c.creator = u.user_id
+   	left join
+   		ss_user u1
+   	on
+   		c.salesman = u1.user_id
+ 	left join
+   		ss_user u2
+   	on
+   		c.assignPeople = u2.user_id
+  </sql>
+  <!-- 返回一个list的写法 -->
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by c.createdate desc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap2" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where c.id = #{customerId,jdbcType=INTEGER}
+  </select>
+  <select id="selectByCusName" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    <include refid="associateQuery" />
+    where c.customer_name = #{customerName,jdbcType=VARCHAR}
+  </select>
+  <select id="cusesWithSaleM" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where c.salesman is null order by c.createdate desc
+  </select>
+  <select id="cusesWithOutSaleM" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where c.salesman is not null order by c.createdate desc
+  </select>
+  <select id="getCusesByUIds" resultMap="BaseResultMap2" >
+    <include refid="associateQuery2" />
+    where c.salesman in 
+    <foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>  
+    order by c.createdate desc
+  </select>
+  <select id="getCusesByCreators" resultMap="BaseResultMap2" >
+    <include refid="associateQuery2" />
+    where c.creator in 
+    <foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>  
+    order by c.createdate desc
+  </select>
+  
+  <select id="getShareCusesByUID" resultMap="BaseResultMap2" parameterType="java.lang.Integer" >
+    <include refid="associateQuery2" />
+    inner join
+			ss_shareCus s
+		on
+			s.cusId = c.id
+	where s.authorizedPerson = #{userId,jdbcType=INTEGER}
+    order by c.createdate desc
+  </select>
+  <select id="getShareCusesByUIDAndKey" resultMap="BaseResultMap2" >
+    <include refid="associateQuery2" />
+    inner join
+			ss_shareCus s
+		on
+			s.cusId = c.id
+	where s.authorizedPerson = #{userId,jdbcType=INTEGER}
+			and c.customer_name like "%"#{keyWords,jdbcType=VARCHAR}"%"
+    order by c.createdate desc
+  </select>
+  
+  <select id="getCusesByUId" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where c.salesman = #{userId,jdbcType=INTEGER} order by c.createdate desc
+  </select>
+  <select id="getCusesByUId2" resultMap="BaseResultMap2" parameterType="java.lang.Integer" >
+    <include refid="associateQuery2" />
+    where c.salesman = #{userId,jdbcType=INTEGER} order by c.createdate desc
+  </select>
+  <select id="selByUIdAndKey" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where c.salesman = #{userId,jdbcType=INTEGER} and c.customer_name like "%"#{keywords,jdbcType=VARCHAR}"%" order by c.createdate desc
+  </select>
+  <select id="selByUIdAndKey2" resultMap="BaseResultMap2">
+    <include refid="associateQuery2" />
+    where c.salesman = #{userId,jdbcType=INTEGER} and c.customer_name like "%"#{keywords,jdbcType=VARCHAR}"%" order by c.createdate desc
+  </select>
+  <select id="selByCreatorIdAndKey2" resultMap="BaseResultMap2">
+    <include refid="associateQuery2" />
+    where c.creator = #{userId,jdbcType=INTEGER} and c.customer_name like "%"#{keywords,jdbcType=VARCHAR}"%" order by c.createdate desc
+  </select>
+  <select id="selectByKey" resultMap="BaseResultMap2" parameterType="java.lang.String">
+    <include refid="associateQuery2" />
+    where c.customer_name like "%"#{keywords,jdbcType=VARCHAR}"%" order by c.createdate desc
+  </select>
+  <select id="getCountByUIdAndDate" resultType="java.lang.Integer">
+    select count(*) from ss_customer
+    where createdate &gt;= #{fromdate,jdbcType=VARCHAR} and 
+    		creator = #{userId,jdbcType=INTEGER}
+  </select>
+  <select id="getCountByUIdsAndDate" resultType="java.lang.Integer">
+    select count(*) from ss_customer
+    where creator in 
+	    <foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+		  #{item}  
+		</foreach>  
+    	and createdate &gt;= #{fromdate,jdbcType=VARCHAR} 
+  </select>
+  <select id="noVisitCusNum" resultType="java.lang.Integer">
+  	select count(*)
+	from 
+		ss_customer c
+	left join 
+		(select max(specVisitTime) as rectVisitdate, customerId from ss_visitrecord 
+		<!-- where creator in 
+	    <foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+		  #{item}  
+		</foreach> -->  
+		group by customerId) t 
+	on 
+		c.id = t.customerId
+	where salesman in 
+	    <foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+		  #{item}  
+		</foreach>  
+		and (rectVisitdate &lt; #{fromdate,jdbcType=VARCHAR} or rectVisitdate is null)
+  </select>
+  <select id="noVisitCus" resultMap="BaseResultMap2" >
+	<include refid="associateQuery2" />
+	where salesman in 
+	    <foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+		  #{item}  
+		</foreach>  
+		and (rectVisitdate &lt; #{fromdate,jdbcType=VARCHAR} or rectVisitdate is null)
+  </select>
+  <select id="searchByDTO"  resultMap="BaseResultMap" parameterType="com.sss.pojo.dto.SearchCustomerDTO" >
+	<include refid="associateQuery" />
+	where 
+	  <if test="customerName != null and customerName != ''" >
+	      c.customer_name like "%"#{customerName,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="customerName == null or customerName == ''" >
+	      c.customer_name like "%%" 
+	  </if>
+	  <if test="creatorIds != null" >
+	      AND c.creator in
+	      <foreach item="item" index="index" collection="creatorIds" open="(" separator="," close=")">  
+		  	#{item}  
+		  </foreach>  
+	  </if>
+	  <if test="salesmanIds != null" >
+	      AND c.salesman in
+	      <foreach item="item" index="index" collection="salesmanIds" open="(" separator="," close=")">  
+		  	#{item}  
+		  </foreach>  
+	  </if>
+	  <if test="assignPeopleIds != null" >
+	      AND c.assignPeople in
+	      <foreach item="item" index="index" collection="assignPeopleIds" open="(" separator="," close=")">  
+		  	#{item}  
+		  </foreach>  
+	  </if>
+	  <if test="creatorName != null and creatorName != ''" >
+	      AND u.user_name like "%"#{creatorName,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="salesmanName != null and salesmanName != ''" >
+	      AND u1.user_name like "%"#{salesmanName,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="assignPeopleName != null and assignPeopleName != ''" >
+	      AND u2.user_name like "%"#{assignPeopleName,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="area != null and area != ''" >
+	      AND c.area = #{area,jdbcType=VARCHAR}
+	  </if>
+	  <if test="industry != null and industry != ''" >
+	      AND c.industry = #{industry,jdbcType=VARCHAR}
+	  </if>
+	  <if test="website != null and website != ''" >
+	      AND c.website like "%"#{website,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="source != null and source != ''" >
+	      AND c.source = #{source,jdbcType=VARCHAR}
+	  </if>
+	  <if test="type != null and type != ''" >
+	      AND c.type like "%"#{type,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="grade != null and grade != ''" >
+	      AND c.grade = #{grade,jdbcType=VARCHAR}
+	  </if>
+	  <if test="note != null and note != ''" >
+	      AND c.note = #{note,jdbcType=VARCHAR}
+	  </if>
+	  <if test="fromdate != null and fromdate != ''" >
+	      AND c.createdate &gt;= #{fromdate,jdbcType=VARCHAR}
+	  </if>
+	  <if test="enddate != null and enddate != ''" >
+	      AND c.createdate &lt;= #{enddate,jdbcType=VARCHAR}
+	  </if>
+	order by c.createdate desc
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_customer
+    where id = #{customerId,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.Customer" >
+    insert into ss_customer (id, creator, salesman, 
+      assignPeople, customer_name, area, 
+      industry, website, source, 
+      type, grade, note, createdate
+      )
+    values (#{id,jdbcType=INTEGER}, #{creator.userId,jdbcType=INTEGER}, #{salesman.userId,jdbcType=INTEGER}, 
+      #{assignPeople.userId,jdbcType=INTEGER}, #{customerName,jdbcType=VARCHAR}, #{area,jdbcType=VARCHAR}, 
+      #{industry,jdbcType=VARCHAR}, #{website,jdbcType=VARCHAR}, #{source,jdbcType=VARCHAR}, 
+      #{type,jdbcType=VARCHAR}, #{grade,jdbcType=VARCHAR}, #{note,jdbcType=VARCHAR}, #{createdate,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.Customer">
+  	<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+    </selectKey>
+    insert into ss_customer
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="creator != null and creator.userId != 0">
+        creator,
+      </if>
+      <if test="salesman != null and salesman.userId != 0">
+        salesman,
+      </if>
+      <if test="assignPeople != null and assignPeople.userId != 0">
+        assignPeople,
+      </if>
+      <if test="customerName != null">
+        customer_name,
+      </if>
+      <if test="area != null">
+        area,
+      </if>
+      <if test="industry != null">
+        industry,
+      </if>
+      <if test="website != null">
+        website,
+      </if>
+      <if test="source != null">
+        source,
+      </if>
+      <if test="type != null">
+        type,
+      </if>
+      <if test="grade != null">
+        grade,
+      </if>
+      <if test="note != null">
+        note,
+      </if>
+      	createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="creator != null and creator.userId != 0">
+        #{creator.userId,jdbcType=INTEGER},
+      </if>
+      <if test="salesman != null and salesman.userId != 0">
+        #{salesman.userId,jdbcType=INTEGER},
+      </if>
+      <if test="assignPeople != null and assignPeople.userId != 0">
+        #{assignPeople.userId,jdbcType=INTEGER},
+      </if>
+      <if test="customerName != null">
+        #{customerName,jdbcType=VARCHAR},
+      </if>
+      <if test="area != null">
+        #{area,jdbcType=VARCHAR},
+      </if>
+      <if test="industry != null">
+        #{industry,jdbcType=VARCHAR},
+      </if>
+      <if test="website != null">
+        #{website,jdbcType=VARCHAR},
+      </if>
+      <if test="source != null">
+        #{source,jdbcType=VARCHAR},
+      </if>
+      <if test="type != null">
+        #{type,jdbcType=VARCHAR},
+      </if>
+      <if test="grade != null">
+        #{grade,jdbcType=VARCHAR},
+      </if>
+      <if test="note != null">
+        #{note,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.Customer">
+    update ss_customer
+    <set>
+      <if test="creator != null and creator.userId != 0">
+        creator = #{creator.userId,jdbcType=INTEGER},
+      </if>
+      <if test="salesman != null and salesman.userId != 0">
+        salesman = #{salesman.userId,jdbcType=INTEGER},
+      </if>
+      <if test="assignPeople != null and assignPeople.userId != 0">
+        assignPeople = #{assignPeople.userId,jdbcType=INTEGER},
+      </if>
+      <if test="customerName != null">
+        customer_name = #{customerName,jdbcType=VARCHAR},
+      </if>
+      <if test="area != null">
+        area = #{area,jdbcType=VARCHAR},
+      </if>
+      <if test="industry != null">
+        industry = #{industry,jdbcType=VARCHAR},
+      </if>
+      <if test="website != null">
+        website = #{website,jdbcType=VARCHAR},
+      </if>
+      <if test="source != null">
+        source = #{source,jdbcType=VARCHAR},
+      </if>
+      <if test="type != null">
+        type = #{type,jdbcType=VARCHAR},
+      </if>
+      <if test="grade != null">
+        grade = #{grade,jdbcType=VARCHAR},
+      </if>
+      <if test="note != null">
+        note = #{note,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.Customer">
+    update ss_customer
+    set creator = #{creator.userId,jdbcType=INTEGER},
+      salesman = #{salesman.userId,jdbcType=INTEGER},
+      assignPeople = #{assignPeople.userId,jdbcType=INTEGER},
+      customer_name = #{customerName,jdbcType=VARCHAR},
+      area = #{area,jdbcType=VARCHAR},
+      industry = #{industry,jdbcType=VARCHAR},
+      website = #{website,jdbcType=VARCHAR},
+      source = #{source,jdbcType=VARCHAR},
+      type = #{type,jdbcType=VARCHAR},
+      grade = #{grade,jdbcType=VARCHAR},
+      note = #{note,jdbcType=VARCHAR},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

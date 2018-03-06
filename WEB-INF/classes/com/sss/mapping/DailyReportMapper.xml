@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IDailyReportDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.DailyReport" >
+    <id column="report_id" property="reportId" jdbcType="INTEGER" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    <result column="content" property="content" jdbcType="VARCHAR" />
+    <result column="photoUrls" property="photoUrls" jdbcType="VARCHAR" />
+    <result column="isFill" property="isFill" jdbcType="INTEGER" />
+    <result column="reportDate" property="reportDate" jdbcType="VARCHAR" />
+    
+    <association property="user" javaType="com.sss.pojo.User">
+		<id column="du_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="du_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="du_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="du_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="du_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="du_user_status" property="status" jdbcType="VARCHAR" />
+	    <result column="du_user_email" property="email" jdbcType="VARCHAR" />
+	    <result column="du_user_birthDate" property="birthdate" jdbcType="VARCHAR" />
+	    <result column="du_user_entryDate" property="entrydate" jdbcType="VARCHAR" />
+	    <result column="du_user_lastlogindate" property="lastlogindate" jdbcType="VARCHAR" />
+	    <result column="du_user_telephone" property="telephone" jdbcType="VARCHAR" />
+	    <result column="du_user_address" property="address" jdbcType="VARCHAR" />
+	    <result column="du_user_eduBackground" property="edubackground" jdbcType="VARCHAR" />
+	    <result column="du_user_major" property="major" jdbcType="VARCHAR" />
+	    <result column="du_user_school" property="school" jdbcType="VARCHAR" />
+	    <result column="du_user_photoUrl" property="photoUrl" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  
+  <!-- 分页相关，分页实体类 -->
+  <resultMap id="PageResultMap" type="com.sss.pojo.dto.PageModel" >
+    <result column="pageNo" property="pageNo" jdbcType="INTEGER" />
+    <result column="pageSize" property="pageSize" jdbcType="INTEGER" />
+    <result column="countNum" property="countNum" jdbcType="INTEGER" />
+    <collection property="results" resultMap="BaseResultMap"></collection>
+  </resultMap>
+  
+  <!-- 分页相关方法，特殊需求主要修改部分为"数据总条数查询countNumQuery"和"数据信息查询sql，如associateQuery和complexAdvancedSearchQuery" -->
+  <!-- 条数信息：数据总条数 -->
+  <sql id="countNumQuery">
+  	select count(*) from ss_dailyreport
+  </sql>
+  <!-- 条数信息：复杂高级搜索数据总条数 -->
+  <sql id="countAdvancedSearchNumQuery">
+    select count(*)
+    from 
+      ss_dailyreport d
+    left join
+      ss_user u
+    on
+      d.user_id = u.user_id
+    where 1=1 
+      <if test="list != null">
+        <foreach item="mapItem" index="listIndex" collection="list" >  
+          <if test="listIndex == 0">and</if>
+         (
+        <foreach item="item" index="index" collection="mapItem.searchDTOs">
+          ${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+        </foreach>
+        )
+        ${mapItem.groupLogicalOperator}
+      </foreach>  
+      </if>
+  </sql>
+  <!--  条数信息：复杂高级搜索查询，无分页-->
+  <sql id="complexAdvancedSearchQuery">
+  	<include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by d.createdate desc
+  </sql>
+  
+  <!-- 条数信息：普通所有数据分页查询 -->
+  <select id="selectAllDataLazy"  resultMap="PageResultMap" parameterType="com.sss.pojo.dto.PageModel" >
+    select ${pageNo} as pageNo,
+    	${pageSize} as pageSize,
+    	(<include refid="countNumQuery" />) as countNum,
+    	pageResults.*
+    from
+	(
+	    <include refid="associateQuery" /> order by d.createdate desc
+	    limit ${(pageNo-1)*pageSize}, ${pageSize}
+	) pageResults
+  </select>
+  <!-- 条数信息：复杂高级搜索分页测试 -->
+  <select id="complexAdvancedSearchLazy"  resultMap="PageResultMap" >
+    select ${pageModel.pageNo} as pageNo,
+    	${pageModel.pageSize} as pageSize,
+    	(<include refid="countAdvancedSearchNumQuery" />) as countNum,
+    	pageResults.*
+    from
+	(
+	    <include refid="complexAdvancedSearchQuery" />
+	    limit ${(pageModel.pageNo-1)*pageModel.pageSize}, ${pageModel.pageSize}
+	) pageResults
+  </select>
+  
+  <sql id="associateQuery">
+  	select 
+  		d.*,
+  		u.user_id as du_user_id,
+  		u.user_name as du_user_name,
+  		u.user_no as du_user_no,
+  		u.position_id as du_position_id,
+  		u.sex as du_user_sex,
+  		u.status as du_user_status,
+  		u.email as du_user_email,
+  		u.birthdate as du_user_birthDate,
+  		u.entrydate as du_user_entryDate,
+  		u.lastlogindate as du_user_lastlogindate,
+  		u.telephone as du_user_telephone,
+  		u.address as du_user_address,
+  		u.edubackground as du_user_eduBackground,
+  		u.major as du_user_major,
+  		u.school as du_user_school,
+  		u.photoUrl as du_user_photoUrl
+    from 
+    	ss_dailyreport d
+   	left join
+   		ss_user u
+   	on
+   		d.user_id = u.user_id
+  </sql>
+  <!-- 返回一个list的写法 -->
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by d.createdate desc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where d.report_id = #{reportId,jdbcType=INTEGER} order by d.createdate desc
+  </select>
+  <select id="selByUserId" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where d.user_id = #{userId,jdbcType=INTEGER} order by d.createdate desc
+  </select>
+  <select id="getDReportByDate" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where d.user_id = #{userId,jdbcType=INTEGER} and 
+    	(
+    		<!-- (d.createdate &gt; #{createdate,jdbcType=VARCHAR} and d.createdate &lt; #{enddate,jdbcType=VARCHAR} and d.fillReportDate is null) or  -->
+    		d.reportDate = #{createdate,jdbcType=VARCHAR}
+    	)
+  </select>
+  <select id="selectFillCountFrom" resultType="java.lang.Integer" >
+   	select count(*) from ss_dailyreport 
+    where user_id = #{userId,jdbcType=INTEGER} and 
+    	  createdate &gt;= #{datetime,jdbcType=VARCHAR} and
+    	  isFill = 1
+  </select>
+  <select id="getFillCountByPri" resultType="java.lang.Integer" >
+   	select count(*) from ss_dailyreport 
+    where user_id in 
+	    <foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+		  #{item}  
+		</foreach>  
+    	and (reportDate &gt;= #{fromdate,jdbcType=VARCHAR} 
+    		and reportDate &lt;= #{enddate,jdbcType=VARCHAR})
+  </select>
+  <select id="getDReportsByUIds" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where d.user_id in 
+    <foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>  
+    order by d.createdate desc
+  </select>
+  <select id="getDReportsByUIdsLazy" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where d.user_id in 
+    <foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>
+		and u.user_name like "%"#{keyWords,jdbcType=VARCHAR}"%"
+    order by d.createdate desc
+    limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="dReportsCountByUserPri" resultType="java.lang.Integer" >
+    select count(*)
+    from 
+    	ss_dailyreport d
+   	left join
+   		ss_user u
+   	on
+   		d.user_id = u.user_id
+    where d.user_id in 
+    <foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>
+		and u.user_name like "%"#{keyWords,jdbcType=VARCHAR}"%"
+  </select>
+  <select id="selByUserIdAndKey" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where d.user_id = #{userId,jdbcType=INTEGER} and u.user_name like "%"#{keyWords,jdbcType=VARCHAR}"%"
+  	order by d.createdate desc
+  </select>
+  <select id="selByUserName" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    <include refid="associateQuery" />
+	where 
+		u.user_name like "%"#{keyWords,jdbcType=VARCHAR}"%" order by d.createdate desc
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_dailyreport
+    where report_id = #{reportId,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.DailyReport" >
+    insert into ss_dailyreport (report_id, user_id, createdate, 
+      content, photoUrls, isFill, reportDate)
+    values (#{reportId,jdbcType=INTEGER}, #{user.userId,jdbcType=INTEGER}, #{createdate,jdbcType=VARCHAR}, 
+      #{content,jdbcType=VARCHAR}, #{photoUrls,jdbcType=VARCHAR}, #{isFill,jdbcType=INTEGER}, #{reportDate,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.DailyReport" >
+    insert into ss_dailyreport
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="reportId != null" >
+        report_id,
+      </if>
+      <if test="user.userId != null" >
+        user_id,
+      </if>
+      <if test="content != null" >
+        content,
+      </if>
+      <if test="photoUrls != null" >
+        photoUrls,
+      </if>
+      <if test="isFill != null" >
+        isFill,
+      </if>
+      <if test="reportDate != null and reportDate != ''" >
+        reportDate,
+      </if>
+      	createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="reportId != null" >
+        #{reportId,jdbcType=INTEGER},
+      </if>
+      <if test="user.userId != null" >
+        #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="content != null" >
+        #{content,jdbcType=VARCHAR},
+      </if>
+      <if test="photoUrls != null" >
+        #{photoUrls,jdbcType=VARCHAR},
+      </if>
+      <if test="isFill != null" >
+        #{isFill,jdbcType=INTEGER},
+      </if>
+      <if test="reportDate != null and reportDate != ''" >
+        #{reportDate,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.DailyReport" >
+    update ss_dailyreport
+    <set >
+      <if test="user.userId != null" >
+        user_id = #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null" >
+        content = #{content,jdbcType=VARCHAR},
+      </if>
+      <if test="photoUrls != null" >
+        photoUrls = #{photoUrls,jdbcType=VARCHAR},
+      </if>
+      <if test="isFill != null" >
+        isFill = #{isFill,jdbcType=INTEGER},
+      </if>
+      <if test="reportDate != null and reportDate != ''" >
+        reportDate = #{reportDate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where report_id = #{reportId,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.DailyReport" >
+    update ss_dailyreport
+    set user_id = #{user.userId,jdbcType=INTEGER},
+      createdate = #{createdate,jdbcType=VARCHAR},
+      content = #{content,jdbcType=VARCHAR},
+      photoUrls = #{photoUrls,jdbcType=VARCHAR},
+      isFill = #{isFill,jdbcType=INTEGER},
+      reportDate = #{reportDate,jdbcType=VARCHAR}
+    where report_id = #{reportId,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by d.createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="complexAdvancedSearchQuery" />
+  </select>
+</mapper>

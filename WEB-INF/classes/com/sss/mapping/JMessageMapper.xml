@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IJMessageDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.JMessage" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="userId" property="userId" jdbcType="INTEGER" />
+    <result column="fromUserId" property="fromUserId" jdbcType="INTEGER" />
+    <result column="targetId" property="targetId" jdbcType="INTEGER" />
+    <result column="targetType" property="targetType" jdbcType="VARCHAR" />
+    <result column="content" property="content" jdbcType="VARCHAR" />
+    <result column="msgType" property="msgType" jdbcType="VARCHAR" />
+    <result column="resourceUrl" property="resourceUrl" jdbcType="VARCHAR" />
+    <result column="localResourcePath" property="localResourcePath" jdbcType="VARCHAR" />
+    <result column="state" property="state" jdbcType="INTEGER" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+  </resultMap>
+  <select id="selectList" resultMap="BaseResultMap" >
+    select * from ss_jmessage
+    order by createdate desc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select * from ss_jmessage
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="getNeedSynchroData" resultMap="BaseResultMap" >
+    select * from ss_jmessage
+    where userId = #{userId,jdbcType=INTEGER}
+    and createdate &gt; #{lastFileCreatedate,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_jmessage
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.JMessage" >
+    insert into ss_jmessage (id, fromUserId, targetId, 
+      targetType, content, msgType, resourceUrl, 
+      localResourcePath, state, createdate)
+    values (#{id,jdbcType=INTEGER}, #{fromUserId,jdbcType=INTEGER}, #{targetId,jdbcType=INTEGER}, 
+      #{targetType,jdbcType=VARCHAR}, #{content,jdbcType=VARCHAR}, #{msgType,jdbcType=VARCHAR}, #{resourceUrl,jdbcType=VARCHAR}, 
+      #{localResourcePath,jdbcType=VARCHAR}, #{state,jdbcType=INTEGER}, #{createdate,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertEntitys" parameterType="java.util.List">
+	insert into ss_jmessage (id, fromUserId, targetId, 
+      targetType, content, msgType, resourceUrl, 
+      localResourcePath, state, createdate)
+	values
+	<foreach collection="list" item="item" index="index" separator=",">
+		(null, #{item.fromUserId,jdbcType=INTEGER}, #{item.targetId,jdbcType=INTEGER}, 
+      #{item.targetType,jdbcType=VARCHAR}, #{item.content,jdbcType=VARCHAR}, #{item.msgType,jdbcType=VARCHAR}, #{item.resourceUrl,jdbcType=VARCHAR}, 
+      #{item.localResourcePath,jdbcType=VARCHAR}, #{item.state,jdbcType=INTEGER}, #{item.createdate,jdbcType=VARCHAR})
+	</foreach>
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.JMessage" >
+    insert into ss_jmessage
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="fromUserId != null" >
+        fromUserId,
+      </if>
+      <if test="targetId != null" >
+        targetId,
+      </if>
+      <if test="targetType != null" >
+        targetType,
+      </if>
+      <if test="content != null" >
+        content,
+      </if>
+      <if test="msgType != null" >
+        msgType,
+      </if>
+      <if test="resourceUrl != null" >
+        resourceUrl,
+      </if>
+      <if test="localResourcePath != null" >
+        localResourcePath,
+      </if>
+      <if test="state != null" >
+        state,
+      </if>
+      <if test="createdate != null" >
+        createdate,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="fromUserId != null" >
+        #{fromUserId,jdbcType=INTEGER},
+      </if>
+      <if test="targetId != null" >
+        #{targetId,jdbcType=INTEGER},
+      </if>
+      <if test="targetType != null" >
+        #{targetType,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null" >
+        #{content,jdbcType=VARCHAR},
+      </if>
+      <if test="msgType != null" >
+        #{msgType,jdbcType=VARCHAR},
+      </if>
+      <if test="resourceUrl != null" >
+        #{resourceUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="localResourcePath != null" >
+        #{localResourcePath,jdbcType=VARCHAR},
+      </if>
+      <if test="state != null" >
+        #{state,jdbcType=INTEGER},
+      </if>
+      <if test="createdate != null" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.JMessage" >
+    update ss_jmessage
+    <set >
+      <if test="fromUserId != null" >
+        fromUserId = #{fromUserId,jdbcType=INTEGER},
+      </if>
+      <if test="targetId != null" >
+        targetId = #{targetId,jdbcType=INTEGER},
+      </if>
+      <if test="targetType != null" >
+        targetType = #{targetType,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null" >
+        content = #{content,jdbcType=VARCHAR},
+      </if>
+      <if test="msgType != null" >
+        msgType = #{msgType,jdbcType=VARCHAR},
+      </if>
+      <if test="resourceUrl != null" >
+        resourceUrl = #{resourceUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="localResourcePath != null" >
+        localResourcePath = #{localResourcePath,jdbcType=VARCHAR},
+      </if>
+      <if test="state != null" >
+        state = #{state,jdbcType=INTEGER},
+      </if>
+      <if test="createdate != null" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.JMessage" >
+    update ss_jmessage
+    set fromUserId = #{fromUserId,jdbcType=INTEGER},
+      targetId = #{targetId,jdbcType=INTEGER},
+      targetType = #{targetType,jdbcType=VARCHAR},
+      content = #{content,jdbcType=VARCHAR},
+      msgType = #{msgType,jdbcType=VARCHAR},
+      resourceUrl = #{resourceUrl,jdbcType=VARCHAR},
+      localResourcePath = #{localResourcePath,jdbcType=VARCHAR},
+      state = #{state,jdbcType=INTEGER},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

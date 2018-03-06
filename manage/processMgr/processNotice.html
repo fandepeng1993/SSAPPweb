@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>流程通知</title>
+<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+<script type="text/javascript" src="../../js/checkUser.js"></script>
+<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+<script type="text/javascript" src="../../js/UserUtil.js"></script>
+<script type="text/javascript" src="../../js/UserCommon.js"></script>
+<script type="text/javascript" src="../../js/oaProcessJson.js"></script>
+<script type="text/javascript">
+	var menuCode;
+	$(document).ready(function(){
+		menuCode = Request["menuCode"];
+		initTable();
+	/* 	new UserCommon().checkboxListener();
+		new UserCommon().radioListener(); */
+	});
+	
+	var pageSize = 10;
+	var pageNo = 1;
+	var totalRecords = 0;
+	var totalPages = 0;
+	var process = null;
+	function initTable() {
+		$.ajax({
+			url:"../../OAProcessMgrAdmin/getNoticeProcess/" + currentUserNo,
+			datatype: "json",
+			type: "get",
+			data: {},
+			success: function (data, status, xhr) {
+				$("#processTable").empty();
+				process = data;
+				totalRecords = process.length;
+				//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+				if(totalRecords % pageSize != 0) {
+					totalPages = Math.floor(totalRecords / pageSize) + 1;
+				} else {
+					totalPages = totalRecords / pageSize;
+				}
+				//根据totalPages初始化页码插件
+				$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+				$("#Pagination").pagination(totalPages);
+			} 
+		});
+	}
+	
+	function circleInfos() {
+		 $("#processTable").empty();
+		 $.each(process, function(index, item) {
+			 if(index >= ((pageNo-1)*pageSize) && index < (pageNo*pageSize)) {
+				 new UserCommon().fillTable("processTable",item,index);
+				 inittAble();
+			 } else if(index > (pageNo*pageSize)) {
+				 return;
+			 }
+	      });
+	}
+
+	function admin_role_add(title,url,w){
+		new UserCommon().layer_show(title,url,w);
+	}
+
+	function fillDetail(id) {
+		/* $.each(process, function(index, item) {
+			if(item.id == id) {
+				admin_role_add('<strong>流程查看</strong>',"viewpro1.html?menuCode=" + menuCode  + "&leaveId=" + item.id, iframeJson.width*0.55);
+			}
+   	 	}); */
+   	 	getProcessJson(function() {
+   	 		$.each(process, function(index, item) {
+				if (item.processInstanceId == id) {
+					var name = eval("processJson." + item.processDefinitionKey + ".name");
+					admin_role_add('<strong>' + name + '</strong>',"viewProcessDetail.html?processDefinitionKey=" + item.processDefinitionKey + "&proId=" + item.processInstanceId, iframeJson.width * 0.55);
+				}
+			});
+   	 	});
+	}
+</script>
+</head>
+<body>
+	<div class="bt-div-two-table" id="pro">
+		<div class="table-responsive centerTable">
+			<table class="table table-data-bottom text-center tableHidden">
+				<thead>
+					<tr class="table-first-tr" fieldType="radioTable" fieldName="processInstanceId">
+						<!-- <th fieldType="checkbox" fieldName="processInstanceId"><input type="checkbox" name="ifAll" class="all"></th> -->
+						<th fieldType="num" fieldName="">序号</th>
+						<th fieldType="text" fieldName="processName">流程名称</th>
+						<th fieldType="text" fieldName="globelStartUserName">发起人</th>
+						<th fieldType="text" fieldName="deptName">部门</th>
+						<th fieldType="detailInfo" fieldName="processInstanceId">详细信息</th>
+					</tr>
+				</thead>
+				<tbody id="processTable"></tbody>
+			</table>
+		</div>
+		<!-- 分页 -->
+		<div class="pages">
+			<div id="Pagination"></div>
+			<div class="searchPage">
+				<span class="page-sum" id="sumPage"></span> <span class="page-go">跳转<input type="text">页
+				</span> <a class="page-btn" href="javascript:;">GO</a>
+			</div>
+		</div>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+			<span></span>
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>留言板</title>
+	
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+	<link rel="stylesheet" href="../../css/font-awesome.min.css">
+	
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../../js/json/CityJson.js"></script>
+    <script type="text/javascript" src="../../js/json/ProJson.js"></script>
+    <script type="text/javascript" src="../../js/json/DistrictJson.js"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.autocomplete.js"></script>
+	<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+	<script type="text/javascript" src="../../js/underscore.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+   	 	//var currentUserId = window.parent.currentUserId;
+   	 	var searchDTO = {};
+		function initCalendar() {
+			laydate({
+			    elem: '#exceptedtime', //目标元素。由于laydate.js封装了一个轻量级的选择器引擎，因此elem还允许你传入class、tag但必须按照这种方式 '#id .class'
+			    event: 'focus' //响应事件。如果没有传入event，则按照默认的click
+			});
+		}
+		/* 光标定位 */
+		function s(e,a){
+ 			if ( e && e.preventDefault )
+        	e.preventDefault();
+			else 
+				window.event.returnValue = false;
+				a.focus();
+		}
+		var currentCusName,currentUserOrCusName;
+		$(document).ready(function(){
+			$.ajax({
+			      url: "../../sessionAdmin/getPri",
+			      datatype: "json",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+			    	  var pathname = window.location.pathname;
+			    	  var url = pathname.substring(pathname.indexOf("/", 1) + 1, pathname.length);
+			    	  $.each(eval("(" + data + ")"), function(index, item) {
+			      			if(item.menuUrl == url) {
+			      				searchDTO = {
+		      							"employeeIds": [currentUserId]
+		      					};
+			      				if(item.menuName == "查看") {
+			      					selPri = 1;
+			      					initTable();
+			      					lookShow();
+			      				} 
+			      			}
+		    	  		});
+			      	} 
+				});
+			
+			
+			/* select */
+			$('#cus').change(function(){ 
+				/* alert($(this).children('option:selected').val());  */
+				var p1=$(this).children('option:selected').val();//这就是selected的值
+				/* $("#leaveWord").empty(); */
+				p1 = "@" + p1 + ":";
+				$("#leaveWord").val(p1);
+			})
+			/* var p2=$('#param2').val();//获取本页面其他标签的值 
+			window.location.href="xx.php?param1="+p1+"¶m2="+p2+""; *///页面跳转并传参 
+			
+			$("#replyContent").hide();
+			initTable();
+		  	if (typeof(currentUserName) == "undefined") {
+				//alert($("#cus option:selected").text());
+				currentUserOrCusName = $("#cus option:selected").text();
+			} else {
+				currentUserOrCusName = currentUserName;
+			}
+		});
+		
+		//联系人列表部分
+		var speakBoas = null;
+		var arr = null;
+		var cusNames = [];
+		function initTable() {
+			url = "../../speakBoardAdmin/cusNames";
+			$.ajax({
+				url: url,
+				datatype: "json",
+				type: "get",
+				data: JSON.stringify(searchDTO),
+				success: function (data, status, xhr) {
+					$("#checkOutTable").empty();
+					$.each(data, function(index, item) {
+						var obj = {
+							customerName : item.cus_name
+						};
+						cusNames.push(obj);
+					});
+					totalRecords = data.length;
+					//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+					if(totalRecords % pageSize != 0) {
+						totalPages = Math.floor(totalRecords / pageSize) + 1;
+					} else {
+						totalPages = totalRecords / pageSize;
+					}
+					//根据totalPages初始化页码插件
+					$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+					$("#Pagination").pagination(totalPages);
+				} 
+			});
+		}
+		var pageSize = 10;
+		var pageNo = 1;//当前的页码
+		var totalRecords = 0;
+		var totalPages = 0;
+
+		function circleInfos() {
+			$("#checkOutTable").empty();
+			$.each(cusNames, function(index, item) {
+	 			if(index >= ((pageNo-1)*pageSize) && index < (pageNo*pageSize)) {
+		 			//addDWReportInfo(index, item);
+		 			new UserCommon().fillTable("checkOutTable",item,index);
+				} else if(index > (pageNo*pageSize)) {
+					return;
+				}
+				//为checkbox添加监听事件
+				new UserCommon().checkboxListener();
+			});
+			
+		}
+		
+		/**
+		 * 选择添加后填充相关选择下拉框
+		 */
+		/* function fillcustomer() {
+    	    $("#cus").empty();
+			var str = "<option value=\"-1\">请选择</option>";
+			$.ajax({
+			      url: "../../cusAdmin/customers",
+			      datatype: "text",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+						$.each(eval("(" + data + ")"), function(index, item) {
+							str = str + "<option value=\"" + item.customerName + "\" >" + item.customerName + "</option>"
+						});
+						$("#cus").html(str);
+						//$("#userName").val(str);
+						//$("#userName").html(str);
+			      }
+			});
+		} */
+			
+		/* var currentCusId,currentUserName;
+		function getCus() {
+			$.ajax({
+				url: "../../userAdmin/user/" + currentUserId ,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data) {
+					var json = eval("(" + data + ")");
+					
+					currentCusId = json.customer.id;
+					currentUserName = json.customer.customerName;
+				} 
+			});
+		} */
+		
+		/**
+		 * 根据reportId填充单个用户详细信息查看表单
+		 */
+		/* function fillDetail(id) {
+			$.each(dReports, function(index, item) {
+				if(item.reportId == id) {
+					admin_role_add('<strong>日报查看</strong>',"viewReport.html?menuCode=" + menuCode + "&reportId=" + item.reportId,'800');
+				}
+		    });
+		} */
+		
+		
+		//查看对应客户的所有留言
+		function fillDetail(customerName) {
+			/* alert(customerName); */
+			admin_role_add('<strong>查看页面</strong>',"viewSpeak.html?menuCode=" + menuCode + "&customerName=" + customerName,'680','560');
+			/* $.each(cusNames, function(index, item) {
+				if(item.customerName == customerName) {
+				admin_role_add('<strong>查看页面</strong>',"viewSpeak.html?menuCode=" + menuCode + "&customerName=" + customerName,'680','560');
+				}
+			}); */
+		}
+		
+
+		var pid,rootId,userName;
+		
+		/*管理员-角色-添加*/
+		function admin_role_add(title,url,w){
+			new UserCommon().layer_show(title, url, w);
+		}
+		
+		function addOne (pidd,rootIdd,name888) {
+			/* if (cusIdd == -1 || cusIdd == undefined) {
+				alert("你好，请选择客户");
+				$(".xsjh-bottom-bg").hide();
+				$(".xsjh-bottom-fixed").hide();
+			} else{ 
+			} */
+			if (name888 != "") {
+				$(".content").val("@"+ name888 + ":");
+			} else {
+				$(".content").val("");
+			}
+			$(".xsjh-bottom-bg").show();
+			$(".xsjh-bottom-fixed").show();
+			pid = pidd;
+			rootId = rootIdd;
+			userName = name888;
+		}
+		
+		function addOneForRoot(num) {
+			pid = 1;
+			rootId = 1;
+			userName = $("#cus").val();
+			
+			addReply(num);
+		}
+		
+		function addReply(num) {
+			var str;
+			if(num == 0) {
+				str = $(".xsjh-bottom-fixed").find(".content").val();
+			} else {
+				str = $("#leaveWord").val();
+			}
+			var content;
+			//提交时去除@字符串
+			//字符串首字母一定是@，并且一定包含：
+			if(str.charAt(0) == "@" && str.indexOf(":") != -1) {
+			  var replyUserName = $.trim(str.split(":")[0]);
+			  if(replyUserName == "@"+ userName) {
+				  content = $.trim(str.substring(str.indexOf(":")+1, str.length));
+			  }
+			} else {
+			 		content = str;
+			}
+		    if (content == null || content == "") {
+		    	new UserCommon().check("success","评论不能为空哦！",null,"fail");
+		    	return;
+		    }
+		    var json = {
+					parentBoard:{
+						id:pid
+					},
+					rootId:rootId,
+					content:content,
+					isleaf:0
+			};
+		    currentCusName = $("#cus").val();
+		    //alert(currentCusId);
+		    if (currentCusName == -1 || currentCusName == undefined) {
+		    	var user = {
+					userId:currentUserId
+				};
+		    	json.user = user;
+			} else{ 
+				/* var customer = {
+						id:currentCusId
+				}; */
+		    	json.customerName = currentCusName;
+			}
+			
+			$.ajax({
+				  url: "../../speakBoardAdmin/speakBoard",
+				  datatype: "text",
+				  type: "post",
+				  data: JSON.stringify(json),
+				  success: function (data) {
+					  var json = eval("(" + data + ")");
+					  if(json.status == 1) {
+						  new UserCommon().check("success","发表成功",null,"success");
+						  setTimeout(function (){
+							  //initTable(salechanId);
+							  initTable();
+							  $(".xsjh-bottom-fixed").hide();
+							  $(".xsjh-bottom-bg").hide();
+							  $(".content").val("");
+							  $("#leaveWord").val("");
+						  }, 1000);
+					  } else {
+						  new UserCommon().check("success",json.msg,null,"fail");
+					  }
+				  }
+			});
+		}
+	
+		function expand(){
+			var rightT = $(".xsjh-top-right");
+			for(var j = 0;j< rightT.length; j++){
+				if(rightT.eq(j).find(".xsjh-content-right").children("p").length > 0){
+					rightT.eq(j).children(".xsjh-top-right-top").next(".xsjh-content").show();
+					rightT.eq(j).children(".xsjh-top-right-top").find("i").removeClass("fa-chevron-circle-down");
+					rightT.eq(j).children(".xsjh-top-right-top").find("i").addClass("fa-chevron-circle-up");
+				}else{
+					rightT.eq(j).children(".xsjh-top-right-top").next(".xsjh-content").hide();
+					rightT.eq(j).children(".xsjh-top-right-top").find("i").removeClass("fa-chevron-circle-up");
+					rightT.eq(j).children(".xsjh-top-right-top").find("i").addClass("fa-chevron-circle-down");
+				}
+			}
+			for(var i = 0; i< rightT.length; i++){
+				$(".xsjh-top-right").eq(i).children(".xsjh-top-right-top").click(function(){
+					if($(this).find("i").hasClass("fa-chevron-circle-down")){
+						$(this).find("i").removeClass("fa-chevron-circle-down");
+						$(this).find("i").addClass("fa-chevron-circle-up");
+						$(this).next(".xsjh-content").show();
+					}else if($(this).find("i").hasClass("fa-chevron-circle-up")){
+						$(this).next(".xsjh-content").hide();
+						$(this).find("i").addClass("fa-chevron-circle-down");
+						$(this).find("i").removeClass("fa-chevron-circle-up");
+					}
+				})
+			}
+			var imgClick = $(".xsjh-top-right").find("img");
+			$(".xsjh-bottom-bg").click(function(){
+				$(".xsjh-bottom-bg").hide();
+				$(".xsjh-bottom-fixed").hide();
+			})
+		}
+		
+		
+		function lookShow() {
+			$("#search-g").show();
+			$("#keySpan").show();
+			$("#keyWords").show();
+			$("#excel-g").show();
+		}
+		
+		
+	</script>
+</head>			
+<body>
+	<!-- <div class="edit">
+		<div class="edit-content">
+			<div class="edit-in">
+				<div id="cen_right_top">
+					<div class="div" style="display:block;height: 50px;line-height:50px;">
+						<span style="font-size:15px;padding-left:10px;">留言板：</span>
+						<td class="yhtj-tb" style="margin-left: 15px;">
+							<div class="yhtj-tb-div">客户姓名：</div> 
+							<select label="客户" isEmpty="true" errorMsg="不能为空！" name="customer.id" id="cus"></select>
+		                </td>
+						<button class="btn btn-primary btn-sm" style="height: 23.5px;line-height: 13.5px;margin-left: 8px;margin-top:-3px" onclick="addOne(1,1,currentUserOrCusName)" >发表留言</button>
+					</div>
+					<div class="panel-group" id="accordion"></div> 
+					<div class="xsjh-line-fg"></div>
+					<div class="xsjh" id="accordion">
+						
+					</div>		
+				</div>
+			</div>
+			<textarea id="replyContent" rows="3" cols="3" ></textarea>
+			<div class="edit-bottom">
+				<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();"><i class="glyphicon glyphicon-remove"></i>&nbsp;关闭</button>
+			</div>
+		</div>	
+	</div> -->
+	<div class="bt-div-two-table">
+		<div class="table-responsive centerTable ">
+			<table class="table table-data-bottom text-center">
+				<thead>
+					<tr class="table-first-tr" fieldType="controlCB" fieldName="index">
+						<th fieldType="num" fieldName="trNum">序号</th>
+						<th fieldType="text" fieldName="customerName">公司名称</th>
+						<th fieldType="detailInfoContent" fieldName="customerName">详情</th>
+					</tr>
+				</thead>
+				<tbody id="checkOutTable">
+				</tbody>
+			</table> 
+		</div>
+		<!-- 分页 -->
+		<div class="pages">
+	        <div id="Pagination"></div>
+	        <div class="searchPage">
+	          <span class="page-sum" id="sumPage"></span>
+	          <span class="page-go">跳转<input type="text">页</span>
+	          <a class="page-btn" href="javascript:;">GO</a>
+	        </div>
+	    </div>
+	</div>
+	<div class="xsjh-bottom-bg"></div>
+	<div class="xsjh-bottom-fixed">
+		<textarea class="content" rows="3" cols="3"></textarea>
+		<button class="btn btn-primary" onclick="addReply(0)">发表评论</button>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span>
+			<span></span>
+			<div><img src="../../images/sanjiao.png" width="10"></div>
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>审核通过</title>
+<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+<script src="../../js/json/LAreaData2.js" type="text/javascript"></script>
+<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+<script type="text/javascript" src="../../js/bootstrap.autocomplete.js"></script>
+<script type="text/javascript" src="../../js/checkUser.js"></script>
+<script type="text/javascript" src="../../js/UserUtil.js"></script>
+<script type="text/javascript" src="../../js/UserCommon.js"></script>
+<script type="text/javascript" src="../../js/oaProcessJson.js"></script>
+<script type="text/javascript">
+
+	//当前页面所属菜单的menuCode
+	var menuCode;
+	var taskId;
+	var aminProcess;
+	var processDefinitionKey;
+	//初始化页面
+	$(document).ready(function() {
+		menuCode = Request["menuCode"];
+		taskId = Request["taskId"];
+		aminProcess = Request["aminProcess"];
+		processDefinitionKey = Request["processDefinitionKey"];
+		//初始化层的大小
+		initLayerSize();
+	});
+
+
+	function save() {
+		//根据要发起的流程，确定url
+		var url = "";
+		var processDefinitionKey = $("#processDefinitionKey").val();
+		url = "../../OAProcessMgrAdmin/completeTask/" + currentUserNo + "," + taskId;
+		var formObj = $("#approveForm");
+		var msg = "不能为空！";
+		if (new UserCommon().show("edit-promit", formObj, msg)) {
+			var formObjJson = $("#approveForm").serializeNestedObject();
+			$.ajax({
+				url : url,
+				datatype : "text",
+				type : "post",
+				data : JSON.stringify(formObjJson),
+				success : function(data) {
+					if (data.status == 1) {
+						new UserCommon().check("success", data.msg, null, "success");
+						setTimeout(function() {
+							if(aminProcess=="admin"){
+								//window.parent.location.href = "processManage/selProcessTaskIntanceHI.html?menuCode=" + menuCode;
+								/* window.parent.parent.initTable(window.parent.parent.processDefinitionId);
+								$("#imgObj", window.parent.document).attr("src", window.parent.src + "?timestamp=" + new Date().getTime());
+								new UserCommon().layer_close(); */
+								window.parent.parent.location.href = window.parent.parent.location.href;
+							}else{
+								window.parent.parent.location.href = "processDeal.html?menuCode=" + menuCode;
+							}
+						}, 1000);
+					} else {
+						new UserCommon().check("success", data.msg, null, "fail");
+					}
+				}
+			});
+		}
+	}
+</script>
+</head>
+<body>
+	<div class="edit">
+		<div class="edit-content">
+			<div class="edit-in">
+				<form id="approveForm">
+					<div class="zsy">
+						<div class="zsy-textarea">
+							<div class="zsy-common-left">
+								<label><span style="color: red; font-size: 18px">*</span>审批意见：</label>
+							</div>
+							<div class="zsy-common-right">
+								<textarea type="" id="opinion" iseditable="true" name="opinion" isreadonly="false" value=""
+									isdisable="true" isvisible="true" label="审批意见" errormsg="不能为空！"
+									isempty="false" style="">同意！情况属实！</textarea>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+			<div class="edit-bottom">
+				<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();">
+					<i class="glyphicon glyphicon-remove"></i>&nbsp;关闭
+				</button>
+				<button type="button" class="btn btn-xs edit-save btn-primary" onclick="save()">
+					<i class="glyphicon glyphicon-ok"></i>&nbsp;提交
+				</button>
+			</div>
+		</div>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert"
+				aria-hidden="true">&times;</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span> <span></span>
+			<div>
+				<img src="../../images/sanjiao.png" width="10">
+			</div>
+		</div>
+	</div>
+</body>
+</html>

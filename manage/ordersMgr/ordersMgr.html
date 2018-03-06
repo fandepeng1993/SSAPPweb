@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>订单管理</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+	<link href="../../css/font-awesome.min.css" rel="stylesheet">
+	<script type="text/javascript" charset="utf-8" src="../../js/ueditor/ueditor.config.js"></script>
+	<script type="text/javascript" charset="utf-8" src="../../js/ueditor/ueditor.all.min.js"> </script>
+	<!--建议手动加在语言，避免在ie下有时因为加载语言失败导致编辑器加载失败-->
+	<!--这里加载的语言文件会覆盖你在配置项目里添加的语言类型，比如你在配置项目里配置的是英文，这里加载的中文，那最后就是中文-->
+	<script type="text/javascript" charset="utf-8" src="../../js/ueditor/lang/zh-cn/zh-cn.js"></script>
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		//当前页面所属菜单的menuCode
+	    var menuCode;
+		//根据权限渲染页面
+		$(document).ready(function(){ 
+			menuCode = Request["menuCode"];
+			$.ajax({
+			      url: "../../sessionAdmin/getPri",
+			      datatype: "json",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+			    	  var pathname = window.location.pathname;
+			    	  var url = pathname.substring(pathname.indexOf("/", 1) + 1, pathname.length);
+			    	  $.each(eval("(" + data + ")"), function(index, item) {
+			      			if(item.menuUrl == url) {
+			      				if(item.menuName == "查看") {
+			      					initTable();
+			      					$("#search-g").show();
+			      					$("#keySpan").show();
+			      					$("#keyWords").show();
+			      				} else if(item.menuName == "添加") {
+			      					$("#add-g").show();
+			      				} else if(item.menuName == "修改") {
+			      					$("#update-g").show();
+			      				} else if(item.menuName == "删除") {
+			      					$("#delete-g").show();
+			      				}
+			      			}
+			    	  });
+			      } 
+			});
+		});
+		</script>
+		<script type="text/javascript">
+		var orders = null;
+		
+		function initTable() {
+			$.ajax({
+				url: "../../ordersAdmin//orders",
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					$("#orderTable").empty();
+					orders = eval("(" + data + ")");
+					totalRecords = eval("(" + data + ")").length;
+					
+					//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+					if(totalRecords % pageSize != 0) {
+						totalPages = Math.floor(totalRecords / pageSize) + 1;
+					} else {
+						totalPages = totalRecords / pageSize;
+					}
+					//根据totalPages初始化页码插件
+					$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+					$("#Pagination").pagination(totalPages);
+					
+				} 
+			});
+		}
+		
+		var pageSize = 10;
+		var pageNo = 1;//当前的页码
+		var totalRecords = 0;
+		var totalPages = 0;
+		
+		
+		function circleInfos() {
+			 $("#orderTable").empty();
+			 $.each(orders, function(index, item) {
+				 if(index >= ((pageNo-1)*pageSize) && index < (pageNo*pageSize)) {
+					 //addOrderInfo(index, item);
+					 new UserCommon().fillTable("orderTable",item,index);
+				 } else if(index > (pageNo*pageSize)) {
+					 return;
+				 }
+		      });
+			 //为checkbox添加监听事件
+			 new UserCommon().checkboxListener();
+		}
+		
+		/**
+		 * 根据orderId填充单个公告详细信息查看表单
+		 */
+		function fillDetail(id) {
+			$.each(orders, function(index, item) {
+				if(item.id == id) {
+					admin_role_add('<strong>订单查看</strong>',"viewOrder.html?menuCode=" + menuCode + "&orderId=" + item.id,'540');
+				}
+		    });
+		}
+		/**
+		 * 选择修改后填充相关信息
+		 */
+		function fillUpdateForm() {
+			var but = $("input[name='selectFlag']");
+			var orderId;
+			var num = 0;
+			for(var i=0; i<but.length; i++) {
+				if(but[i].checked) { 
+					if(num == 0) {
+						orderId = but[i].value;
+					}
+					num += 1;
+				}
+			} 
+			if(num == 1) {
+				$.each(orders, function(index, item) {
+					if(item.id == orderId) {
+						admin_role_add('<strong>订单修改</strong>',"editOrder.html?menuCode=" + menuCode + "&orderId=" + item.id,'540');
+					}
+			    });
+			} else {
+				new UserCommon().check("success","请选择一个订单！",null,"warning");
+			}
+		}
+		 
+		function deleteorders() {
+			var str = "";
+			$("input[name='selectFlag']").each(function(){
+				if($(this).is(':checked')) str += $(this).val() + ",";
+			});
+			if(str != null && str.trim() != "") {
+				str = str.substring(0, str.length-1);
+				layer.confirm('要删除么？',function(index){
+					$.ajax({
+					      url: "../../ordersAdmin/orders/" + str,
+					      datatype: "text",
+					      type: "delete",
+					      data: {},
+					      success: function (data) {
+					    	  var json = eval("(" + data + ")");
+					    	  if(json.status == 1) {
+					    		  new UserCommon().check("success",json.msg,null,"success");
+					    		  initTable();
+					    		  layer.close(index);
+					    	  } else {
+					    		  new UserCommon().check("success",json.msg,null,"fail");
+					    	  }
+					      }
+					});
+				});
+			} else {
+				new UserCommon().check("success","请选择要删除的订单！",null,"warning");
+			}
+		}
+		
+		function getOrdersByKey() {
+			var keyWords = $("#keyWords").val();
+			$.ajax({
+				url: "../../ordersAdmin/getOrdersByKey?keyWords=" + encodeURI(keyWords),
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					$("#orderTable").empty();
+					orders = data;
+					totalRecords = data.length;
+					
+					//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+					if(totalRecords % pageSize != 0) {
+						totalPages = Math.floor(totalRecords / pageSize) + 1;
+					} else {
+						totalPages = totalRecords / pageSize;
+					}
+					
+					$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+					$("#Pagination").pagination(totalPages);
+				} 
+			});
+		}
+		
+		function advancedSearch(dto) {
+			$.ajax({
+				url: "../../ordersAdmin/selectByAdvancedSearch" ,
+				datatype: "json",
+				type: "post",
+				data: JSON.stringify(dto),
+				success: function (data, status, xhr) {
+					$("#orderTable").empty();
+					orders = data;
+					totalRecords = orders.length;
+					//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+					if(totalRecords % pageSize != 0) {
+						totalPages = Math.floor(totalRecords / pageSize) + 1;
+					} else {
+						totalPages = totalRecords / pageSize;
+					}
+					
+					$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+					$("#Pagination").pagination(totalPages);
+				} 
+			});
+		}
+		/*管理员-角色-添加*/
+		function admin_role_add(title,url,w){
+			new UserCommon().layer_show(title,url,w);
+		}
+		function addOrder() {
+			admin_role_add('<strong>订单添加</strong>',"addOrder.html?menuCode=" + menuCode,'540');
+		}
+	</script>
+</head>
+<body>
+	<div class="bt-div">
+		<div class="bt-div-in">
+			<button type="button" class="btn btn-default btn-xs bt-one" id="add-g" onclick="addOrder()">
+				<span class="glyphicon glyphicon-plus color-add"></span> 添加
+			</button>
+			<button type="button" class="btn btn-default btn-xs bt-two" id="update-g" onclick="fillUpdateForm()">
+				<span class="glyphicon glyphicon-edit color-edit"></span> 修改
+			</button>
+			<button type="button" class="btn btn-default btn-xs bt-three" style="width:60px;display:none" id="delete-g" onclick="deleteorders()">
+				<span class="glyphicon glyphicon-trash color-del"></span> 删除
+			</button>
+			<span class="bt-div-title" id="keySpan">品名:</span>
+			<input type="text" id="keyWords" class="bt-div-input">
+			<button type="button" class="btn btn-default bt-div-bt" id="search-g" onclick="getOrdersByKey()">
+				<span class="glyphicon glyphicon-search color-zn"></span> 搜索
+			</button>
+			<button type="button" class="btn btn-default bt-div-bt" style="display:inline-block;" onclick="slideRight()">
+				<span class="glyphicon glyphicon-filter color-zn"></span> 高级筛选
+			</button>
+		</div>
+	</div>
+	<div class="bt-div-two-table">
+		<div class="table-responsive centerTable" >
+			<table class="table table-data-bottom text-center tableHidden">
+				<thead>
+					<tr fieldType="controlCB" fieldName="id" class="table-first-tr">
+						<th fieldType="checkbox" fieldName="id"><input type="checkbox" name="ifAll" class="all"></th>						
+						<th fieldType="num" fieldName="">序号</th>
+						<th fieldType="text" fieldName="proName">品名</th>
+						<th fieldType="text" fieldName="dSteel">材质</th>
+						<th fieldType="text" fieldName="dSpec">规格</th>
+						<th fieldType="text" fieldName="dStandards">执行标准</th>
+						<th fieldType="text" fieldName="buyWeight">购买重量</th>
+						<th fieldType="datetime" fieldName="deliveryTime">交货时间</th>
+						<th fieldType="text" fieldName="contact">联系人</th>
+						<th fieldType="text" fieldName="telphone">联系电话</th>
+						<th fieldType="detailInfo" fieldName="id">详细信息</th>
+					</tr>
+				</thead>
+				<tbody id="orderTable">
+				</tbody>
+			</table> 
+		</div>
+		<div class="pages">
+	        <div id="Pagination"></div>
+	        <div class="searchPage">
+	          <span class="page-sum" id="sumPage"></span>
+	          <span class="page-go">跳转<input type="text">页</span>
+	          <a href="javascript:;" class="page-btn">GO</a>
+	        </div>
+    	</div>
+    </div>
+    <!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<div class="search-background" id="background" onclick="hidebg()"></div>
+</body>
+</html>

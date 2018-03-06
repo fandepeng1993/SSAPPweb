@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>个人流程管理</title>
+<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+<link href="../../css/font-awesome.min.css" rel="stylesheet">
+<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+<script type="text/javascript" src="../../js/checkUser.js"></script>
+<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+<script type="text/javascript" src="../../js/UserUtil.js"></script>
+<script type="text/javascript" src="../../js/UserCommon.js"></script>
+<script type="text/javascript" src="../../js/oaProcessJson.js"></script>
+
+<script type="text/javascript">
+	var aH3;
+	var aDiv;
+	function initTab() {
+		aH3=$("#cen_right_top").children("h3");
+		aDiv=$("#cen_right_top").children("div");
+		for(var i=0;i<aH3.length;i++) {
+			aH3[i].index=i;
+			aH3[i].onclick=function() {
+				for(var i=0;i<aH3.length;i++) {
+					aH3[i].className="";
+					aDiv[i].style.display="none";
+				}
+				this.className="white";
+				aDiv[this.index].style.display="block";
+			}
+		}
+	}
+
+	var menuCode;
+	$(document).ready(function() {
+		initTab();
+		$("#search-g").show();
+		$("#search-g1").show();
+		menuCode = Request["menuCode"];
+		//为checkbox添加监听事件
+		/* new UserCommon().checkboxListener();
+		new UserCommon().radioListener(); */
+		initTable1();
+		initTable2();
+	});
+
+	var pageObj1, pageObj2;
+	for(var i=1; i<=2; i++) {
+		var temp = {
+			"pageSize": 10,
+			"pageNo": 1,
+			"totalRecords": 0,
+			"totalPages": 0
+		};
+		eval("pageObj" + i + "=temp");
+	}
+	function inittAble(){
+		/*初始化 table tr点击事件*/
+		$('.centerTable .table tbody tr').click(function(){
+			$(this).addClass('onColor').siblings().removeClass('onColor');
+		})
+	}
+	var runTasks;
+	var finishTasks;
+	function initTable1() {
+		var currentPageObj = pageObj1;
+		$.ajax({
+			url : "../../OAProcessMgrAdmin/getUnfinishedProcess/" + currentUserNo,
+			datatype : "json",
+			type : "get",
+			data : {},
+			success : function(data, status, xhr) {
+				$("#processTable1").empty();
+				
+				runTasks = data;
+				currentPageObj.totalRecords = data.length;
+				//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+				if (currentPageObj.totalRecords % currentPageObj.pageSize != 0) {
+					currentPageObj.totalPages = Math.floor(currentPageObj.totalRecords / currentPageObj.pageSize) + 1;
+				} else {
+					currentPageObj.totalPages = currentPageObj.totalRecords / currentPageObj.pageSize;
+				}
+				
+				//根据totalPages初始化页码插件
+				$("#sumPage1").html("共<strong class=\"allPage1\">" + currentPageObj.totalPages + "</strong>页");
+				$("#Pagination1").pagination(currentPageObj.totalPages, {paginationIndex:1});
+			}
+		});
+	}
+
+	function initTable2() {
+		var currentPageObj = pageObj2;
+		$.ajax({
+			url : "../../OAProcessMgrAdmin/getFinishedProcess/" + currentUserNo,
+			datatype : "json",
+			type : "get",
+			data : {},
+			success : function(data, status, xhr) {
+				$("#processTable2").empty();
+				finishTasks = data;
+				currentPageObj.totalRecords = data.length;
+				//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+				if (currentPageObj.totalRecords % currentPageObj.pageSize != 0) {
+					currentPageObj.totalPages = Math.floor(currentPageObj.totalRecords / currentPageObj.pageSize) + 1;
+				} else {
+					currentPageObj.totalPages = currentPageObj.totalRecords / currentPageObj.pageSize;
+				}
+				//根据totalPages初始化页码插件
+				$("#sumPage2").html("共<strong class=\"allPage2\">" + currentPageObj.totalPages + "</strong>页");
+				$("#Pagination2").pagination(currentPageObj.totalPages, {paginationIndex:2});
+			}
+		});
+	}
+
+	function circleInfos(objIndex) {
+		var currentPageObj = eval("pageObj" + objIndex);
+		$("#processTable" + objIndex).empty();
+		var tasks;
+		if(objIndex == 1) tasks = runTasks;
+		if(objIndex == 2) tasks = finishTasks;
+		$.each(tasks, function(index, item) {
+			if (index >= ((currentPageObj.pageNo - 1) * currentPageObj.pageSize)
+					&& index < (currentPageObj.pageNo * currentPageObj.pageSize)) {
+				//new UserCommon().fillTable("processTable" + objIndex, item, index);
+				new UserCommon().fillTable("processTable" + objIndex, item, index);
+				//为checkbox添加监听事件
+				//new UserCommon().checkboxListener();
+				inittAble();
+			} else if (index > (currentPageObj.pageNo * currentPageObj.pageSize)) {
+				return;
+			}
+		});
+		
+	}
+
+
+	function admin_role_add(title, url, w) {
+		new UserCommon().layer_show(title, url, w);
+	}
+	function deleteProcess(processInstanceId) {
+		layer.confirm('撤销理由: '+'<input type="text" id="reason" value="表单填错了！" />', function(index) {
+			/* alert($(".layui-layer-title").val()); */
+			var reason = $("#reason").val();
+			$.ajax({
+				url : "../../OAProcessMgrAdmin/deleteProcess/"+ processInstanceId,
+				datatype : "json",
+				type : "post",
+				data : {reason:reason},
+				success : function(data) {
+					if (data.status == 1) {
+						new UserCommon().check("success", data.msg, "processMgr.html?menuCode=" + menuCode, "success");
+					} else {
+						new UserCommon().check("success", data.msg, null, "fail");
+					}
+				}
+			});
+		});
+	}
+	var endProcess="finish";
+	//未完成流程点击按钮打开流程查看表单
+	function getProcessImg(id) {
+		var src = "../../OAProcessMgrAdmin/getProcessImg/" + id;
+		getProcessJson(function() {
+			$.each(runTasks, function(index, item) {
+				if (item.processInstanceId == id) {
+					if(item.processDefinitionKey=="orderCloseProcess"){
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selOrderProcess.html?processDefinitionKey=" + item.processDefinitionKey + "&endProcess="+endProcess +"&processInstanceId=" + item.processInstanceId + "&taskId="+item.taskId+ "&src=" + src, iframeJson.width * 0.95);
+					}else if(item.processDefinitionKey=="sampleProcess"){
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selSampleProcess.html?processDefinitionKey=" + item.processDefinitionKey + "&endProcess="+endProcess +"&processInstanceId=" + item.processInstanceId + "&taskId="+item.taskId+ "&src=" + src, iframeJson.width * 0.95);
+					}else if(item.processDefinitionKey=="outSendProcess"){
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selOutSendProcess.html?processDefinitionKey=" + item.processDefinitionKey + "&endProcess="+endProcess +"&processInstanceId=" + item.processInstanceId + "&taskId="+item.taskId+ "&src=" + src, iframeJson.width * 0.95);
+					}else if(item.processDefinitionKey=="inventoryProcess"){
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selInventoryProcess.html?processDefinitionKey=" + item.processDefinitionKey + "&endProcess="+endProcess +"&processInstanceId=" + item.processInstanceId + "&taskId="+item.taskId+ "&src=" + src, iframeJson.width * 0.95);
+					}else if(item.processDefinitionKey=="paymentProcess"){
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selPaymentProcess.html?processDefinitionKey=" + item.processDefinitionKey + "&endProcess="+endProcess +"&processInstanceId=" + item.processInstanceId + "&taskId="+item.taskId+ "&src=" + src, iframeJson.width * 0.95);
+					}else if(item.processDefinitionKey=="purchaseProcess"){
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selPurchaseProcess.html?processDefinitionKey=" + item.processDefinitionKey + "&endProcess="+endProcess +"&processInstanceId=" + item.processInstanceId + "&taskId="+item.taskId+ "&src=" + src, iframeJson.width * 0.95);
+					}else if(item.processDefinitionKey=="returnsProcess"){
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selReturnsProcess.html?processDefinitionKey=" + item.processDefinitionKey + "&endProcess="+endProcess +"&processInstanceId=" + item.processInstanceId + "&taskId="+item.taskId+ "&src=" + src, iframeJson.width * 0.95);
+					}else if(item.processDefinitionKey=="supplementaryProcess"){
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selSupplementaryProcess.html?processDefinitionKey=" + item.processDefinitionKey + "&endProcess="+endProcess +"&processInstanceId=" + item.processInstanceId +"&taskId="+item.taskId+  "&src=" + src, iframeJson.width * 0.95);
+					}else{
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selprocess.html?processDefinitionKey=" + item.processDefinitionKey+ "&endProcess="+endProcess + "&processInstanceId=" + item.processInstanceId +"&taskId="+item.taskId+ "&src=" + src, iframeJson.width * 0.95);
+					}
+				}
+			});
+		});
+	}
+	//已结案流程查看详细信息
+	function fillDetail(id) {
+		var src = "../../OAProcessMgrAdmin/getProcessImg/" + id;
+		getProcessJson(function() {
+			$.each(finishTasks, function(index, item) {
+				if (item.processInstanceId == id) {
+					if(item.processDefinitionKey=="orderCloseProcess"){
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selOrderProcess.html?processDefinitionKey=" + item.processDefinitionKey + "&endProcess="+endProcess +"&processInstanceId=" + item.processInstanceId + "&taskId="+item.taskId+ "&src=" + src, iframeJson.width * 0.95);
+					}else if(item.processDefinitionKey=="sampleProcess"){
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selSampleProcess.html?processDefinitionKey=" + item.processDefinitionKey + "&endProcess="+endProcess +"&processInstanceId=" + item.processInstanceId + "&taskId="+item.taskId+ "&src=" + src, iframeJson.width * 0.95);
+					}else if(item.processDefinitionKey=="outSendProcess"){
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selOutSendProcess.html?processDefinitionKey=" + item.processDefinitionKey + "&endProcess="+endProcess +"&processInstanceId=" + item.processInstanceId + "&taskId="+item.taskId+ "&src=" + src, iframeJson.width * 0.95);
+					}else if(item.processDefinitionKey=="inventoryProcess"){
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selInventoryProcess.html?processDefinitionKey=" + item.processDefinitionKey + "&endProcess="+endProcess +"&processInstanceId=" + item.processInstanceId + "&taskId="+item.taskId+ "&src=" + src, iframeJson.width * 0.95);
+					}else if(item.processDefinitionKey=="paymentProcess"){
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selPaymentProcess.html?processDefinitionKey=" + item.processDefinitionKey + "&endProcess="+endProcess +"&processInstanceId=" + item.processInstanceId + "&taskId="+item.taskId+ "&src=" + src, iframeJson.width * 0.95);
+					}else if(item.processDefinitionKey=="purchaseProcess"){
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selPurchaseProcess.html?processDefinitionKey=" + item.processDefinitionKey + "&endProcess="+endProcess +"&processInstanceId=" + item.processInstanceId + "&taskId="+item.taskId+ "&src=" + src, iframeJson.width * 0.95);
+					}else if(item.processDefinitionKey=="returnsProcess"){
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selReturnsProcess.html?processDefinitionKey=" + item.processDefinitionKey + "&endProcess="+endProcess +"&processInstanceId=" + item.processInstanceId + "&taskId="+item.taskId+ "&src=" + src, iframeJson.width * 0.95);
+					}else if(item.processDefinitionKey=="supplementaryProcess"){
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selSupplementaryProcess.html?processDefinitionKey=" + item.processDefinitionKey + "&endProcess="+endProcess +"&processInstanceId=" + item.processInstanceId +"&taskId="+item.taskId+  "&src=" + src, iframeJson.width * 0.95);
+					}else{
+						var name = eval("processJson." + item.processDefinitionKey + ".name");
+						admin_role_add('<strong>' + name + '</strong>',"selprocess.html?processDefinitionKey=" + item.processDefinitionKey+ "&endProcess="+endProcess + "&processInstanceId=" + item.processInstanceId +"&taskId="+item.taskId+ "&src=" + src, iframeJson.width * 0.95);
+					}
+				}
+			});
+		});
+	} 
+
+</script>
+</head>
+<body>
+	<div id="cen_right_top">
+		<h3 class="white">未完成流程</h3>
+		<h3>已结案流程</h3>
+		<div class="div" style="display: block">
+			<!--未完成流程 -->
+			<div class="bt-div-two-table" id="pro1">
+				<div class="table-responsive centerTable">
+					<table class="table table-data-bottom text-center tableHidden">
+						<thead>
+							<tr class="table-first-tr" fieldType="radioTable" fieldName="id">
+				                <th fieldType="num" fieldName="">序号</th>
+								<th fieldType="text" fieldName="processStatus">流程状态</th>
+								<th fieldType="text" fieldName="processName">流程名称</th>
+								<th fieldType="text" fieldName="globelStartUserName">发起人</th>
+								<th fieldType="text" fieldName="deptName">部门</th>
+								<th fieldType="text" fieldName="currentDealUser">当前处理人</th>
+								<th fieldType="text" fieldName="processStartTime">流程开始日期</th>
+								<th fieldType="deleteProcess" fieldName="processInstanceId">流程撤销</th>
+								<th fieldType="getProcessImg" fieldName="processInstanceId">流程追踪</th>
+							</tr>
+						</thead>
+						<tbody id="processTable1">
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<!-- 分页 -->
+			<div class="pages">
+				<div id="Pagination1"></div>
+				<div class="searchPage">
+					<span class="page-sum" id="sumPage1"></span> <span class="page-go">跳转<input
+						type="text">页
+					</span> <a class="page-btn" href="javascript:;">GO</a>
+				</div>
+			</div>
+		</div>
+		<div class="div">
+			<!--已结案流程 -->
+			<div class="bt-div-two-table" id="pro2">
+				<div class="table-responsive centerTable">
+					<table class="table table-data-bottom text-center tableHidden">
+						<thead>
+							<tr class="table-first-tr" fieldType="radioTable" fieldName="id">
+								<th fieldType="num" fieldName="">序号</th>
+								<th fieldType="text" fieldName="processStatus">流程状态</th>
+								<th fieldType="text" fieldName="processName">流程名称</th>
+								<th fieldType="text" fieldName="processInstanceId">流程实例ID</th>
+								<th fieldType="text" fieldName="processStartTime">开始日期</th>
+								<th fieldType="text" fieldName="processEndTime">结束日期</th>
+								<th fieldType="text" fieldName="durationInMillis">耗时</th>
+								<th fieldType="text" fieldName="globelStartUserName">发起人</th>
+								<th fieldType="text" fieldName="deptName">部门</th>
+								<th fieldType="detailInfo" fieldName="processInstanceId">详细信息</th>
+							</tr>
+						</thead>
+						<tbody id="processTable2"></tbody>
+					</table>
+				</div>
+			</div>
+			<!-- 分页 -->
+			<div class="pages">
+				<div id="Pagination2"></div>
+				<div class="searchPage">
+					<span class="page-sum" id="sumPage2"></span> <span class="page-go">跳转<input
+						type="text">页
+					</span> <a class="page-btn" href="javascript:;">GO</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert"
+				aria-hidden="true">&times;</button>
+			<span></span>
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.mes.dao.IViewMyWorkflowCompleteDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.mes.pojo.ViewMyWorkflowComplete" >
+    <result column="CardId" property="cardid" jdbcType="INTEGER" />
+    <result column="CardNo" property="cardno" jdbcType="VARCHAR" />
+    <result column="WorkCardType" property="workcardtype" jdbcType="INTEGER" />
+    <result column="P_Type" property="pType" jdbcType="INTEGER" />
+    <result column="ContractNo" property="contractno" jdbcType="VARCHAR" />
+    <result column="D_Standards" property="dStandards" jdbcType="VARCHAR" />
+    <result column="Pro_Name" property="proName" jdbcType="VARCHAR" />
+    <result column="CardD1" property="cardd1" jdbcType="VARCHAR" />
+    <result column="CardD2" property="cardd2" jdbcType="VARCHAR" />
+    <result column="CardS1" property="cards1" jdbcType="VARCHAR" />
+    <result column="CardS2" property="cards2" jdbcType="VARCHAR" />
+    <result column="D_Steel" property="dSteel" jdbcType="VARCHAR" />
+    <result column="D_FurnaceNo" property="dFurnaceno" jdbcType="VARCHAR" />
+    <result column="D_HeatNo" property="dHeatno" jdbcType="VARCHAR" />
+    <result column="D_Spec1" property="dSpec1" jdbcType="VARCHAR" />
+    <result column="D_Quantity" property="dQuantity" jdbcType="INTEGER" />
+    <result column="D_Weight" property="dWeight" jdbcType="VARCHAR" />
+    <result column="D_Weights" property="dWeights" jdbcType="DECIMAL" />
+    <result column="D_TotalWeight" property="dTotalweight" jdbcType="DECIMAL" />
+    <result column="D_CS" property="dCs" jdbcType="VARCHAR" />
+    <result column="D_Spec2" property="dSpec2" jdbcType="VARCHAR" />
+    <result column="D_Number" property="dNumber" jdbcType="VARCHAR" />
+    <result column="D_Length" property="dLength" jdbcType="VARCHAR" />
+    <result column="D_SurfaceState" property="dSurfacestate" jdbcType="VARCHAR" />
+    <result column="D_EndfaceState" property="dEndfacestate" jdbcType="VARCHAR" />
+    <result column="D_SolutionTemp" property="dSolutiontemp" jdbcType="VARCHAR" />
+    <result column="D_Tolerances" property="dTolerances" jdbcType="VARCHAR" />
+    <result column="S_Tolerances" property="sTolerances" jdbcType="VARCHAR" />
+    <result column="FeedingDate" property="feedingdate" jdbcType="VARCHAR" />
+    <result column="F_Weight" property="fWeight" jdbcType="DECIMAL" />
+    <result column="F_Date" property="fDate" jdbcType="VARCHAR" />
+    <result column="W_Weight" property="wWeight" jdbcType="DECIMAL" />
+    <result column="W_Date" property="wDate" jdbcType="VARCHAR" />
+    <result column="R_Weight" property="rWeight" jdbcType="DECIMAL" />
+    <result column="R_Date" property="rDate" jdbcType="VARCHAR" />
+    <result column="FinishRate" property="finishrate" jdbcType="VARCHAR" />
+    <result column="PassRate" property="passrate" jdbcType="VARCHAR" />
+    <result column="CardBeginDate" property="cardbegindate" jdbcType="VARCHAR" />
+    <result column="DeliveryDate" property="deliverydate" jdbcType="VARCHAR" />
+    <result column="BatchNo" property="batchno" jdbcType="VARCHAR" />
+    <result column="Cardmake" property="cardmake" jdbcType="VARCHAR" />
+    <result column="CardMakeDate" property="cardmakedate" jdbcType="VARCHAR" />
+    <result column="CardAudting" property="cardaudting" jdbcType="VARCHAR" />
+    <result column="CardAudtingDate" property="cardaudtingdate" jdbcType="VARCHAR" />
+    <result column="CardState" property="cardstate" jdbcType="INTEGER" />
+    <result column="R_Type" property="rType" jdbcType="INTEGER" />
+    <result column="DeptID" property="deptid" jdbcType="INTEGER" />
+    <result column="D_Rate" property="dRate" jdbcType="INTEGER" />
+    <result column="ProduceM_Id" property="producemId" jdbcType="INTEGER" />
+    <result column="ProduceM_Name" property="producemName" jdbcType="VARCHAR" />
+    <result column="ProduceM_Spec" property="producemSpec" jdbcType="VARCHAR" />
+    <result column="ProduceM_State" property="producemState" jdbcType="BIGINT" />
+    <result column="ProduceM_RouteNo" property="producemRouteno" jdbcType="INTEGER" />
+    <result column="ProduceM_Number" property="producemNumber" jdbcType="INTEGER" />
+    <result column="ProduceM_Weight" property="producemWeight" jdbcType="DECIMAL" />
+    <result column="ProduceM_Weights" property="producemWeights" jdbcType="DECIMAL" />
+    <result column="ProduceM_EndTime" property="producemEndtime" jdbcType="VARCHAR" />
+  </resultMap>
+  <resultMap id="ResultMapWithBLOBs" type="com.sss.mes.pojo.ViewMyWorkflowCompleteWithBLOBs" extends="BaseResultMap" >
+    <result column="Special_Requirements" property="specialRequirements" jdbcType="LONGVARCHAR" />
+    <result column="SprayWord_Requirements" property="spraywordRequirements" jdbcType="LONGVARCHAR" />
+    <result column="Package_Requirements" property="packageRequirements" jdbcType="LONGVARCHAR" />
+    <result column="Remark" property="remark" jdbcType="LONGVARCHAR" />
+  </resultMap>
+  <cache 
+  	eviction="FIFO" 
+  	flushInterval="900000" 
+	size="512" 
+	readOnly="true"/> 
+  <select id="getViewEntitys" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select D_Rate,ProduceM_EndTime,ProduceM_Number,ProduceM_Weight,ProduceM_Weights,CardNo,ContractNo,FeedingDate,DeliveryDate from view_my_workflow_complete 
+    where ProduceM_EndTime>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <select id="getVwfcsByPageNoAndSize" resultMap="BaseResultMap" >
+    select D_Rate,ProduceM_EndTime,ProduceM_Number,ProduceM_Weight,ProduceM_Weights,CardNo,ContractNo,FeedingDate,DeliveryDate from view_my_workflow_complete 
+    where ProduceM_EndTime>=#{startTime,jdbcType=VARCHAR} limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="getEntitysCount" resultType="java.lang.Integer" parameterType="java.lang.String" >
+    select count(*) from view_my_workflow_complete 
+    where ProduceM_EndTime>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <select id="getTotalWeight" resultType="java.math.BigDecimal" parameterType="java.lang.String" >
+    select sum(ProduceM_Weight) from view_my_workflow_complete 
+    where ProduceM_EndTime>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <select id="getTotalQuantity" resultType="java.math.BigDecimal" parameterType="java.lang.String" >
+    select sum(ProduceM_Number) from view_my_workflow_complete 
+    where ProduceM_EndTime>=#{startTime,jdbcType=VARCHAR}
+  </select>
+</mapper>

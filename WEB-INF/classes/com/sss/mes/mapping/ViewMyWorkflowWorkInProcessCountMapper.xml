@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.mes.dao.IViewMyWorkflowWorkInProcessCountDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.mes.pojo.ViewMyWorkflowWorkInProcessCount" >
+    <result column="ProduceM_Name" property="producemName" jdbcType="VARCHAR" />
+    <result column="ProduceM_State" property="producemState" jdbcType="VARCHAR" />
+    <result column="Total_ProduceM_Number" property="totalProducemNumber" jdbcType="INTEGER" />
+    <result column="Total_ProduceM_Weight" property="totalProducemWeight" jdbcType="DECIMAL" />
+  </resultMap>
+  <cache 
+  	eviction="FIFO" 
+  	flushInterval="900000" 
+	size="512" 
+	readOnly="true"/> 
+  <select id="getViewEntitys" resultMap="BaseResultMap">
+    SELECT ProduceM_Name,
+     CASE ProduceM_State
+        WHEN 0 THEN
+           '未分配'
+        WHEN 1 THEN
+           '接料'
+        WHEN 2 THEN
+           '首检'
+        WHEN 3 THEN
+           '生产'
+        WHEN 4 THEN
+           '审核'
+        WHEN 5 THEN
+           '已完成'
+     END
+        AS ProduceM_State,
+     SUM(ProduceM_Number) AS Total_ProduceM_Number,
+     SUM(ProduceM_Weight) AS Total_ProduceM_Weight
+    FROM
+        view_my_workflow
+    GROUP BY
+        ProduceM_Name,
+        ProduceM_State
+  </select>
+  <select id="getVwfwipcByPageNoAndSize" resultMap="BaseResultMap" >
+    SELECT ProduceM_Name,
+     CASE ProduceM_State
+        WHEN 0 THEN
+           '未分配'
+        WHEN 1 THEN
+           '接料'
+        WHEN 2 THEN
+           '首检'
+        WHEN 3 THEN
+           '生产'
+        WHEN 4 THEN
+           '审核'
+        WHEN 5 THEN
+           '已完成'
+     END
+        AS ProduceM_State,
+     SUM(ProduceM_Number) AS Total_ProduceM_Number,
+     SUM(ProduceM_Weight) AS Total_ProduceM_Weight
+    FROM
+        view_my_workflow
+    GROUP BY
+        ProduceM_Name,
+        ProduceM_State
+    limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+</mapper>

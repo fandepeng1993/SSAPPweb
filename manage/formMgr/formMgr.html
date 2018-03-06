@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>表单管理</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+    <link href="../../css/plugins/jsTree/style.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome.min.css" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" charset="utf-8" src="../../js/ueditor/ueditor.config.js"></script>
+	<!--建议手动加在语言，避免在ie下有时因为加载语言失败导致编辑器加载失败-->
+	<script type="text/javascript" charset="utf-8" src="../../js/ueditor/ueditor.all.min.js"> </script>
+	<!--这里加载的语言文件会覆盖你在配置项目里添加的语言类型，比如你在配置项目里配置的是英文，这里加载的中文，那最后就是中文-->
+	<script type="text/javascript" charset="utf-8" src="../../js/ueditor/lang/zh-cn/zh-cn.js"></script>
+	<script type="text/javascript" src="../../js/plugins/jsTree/jstree.min.js"></script>
+	
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<style>
+*{
+	padding:0px;
+	margin:0px;
+}
+
+
+.zzjg-content{
+	width: 100%;
+	height: 100%;
+	position:relative;
+}
+.zzjg-left{
+	width: 20%;
+	height: 100%;
+	float:left;
+	border:1px solid #d6e7f7;
+	border-bottom: 0px
+}
+.zzjg-left-top{
+	width:100%;
+	font-size:15px;
+	color:#205e91;
+	height:30px;
+	background:#f7f7f7;
+	line-height:30px;
+	font-family:微软雅黑;
+	font-weight:bold;
+}
+.zzjg-left-top span{
+	padding-left:10px;
+}
+.zzjg-right{
+	width:80%;
+	float:left;
+}
+.zzjg-right-top{
+	width:100%;
+	height:50px;
+	font-size:20px;
+	color:#205e91;
+	background:#f7f7f7;
+	margin-left: 1px;
+	font-family:微软雅黑;
+	font-weight:bold;
+}
+.zzjg-height{
+	height: 21px;
+	line-height: 21px;
+}
+</style>
+	<script type="text/javascript">
+    //当前页面所属菜单的menuCode
+    var menuCode;
+	//根据权限渲染页面
+	$(document).ready(function(){ 
+		menuCode = Request["menuCode"];
+		$.ajax({
+		      url: "../../sessionAdmin/getPri",
+		      datatype: "json",
+		      type: "get",
+		      data: {},
+		      success: function (data, status, xhr) {
+		    	  var pathname = window.location.pathname;
+		    	  var url = pathname.substring(pathname.indexOf("/", 1) + 1, pathname.length);
+		    	  $.each(eval("(" + data + ")"), function(index, item) {
+		      			if(item.menuUrl == url) {
+		      				if(item.menuName == "查看") {
+		      					$("#menuTable").show();
+		      					$("#elementTable").parent().show();
+		      					init('1');
+		      					//初始化
+		      					fillTable(1,"");
+		      					//初始化
+		      			
+		      				} else if(item.menuName == "增加") {
+		      					$("#add-g").show();
+		      				} else if(item.menuName == "修改") {
+		      					$("#update-g").show();
+		      				} else if(item.menuName == "删除") {
+		      					$("#delete-g").show();
+		      				}
+		      			}
+		    	  });
+		      } 
+		});
+	});
+	
+	 /**
+	    *	统一根据父级菜单Id填充其children
+	    */
+	    function fillChildrenByMenuPid(menuPid, childrenArr, grade) {
+	    	for(var index in allMenuData){
+				var childData= {
+	  		            "text":allMenuData[index].menuName,
+	  		            "children": [],
+	  		            "state": {
+	  		                "opened": false
+	  		            },
+	  		            "menuID":allMenuData[index].menuId,
+	  		            "menuCode":allMenuData[index].menuCode
+				};
+	  		  
+	  		  	if(childData.text && allMenuData[index].parentMenu && allMenuData[index].parentMenu.menuId==menuPid){
+	  		  		
+	  		  		if(allMenuData[index].isLeaf == 0 && grade < 2) {
+		  		  		fillChildrenByMenuPid(childData.menuID, childData.children, grade+1);
+	  		  		}
+					childrenArr.push(childData);
+				}
+	  		    
+			}
+	   
+	    }
+	    
+	    var allMenuData;
+	    var stateValue=2;
+	    
+		function init(id) {
+			
+			$.ajax({
+			      url: "../../menuAdmin/menus",
+			      datatype: "json",
+			      type: "get",
+			      data: {},
+			      success: function (data, status, xhr) {
+			    	  allMenuData=JSON.parse(data);
+			    	 
+			    	  var mydata= {
+			    			    "data": [{
+			    			        "text": "根菜单",
+			    			        "state": {"opened": true},
+			    			        "children":[],
+			    			        "menuID":1
+			    			    }]
+			    			}
+			    	  
+			    	  fillChildrenByMenuPid(1, mydata.data[0].children, 1);
+			    	  
+			    	  $("#using_json").jstree({
+				    		  'core': mydata,
+				    		  "plugins": ["types", "dnd"],
+				              "types": {
+				                  "default": {"icon": "fa fa-folder"},
+				                  "html": {"icon": "fa fa-file-code-o"},
+				                  "svg": {"icon": "fa fa-file-picture-o"},
+				                  "css": {"icon": "fa fa-file-code-o"},
+				                  "img": {"icon": "fa fa-file-image-o"},
+				                  "js": {"icon": "fa fa-file-text-o"}
+				              }
+				    		  
+			   	      }).on('changed.jstree', function (e, data) {
+			   	    	if(typeof(data.node) != "undefined") {
+	 						var tempValue=data.node.original.menuID;
+	 					
+	 						if(tempValue!=1 && tempValue!=stateValue){
+	 							stateValue=data.node.original.menuID;
+	 							fillTable(data.node.original.menuID,data.node.original.menuCode);
+	 						}else{
+	 							
+	 						}
+ 						}
+			   	      }).on('loaded.jstree', function(e, data){  
+	 		   	    		var inst = data.instance;
+			 		   	    var obj = inst.get_node(e.target.lastChild.lastChild.lastChild.firstChild);  
+			 		   	      
+			 		   	    inst.select_node(obj);  
+			 		  });
+			      }
+			});
+		}
+
+		var forms = null;
+		//树状图中选定的菜单Code
+		var curMenuCode;
+		//记录局部更新必须数据
+		var ajaxId;
+		var tableDate = null;
+		/**
+		 * 填充右侧表单元素查看元素table表单展现
+		 */
+		function fillTable(id,menuCode) {
+			curMenuCode = menuCode;
+			if(curMenuCode != "") {
+				$.ajax({
+					url: "../../formAdmin/formsByMenuCode/" + curMenuCode,
+					datatype: "json",
+					type: "get",
+					data: {},
+					success: function (data, status, xhr) {
+						/* $("#gg").empty(); */
+						tableDate = eval("(" + data + ")");
+					
+						forms = data;
+						$.each(eval("(" + data + ")"), function(index, item) {
+							new UserCommon().fillTable("elementTable", item, index);
+						});
+						//为checkbox添加监听事件
+						new UserCommon().checkboxListener();
+						
+					} 
+				});
+			}
+			//添加手型选中
+			$("#menuTable").find("span").hide();
+			$("#hand" + id).show();
+		}
+
+		function deleteElements() {
+			var str = "";
+			$("input[name='selectFlag']").each(function(){
+				if($(this).is(':checked')) str += $(this).val() + ",";
+			});
+			if(str != null && str.trim() != "") {
+				str = str.substring(0, str.length-1);
+				layer.confirm('确定要删除所选定元素么？',function(index){
+					$.ajax({
+					      url: "../../formAdmin/form/" + str,
+					      datatype: "text",
+					      type: "delete",
+					      data: {},
+					      success: function (data) {
+					    	  var json = eval("(" + data + ")");
+					    	  if(json.status == 1) {
+					    		  fillTable(ajaxId, curMenuCode);
+					    		  layer.close(index);
+					    		  new UserCommon().check("success",json.msg,null,"success");
+					    		  //new UserCommon().check("success",json.msg,"formMgr.html?menuCode=" + menuCode,"success");
+					    	  } else {
+					    		  new UserCommon().check("success",json.msg,null,"fail");
+					    	  }
+					      }
+					});
+				});
+			} else {
+				new UserCommon().check("success","请选择要删除的表单元素！",null,"warning");
+			}
+		}
+	
+   	var flag = true;
+    function chkRadio(id) {
+	    id.checked = flag;
+	    flag = !flag;
+    }
+
+	
+	var forms = null;
+	//树状图中选定的菜单Code
+	var curMenuCode;
+	/**
+	 * 填充右侧表单元素查看元素table表单展现
+	 */
+	function fillTable(id,menuCode) {
+		curMenuCode = menuCode;
+		if(curMenuCode != "") {
+			$.ajax({
+				url: "../../formAdmin/formsByMenuCode/" + curMenuCode,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					$("#elementTable").empty();
+					forms = data;
+					$.each(eval("(" + data + ")"), function(index, item) {
+						new UserCommon().fillTable("elementTable",item,index);
+					});
+					//为checkbox添加监听事件
+					new UserCommon().checkboxListener();
+					
+				} 
+			});
+		}
+		//添加手型选中
+		$("#menuTable").find("span").hide();
+		$("#hand" + id).show();
+	}
+	
+	function deleteElements() {
+		var str = "";
+		$("input[name='selectFlag']").each(function(){
+			if($(this).is(':checked')) str += $(this).val() + ",";
+		});
+		if(str != null && str.trim() != "") {
+			str = str.substring(0, str.length-1);
+			layer.confirm('确定要删除所选定元素么？',function(index){
+				$.ajax({
+				      url: "../../formAdmin/form/" + str,
+				      datatype: "text",
+				      type: "delete",
+				      data: {},
+				      success: function (data) {
+				    	  var json = eval("(" + data + ")");
+				    	  if(json.status == 1) {
+				    		  new UserCommon().check("success",json.msg,"formMgr.html?menuCode=" + menuCode,"success");
+				    	  } else {
+				    		  new UserCommon().check("success",json.msg,null,"fail");
+				    	  }
+				      }
+				});
+			});
+		} else {
+			new UserCommon().check("success","请选择要删除的表单元素！",null,"warning");
+		}
+	}
+	
+    /**
+     * 选择修改后填充相关信息
+     */
+    function fillUpdateSelect() {
+    	var but = $("input[name='selectFlag']");
+    	var selFormId;
+    	var num = 0;
+    	for(var i=0; i<but.length; i++) {
+    		if(but[i].checked) { 
+    			if(num == 0) {
+    				selFormId = but[i].value;
+    			}
+    			num += 1;
+    			//alert(but[i].value);
+    		}
+    	} 
+    	if(num == 1) {
+    		$.each(eval("(" + forms + ")"), function(index, item) {
+    			if(item.id == selFormId) {
+    				admin_role_add('<strong>表单元素修改</strong>','editForm.html?formId=' + item.id + "&menuCode=" + menuCode + "&curMenuCode=" + curMenuCode,'600');
+    			}
+    	    });
+    	} else {
+    		new UserCommon().check("success","请选择一个元素！",null,"warning");
+    	}
+    }
+    
+    /*管理员-角色-添加*/
+	function admin_role_add(title,url,w){
+		new UserCommon().layer_show(title,url,w);
+	}
+	function addForm() {
+		if(curMenuCode != null && curMenuCode != "") {
+			admin_role_add('<strong>表单元素添加</strong>',"addForm.html?menuCode=" + menuCode + "&curMenuCode=" + curMenuCode,'600');
+		} else {
+			new UserCommon().check("success","请先选择某个菜单！",null,"warning");
+		}
+	}
+	
+	function preview() {
+		admin_role_add('<strong>表单预览</strong>',"preview.html?menuCode=" + curMenuCode,'600');
+	}
+	function previewById(menuCode) {
+		admin_role_add('<strong>表单预览</strong>',"preview.html?menuCode=" + menuCode,'600');
+	}
+    </script>
+</head>
+<body>
+<div class="content">
+	<div class="zzjg-left">
+		<div class="zzjg-left-top">
+			<span>菜单列表</span>
+		</div>
+		<div id="using_json"></div>
+		<!-- <table style="width:100%;height:500px;display:none" id="menuTable">
+			<tr>
+				<td valign="top" nowrap="nowrap">
+					<div>
+						<img alt="展开" style="cursor:hand;" onClick="display('1',1);" id="img1" src="../../images/add.png">
+						<img id="im1" src="../../images/home.png">
+						<button onclick="fillTable(1,'')" class="btn btn-link" target="clientDispAreaFrame" style="font-size:13px;padding-left:0px;padding-bottom:0px;color:#000">
+							上上智汇管理系统
+							<span id="hand1" class="glyphicon glyphicon-hand-right hand zzjg-hand" style="display:none"></span>
+						</button> 
+						<div style="display:none;margin-top:3px;" id="div1">
+						</div>
+					</div>
+				</td>
+			</tr>
+		</table> -->
+	</div>
+	<div class="zzjg-right">
+		<div class=" bt-div">
+			<div class="bt-div-in">
+				<button type="button" class="btn btn-default btn-xs bt-one"  id="add-g" onclick="addForm()">
+					<span class="glyphicon glyphicon-plus" ></span> 添加
+				</button>
+				<button type="button" class="btn btn-default btn-xs bt-two"  id="update-g" onclick="fillUpdateSelect()">
+					<span class="glyphicon glyphicon-edit"></span> 修改
+				</button>
+				<button type="button" class="btn btn-default btn-xs bt-three"   id="delete-g" onclick="deleteElements()">
+					<span class="glyphicon glyphicon glyphicon-trash" ></span> 删除
+				</button>
+				<button type="button" class="btn btn-default btn-xs bt-three " style="display:inline-block;" onclick="preview()">
+					<span class="glyphicon glyphicon glyphicon-search" ></span> 预览
+				</button>
+			</div>
+		</div>
+		 <div class="table-responsive centerTable" >
+            <table class="table table-hover table-bottom text-center tableHidden">
+	            <thead>
+	                <tr fieldType="controlCB" fieldName="id" style="background:#ebebeb;">
+	                	<th fieldType="checkbox" fieldName="id" style="text-align:center">
+							<input type="checkbox" name="ifAll" class="all">
+						</th>
+	                    <th fieldType="num" fieldName="" style="text-align:center">序号</th>
+	                    <th fieldType="text" fieldName="label" style="text-align:center">属性名称</th>
+	                    <th fieldType="text" fieldName="element" style="text-align:center">元素名</th>
+	                    <th fieldType="text" fieldName="type" style="text-align:center">元素类型</th>
+	                    <th fieldType="text" fieldName="name" style="text-align:center">对应pojo字段名</th>
+	                    <th fieldType="text" fieldName="isEmpty" style="text-align:center">可否为空</th>
+	                    <th fieldType="text" fieldName="elementIndex" style="text-align:center">下标值</th>
+	                </tr>
+	            </thead>
+	            <tbody id="elementTable">	
+	            </tbody>
+            </table> 
+        </div>
+	</div>
+</div>
+<!-- 服务器返回信息弹出 -->
+<div id="success" style="position:absolute;left:50%;margin-left:-150px;z-index:7;width:300px;top:50%;display:none">
+	<div class="alert alert-success alert-dismissable">
+		<button type="button" class="close" data-dismiss="alert"
+		aria-hidden="true">
+			&times;
+		</button>
+		<span></span>
+	</div>
+</div>
+</body>
+
+</html>

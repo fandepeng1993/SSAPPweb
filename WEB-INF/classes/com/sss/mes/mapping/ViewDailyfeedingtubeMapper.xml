@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.mes.dao.IViewDailyfeedingtubeDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.mes.pojo.ViewDailyfeedingtube" >
+    <result column="D_Id" property="dId" jdbcType="INTEGER" />
+    <result column="D_Order" property="dOrder" jdbcType="INTEGER" />
+    <result column="D_OrderNo" property="dOrderno" jdbcType="VARCHAR" />
+    <result column="D_TubeNo" property="dTubeno" jdbcType="VARCHAR" />
+    <result column="D_Quantity" property="dQuantity" jdbcType="VARCHAR" />
+    <result column="D_Weight" property="dWeight" jdbcType="VARCHAR" />
+    <result column="D_TotalWeight" property="dTotalweight" jdbcType="VARCHAR" />
+    <result column="ProduceM_BillNo" property="producemBillno" jdbcType="VARCHAR" />
+    <result column="D_Supply" property="dSupply" jdbcType="VARCHAR" />
+    <result column="D_PunchFactory" property="dPunchfactory" jdbcType="VARCHAR" />
+    <result column="D_FurnaceNo" property="dFurnaceno" jdbcType="VARCHAR" />
+    <result column="D_Spec" property="dSpec" jdbcType="VARCHAR" />
+    <result column="FeedingDate" property="feedingdate" jdbcType="VARCHAR" />
+    <result column="CardNo" property="cardno" jdbcType="VARCHAR" />
+    <result column="ContractNo" property="contractno" jdbcType="VARCHAR" />
+    <result column="P_Type" property="pType" jdbcType="INTEGER" />
+  </resultMap>
+  <cache 
+  	eviction="FIFO" 
+  	flushInterval="900000" 
+	size="512" 
+	readOnly="true"/> 
+  <select id="getViewEntitys" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select FeedingDate,ProduceM_BillNo,ContractNo,D_Spec,D_Quantity,D_Weight,D_TotalWeight,D_FurnaceNo from view_dailyfeedingtube 
+    where FeedingDate>=#{startTime,jdbcType=VARCHAR} 
+    order by FeedingDate desc
+  </select>
+  <select id="getVdftsByPageNoAndSize" resultMap="BaseResultMap" >
+    select FeedingDate,ProduceM_BillNo,ContractNo,D_Spec,D_Quantity,D_Weight,D_TotalWeight,D_FurnaceNo from view_dailyfeedingtube 
+    where FeedingDate>=#{startTime,jdbcType=VARCHAR} 
+    order by FeedingDate desc 
+    limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="getEntitysCount" resultType="java.lang.Integer" parameterType="java.lang.String" >
+    select count(*) from view_dailyfeedingtube 
+    where FeedingDate>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <select id="getTotalWeight" resultType="java.math.BigDecimal" parameterType="java.lang.String" >
+    select sum(D_TotalWeight) from view_dailyfeedingtube 
+    where FeedingDate>=#{startTime,jdbcType=VARCHAR}
+  </select>
+  <select id="getTotalQuantity" resultType="java.math.BigDecimal" parameterType="java.lang.String" >
+    select sum(D_Quantity) from view_dailyfeedingtube 
+    where FeedingDate>=#{startTime,jdbcType=VARCHAR}
+  </select>
+</mapper>

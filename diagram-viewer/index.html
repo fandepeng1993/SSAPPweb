@@ -1,0 +1,153 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  
+  <link rel="stylesheet" href="style.css" type="text/css" media="screen">
+  <link rel="stylesheet" href="../editor-app/css/style-common.css" type="text/css" media="screen">
+  <link rel="stylesheet" href="../editor-app/libs/bootstrap_3.1.1/css/bootstrap.min.css" type="text/css" media="screen">
+  <link rel="stylesheet" href="../editor-app/css/style.css" type="text/css" media="screen"> 
+    
+    
+  <script src="js/jstools.js" type="text/javascript" charset="utf-8"></script>
+  <script src="js/raphael.js" type="text/javascript" charset="utf-8"></script>
+  <script src="js/jquery/jquery.js" type="text/javascript" charset="utf-8"></script>
+  <script src="js/jquery/jquery.progressbar.js" type="text/javascript" charset="utf-8"></script>
+  <script src="js/jquery/jquery.asyncqueue.js" type="text/javascript" charset="utf-8"></script>
+  <script src="../js/UserCommon.js" type="text/javascript" charset="utf-8"></script>
+  <script type="text/javascript" src="../js/plugins/layer/layer.min.js"></script>
+  
+  <script src="js/Color.js" type="text/javascript" charset="utf-8"></script>
+  <script src="js/Polyline.js" type="text/javascript" charset="utf-8"></script>
+  <script src="js/ActivityImpl.js" type="text/javascript" charset="utf-8"></script>
+  <script src="js/ActivitiRest.js" type="text/javascript" charset="utf-8"></script>
+  <script src="js/LineBreakMeasurer.js" type="text/javascript" charset="utf-8"></script>
+  <script src="js/ProcessDiagramGenerator.js" type="text/javascript" charset="utf-8"></script>
+  <script src="js/ProcessDiagramCanvas.js" type="text/javascript" charset="utf-8"></script>
+  <script type="text/javascript" src="../js/UserCommon.js"></script>
+  <style type="text/css" media="screen">
+    
+  </style>
+</head>
+<body>
+<div class="wrapper" style="height: 1016px;padding:0;margin:0;max-width:100%;min-width:10%;">
+  <div id="pb1" style="height: 35px;"></div>
+  <div id="overlayBox" >
+    <div id="diagramBreadCrumbs" class="diagramBreadCrumbs" onmousedown="return false" onselectstart="return false"></div>
+    <div id="diagramHolder" class="diagramHolder"></div>
+    <div class="diagram-info" id="diagramInfo"></div>
+  </div>
+</div>
+<script language='javascript'>
+var DiagramGenerator = {};
+var pb1;
+
+function admin_role_add(title, url, w) {
+	new UserCommon().layer_show(title, url, w, true);
+}
+$(document).ready(function(){
+	
+  var query_string = {};
+  var query = window.location.search.substring(1);
+  var vars = query.split("&");
+  for (var i=0;i<vars.length;i++) {
+    var pair = vars[i].split("=");
+    query_string[pair[0]] = pair[1];
+  } 
+  
+  var processDefinitionId = query_string["processDefinitionId"];
+  var processInstanceId = query_string["processInstanceId"]; 
+  //console.log("Initialize progress bar");
+  
+  pb1 = new $.ProgressBar({
+    boundingBox: '#pb1',
+    label: '加载进度条!',
+    on: {
+      complete: function() {
+        //console.log("Progress Bar COMPLETE");
+        this.set('label', '完成!');
+      	//初始化层的大小
+    	setTimeout(function() {
+    		initLayerSize();
+    	},100); 
+        if (processInstanceId) {
+          ProcessDiagramGenerator.drawHighLights(processInstanceId);
+        }
+      },
+      valueChange: function(e) {
+        this.set('label', e.newVal + '%');
+      }
+    },
+    value: 0
+  });
+  //console.log("Progress bar inited");
+  
+  ProcessDiagramGenerator.options = {
+    diagramBreadCrumbsId: "diagramBreadCrumbs",
+    diagramHolderId: "diagramHolder",
+    diagramInfoId: "diagramInfo",
+    on: {//鼠标左键点击事件
+      click: function(canvas, element, contextObject){
+        var mouseEvent = this;
+       /* console.log(canvas);
+       console.log(element);
+       console.log(contextObject); */
+       var processDefinitionKey=processDefinitionId.substring(0,processDefinitionId.indexOf(":"));
+       var activityType=contextObject.properties.type;
+       var activityName=contextObject.properties.name;
+       if(contextObject.getProperty("type") != "parallelGateway" & contextObject.id !="usertask1" & activityType !="startEvent" & activityType !="endEvent" ){
+       		admin_role_add('<strong>审批人信息</strong>', "../manage/processMgr/setApprove.html?processDefinitionKey=" + processDefinitionKey+"&activiyId=" +contextObject.id+"&processDefinitionId=" +processDefinitionId + "&activityType=" +activityType+"&activityName="+activityName , 600);
+       }
+        //console.log("[CLICK] mouseEvent: %o, canvas: %o, clicked element: %o, contextObject: %o", mouseEvent, canvas, element, contextObject);
+
+        if (contextObject.getProperty("type") == "callActivity") {
+          var processDefinitonKey = contextObject.getProperty("processDefinitonKey");
+          var processDefinitons = contextObject.getProperty("processDefinitons");
+          var processDefiniton = processDefinitons[0];
+         //console.log("Load callActivity '" + processDefiniton.processDefinitionKey + "', contextObject: ", contextObject);
+          // Load processDefinition
+        ProcessDiagramGenerator.drawDiagram(processDefiniton.processDefinitionId);
+        }
+      },
+      //鼠标右键点击事件
+      rightClick: function(canvas, element, contextObject){
+        var mouseEvent = this;
+        //alert("rightClick");
+        //console.log("[RIGHTCLICK] mouseEvent: %o, canvas: %o, clicked element: %o, contextObject: %o", mouseEvent, canvas, element, contextObject);
+      },
+      //鼠标悬浮事件
+      over: function(canvas, element, contextObject){
+        var mouseEvent = this;
+        //console.log("[OVER] mouseEvent: %o, canvas: %o, clicked element: %o, contextObject: %o", mouseEvent, canvas, element, contextObject);
+
+        // TODO: show tooltip-window with contextObject info
+        ProcessDiagramGenerator.showActivityInfo(contextObject);
+      },
+      //鼠标移出事件
+      out: function(canvas, element, contextObject){
+        var mouseEvent = this;
+        //console.log("[OUT] mouseEvent: %o, canvas: %o, clicked element: %o, contextObject: %o", mouseEvent, canvas, element, contextObject);
+        ProcessDiagramGenerator.hideInfo();
+      }
+    }
+  };
+  
+  var baseUrl = window.document.location.protocol + "//" + window.document.location.host + "/";
+  var shortenedUrl = window.document.location.href.replace(baseUrl, "");
+  baseUrl = baseUrl + shortenedUrl.substring(0, shortenedUrl.indexOf("/"));
+  
+  ActivitiRest.options = {
+    processInstanceHighLightsUrl: baseUrl + "/process-instance/{processInstanceId}/highlights",
+    processDefinitionUrl: baseUrl + "/process-definition/{processDefinitionId}/diagram-layout",
+    processDefinitionByKeyUrl: baseUrl + "/process-definition/{processDefinitionKey}/diagram-layout"
+  };
+  
+  if (processDefinitionId) {
+    ProcessDiagramGenerator.drawDiagram(processDefinitionId);
+  } else {
+    alert("processDefinitionId parameter is required");
+  }
+});
+
+</script>
+</body>
+</html>

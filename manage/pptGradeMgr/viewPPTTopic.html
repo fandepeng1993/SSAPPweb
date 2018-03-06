@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>查看ppt主题详情</title>
+<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+<script type="text/javascript" src="../../js/checkUser.js"></script>
+<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+<script type="text/javascript" src="../../js/UserUtil.js"></script>
+<script type="text/javascript" src="../../js/UserCommon.js"></script>
+<script type="text/javascript">
+	
+	var addtext;
+	var menuCode;
+	var topicId;
+	var selectorCount = [];
+	$(document).ready(function() {
+		menuCode = Request["menuCode"];
+		topicId = Request["topicId"];
+		getPPTTopic(topicId);
+	});
+	
+	/* 根据topicId获取pptTopic */
+	function getPPTTopic(tid) {
+		$.ajax({
+			url: "../../pptTopicAdmin/getPPTTopicById/" + tid,
+			datatype: "json",
+			type: "get",
+			data: {},
+			success: function (data, status, xhr) {
+				pptTopic = eval("(" + data + ")");
+				initForm();
+			} 
+		});
+	}
+	
+	
+	/* 根据topicId获取pptProject */
+	function getPPTProject(pid){
+		$.ajax({
+			url: "../../pptProjectAdmin/getPPTProjectsByTopicId/" + pid,
+			datatype: "json",
+			type: "get",
+			data: {},
+			success: function (data, status, xhr) {
+				pptProjects = $.parseJSON(data);
+				console.log(pptProjects.length);
+				for(var i = 0; i < pptProjects.length; i++){
+					//当第一次进入循环时，只填充第一个项目框, 随后进入循环增加项目框
+					if(i > 0) {
+						addPPTProject();
+					}
+					$("input[name='pptProjectId']").eq(i).val(pptProjects[i].projectId);
+					$("input[name='pptProjectName']").eq(i).val(pptProjects[i].projectName);
+					var projectId = pptProjects[i].projectId;
+					getPPTItem(projectId,i);
+				}
+			}
+			
+		});
+	}
+	
+	/*根据projectId获取指标  */
+	function getPPTItem(iid, index){
+		$.ajax({
+			url: "../../pptItemAdmin/getPPTItemsByProjectId/" + iid,
+			datatype: "json",
+			type: "get",
+			data: {},
+			success: function (data, status, xhr) {
+				pptItems = $.parseJSON(data);
+				for(var j = 0; j < pptItems.length; j++) {
+					//当第一次进入循环时，只填充第一个指标框, 随后进入循环增加指标框
+					if(j > 0) {
+						addPPTItem($("input[name='addPPTItemButton']").eq(index));
+					}
+					$("form[name='cloneForm']").eq(index).find("input[name='pptItemName']").eq(j).val(pptItems[j].itemName);
+					$("form[name='cloneForm']").eq(index).find("input[name='pptItemId']").eq(j).val(pptItems[j].itemId);
+				}
+				new UserCommon().radioListener();
+			} 
+		});
+	}
+	
+	/* 根据ss_form表取出数据构建form表单 */
+	function initForm() {
+		fillPPTTopicInfos();
+		//初始化层的大小
+		initLayerSize();
+		getPPTProject(topicId);
+		addtext = $("form[name='cloneForm']").eq(0).clone();
+		$("form[name='cloneForm']").eq(0).find(".del_con").css("display","none");
+		new UserCommon().radioListener();
+		
+	}
+	
+	/* 填充PPTTopic的信息 */
+	function fillPPTTopicInfos() {
+		$("#pptTopicContent").val(pptTopic.topicContent);
+		$("#topicCreateManName").val(pptTopic.topicCreateMan);
+	}
+ 	
+	/* 增加项目 */
+	function addPPTProject() {
+		var length=$("form[name='cloneForm']").length; 
+		$('#test').append(addtext.prop("outerHTML"));
+		var contH=$('#test').height();
+		$("form[name='cloneForm']:last").find("input[class='singlebox']").attr("checked","checked");
+	    $("form[name='cloneForm']:last").find('legend').html('项目'+(length+1));
+	    var Ohe=$('.table-responsive').height();
+	    var tops=$("form[name='cloneForm']:last").offset().top;
+	    if((contH-Ohe)>=0){
+		   $('.table-responsive').scrollTop(contH-Ohe+62); 
+	    }
+	    $('.del_con').on('click',function(){
+	    	var index = $(this).parent().parent().parent().parent().parent().index();
+			$(this).parent().parent().parent().parent().remove();
+			if(index != -1) updateNum(index);
+		});
+	  	//为radio添加监听事件
+		new UserCommon().radioListener();
+		/* $("input").attr("readonly","readonly"); */
+	}
+	
+	/*增加问题和指标的角标 */
+	function updateNum (index) {
+		var numLegend = $("legend[name='numLegend']");
+		for(var i=index; i<numLegend.length; i++) {
+			numLegend.eq(i).html("项目" + (i+1));
+		}
+	}
+	
+ 	/* 增加指标 */
+ 	var index;
+	function addPPTItem(arg) {
+		var Obj = arg;
+		index = Obj.parent().parent().parent().parent().parent().index();
+		if (!selectorCount['' + index]) {
+			selectorCount['' + index] = 2
+		} else {
+			++selectorCount['' + index]
+		}
+		
+		var newChoose = $("<p class=selectorCount" + index + selectorCount[index] + ">" +
+		"<span style=\"width:63px;padding-left:3px; display:inline-block\" >指标"+ selectorCount[index]+":</span>" +
+		"<input type='text' name='pptItemName' label='指标名称' errormsg='不能为空！'>" +"</p>");
+		$(newChoose).hide();
+		Obj.closest(".div").append(newChoose);
+		$(newChoose).slideDown();
+	} 
+	
+</script>
+</head>
+<body>
+<div class="table-responsive" style="height:450px; overflow-y:scroll; padding-left:5%; padding-right:5%;">
+	<form id="titleForm" name="con1">
+		<p class="pptTopicContent">
+	    	<span>ppt主题名称:</span><input type="text" name="pptTopicContent" id="pptTopicContent" label="ppt主题名称" errormsg="不能为空！"/>
+		</p>
+		<p class="topicCreateManName">
+	    	<span style="width:80px; display:inline-block;">创建人:</span><input type="text" name="topicCreateMan" id="topicCreateManName" label="创建人姓名" errormsg="不能为空！"/>
+		</p>
+	 </form>
+	 <div id="test">   	
+		 <form style="position:relative;" name="cloneForm">
+				<div class="addtext">
+				<fieldset
+			  	style="display: block; -webkit-margin-start: 25px; -webkit-margin-end: 25px; -webkit-padding-before: 0.35em; -webkit-padding-start: 0.75em; -webkit-padding-end: 0.75em; -webkit-padding-after: 0.625em; border-image-source: initial; border-image-slice: initial; border-image-width: initial; border-image-outset: initial; border-image-repeat: initial; min-width: -webkit-min-content; border-width: 2px; border-style: groove; border-color: threedface;">
+			    <legend name="numLegend" style="display: block; width: 80px;padding: 7px;font-size: 21px;line-height: inherit;color: #333;border: 0;margin-bottom: 0px;">项目1</legend>
+			    <div class="div">
+					<p class="pptProject">
+						<span style="width:56px; display:inline-block;">项目名:</span>
+						<input type="text" name="pptProjectName" label="项目名" errormsg="不能为空！"/>
+					</p>
+					<p class="pptItem">
+						<span style="width:56px; display:inline-block;">指标1:</span>
+						<input type="text" name="pptItemName" label="指标名称" errormsg="不能为空！">
+						<input type="hidden" name="addPPTItemButton" onclick="addPPTItem($(this))" value="增加指标" class="addItemsQ"/>
+					</p>
+			  </fieldset>
+			  </div>
+		 </form>
+	</div>			
+	<div id="buttionDiv" class="buttionDiv">
+		<div class="edit-bottom">
+			<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();"><i class="glyphicon glyphicon-remove"></i>&nbsp;关闭</button>
+		</div>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert"
+				aria-hidden="true">&times;</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span> <span></span>
+			<div>
+				<img src="../../images/sanjiao.png" width="10">
+			</div>
+		</div>
+	</div>
+</body>
+</html>

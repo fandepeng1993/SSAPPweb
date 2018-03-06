@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IBusTripReportDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.BusTripReport" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="fromdate" property="fromdate" jdbcType="VARCHAR" />
+    <result column="enddate" property="enddate" jdbcType="VARCHAR" />
+    <result column="address" property="address" jdbcType="VARCHAR" />
+    <result column="contactTel" property="contactTel" jdbcType="VARCHAR" />
+    <result column="content" property="content" jdbcType="VARCHAR" />
+    <result column="photoUrls" property="photoUrls" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    
+    <association property="user" javaType="com.sss.pojo.User">
+		<id column="bu_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="bu_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="bu_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="bu_user_photoUrl" property="photoUrl" jdbcType="VARCHAR" />
+	</association>
+	<association property="customer" javaType="com.sss.pojo.Customer">
+		<id column="bc_customer_id" property="id" jdbcType="INTEGER" />
+		<result column="bc_salesman_userId" property="salesman.userId" jdbcType="INTEGER" />
+	    <result column="bc_customer_name" property="customerName" jdbcType="VARCHAR" />
+	    <result column="bc_customer_area" property="area" jdbcType="VARCHAR" />
+	</association>
+	<association property="contact" javaType="com.sss.pojo.Contact">
+		<id column="bc_contact_id" property="id" jdbcType="INTEGER" />
+		<result column="bc_contact_name" property="name" jdbcType="VARCHAR" />
+		<result column="bc_contact_sex" property="sex" jdbcType="VARCHAR" />
+		<result column="bc_contact_deptName" property="deptName" jdbcType="VARCHAR" />
+		<result column="bc_contact_position" property="position" jdbcType="VARCHAR" />
+		<result column="bc_contact_officeTel" property="officeTel" jdbcType="VARCHAR" />
+		<result column="bc_contact_telephone" property="telephone" jdbcType="VARCHAR" />
+	</association>
+	<association property="visitPlan" javaType="com.sss.pojo.VisitPlan">
+		<id column="bv_visit_id" jdbcType="INTEGER" property="id" />
+	    <result column="bv_visit_address" jdbcType="VARCHAR" property="address" />
+	    <result column="bv_visit_fromdate" jdbcType="VARCHAR" property="fromdate" />
+	    <result column="bv_visit_enddate" jdbcType="VARCHAR" property="enddate" />
+	    <result column="bv_visit_createdate" property="createdate" jdbcType="VARCHAR" />
+    	<result column="bv_visit_status" property="status" jdbcType="INTEGER" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		btr.*,
+  		u.user_id as bu_user_id,
+  		u.user_name as bu_user_name,
+  		u.user_no as bu_user_no,
+  		u.photoUrl as bu_user_photoUrl,
+  		cus.id as bc_customer_id,
+  		cus.customer_name as bc_customer_name,
+  		cus.area as bc_customer_area,
+  		cus.salesman as bc_salesman_userId,
+  		con.id as bc_contact_id,
+  		con.name as bc_contact_name,
+  		con.sex as bc_contact_sex,
+  		con.deptName as bc_contact_deptName,
+  		con.position as bc_contact_position,
+  		con.officeTel as bc_contact_officeTel,
+  		con.telephone as bc_contact_telephone,
+  		v.id as bv_visit_id,
+  		v.address as bv_visit_address,
+  		v.fromdate as bv_visit_fromdate,
+  		v.enddate as bv_visit_enddate,
+  		v.createdate as bv_visit_createdate,
+  		v.status as bv_visit_status
+    from 
+    	ss_busTripReport btr
+   	left join
+   		ss_user u
+   	on
+   		btr.userId = u.user_id
+   	left join
+   		ss_customer cus
+   	on
+   		btr.cusId = cus.id
+   	left join
+   		ss_contact con
+   	on
+   		btr.contactId = con.id
+   	left join
+   		ss_visitPlan v
+   	on
+   		btr.visitId = v.id
+  </sql>
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by btr.createdate desc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where btr.id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectByCusId" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where btr.cusId = #{cusId,jdbcType=INTEGER}
+    order by btr.createdate desc
+  </select>
+  <select id="selectByVisitId" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where btr.visitId = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectByUIds" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where btr.userId in 
+    <foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>
+    order by btr.createdate desc
+  </select>
+  <select id="selectCountByUIds" resultType="java.lang.Integer" >
+    select count(*) from ss_busTripReport
+    where userId in 
+    <foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>
+  </select>
+  <select id="selectByUIdsLazy" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where btr.userId in 
+    <foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>
+    order by btr.createdate desc
+    limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="selectByDateAndUser" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where btr.userId = #{userId,jdbcType=INTEGER}
+    	and btr.fromdate &gt;= #{fromdateBegin,jdbcType=VARCHAR}
+    	and btr.fromdate &lt;= #{fromdateEnd,jdbcType=VARCHAR}
+    order by btr.createdate desc
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_bustripreport
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.BusTripReport" >
+    insert into ss_bustripreport (id, userId, cusId, 
+      contactId, visitId, contactTel, fromdate, enddate, 
+      address, createdate, content, photoUrls
+      )
+    values (#{id,jdbcType=INTEGER}, #{user.userId,jdbcType=INTEGER}, #{customer.id,jdbcType=INTEGER}, 
+      #{contact.id,jdbcType=INTEGER}, #{visitPlan.id,jdbcType=INTEGER}, #{contactTel,jdbcType=VARCHAR}, 
+      #{fromdate,jdbcType=VARCHAR}, #{enddate,jdbcType=VARCHAR}, #{address,jdbcType=VARCHAR}, 
+      #{createdate,jdbcType=VARCHAR}, #{content,jdbcType=VARCHAR}, #{photoUrls,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.BusTripReport" >
+  	<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+    </selectKey>
+    insert into ss_bustripreport
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="user != null and user.userId != null" >
+        userId,
+      </if>
+      <if test="customer != null and customer.id != null" >
+        cusId,
+      </if>
+      <if test="contact != null and contact.id != null" >
+        contactId,
+      </if>
+      <if test="visitPlan != null and visitPlan.id != null" >
+        visitId,
+      </if>
+      <if test="contactTel != null" >
+        contactTel,
+      </if>
+      <if test="fromdate != null and fromdate != ''" >
+        fromdate,
+      </if>
+      <if test="enddate != null and enddate != ''" >
+        enddate,
+      </if>
+      <if test="address != null" >
+        address,
+      </if>
+      <if test="content != null" >
+        content,
+      </if>
+      <if test="photoUrls != null" >
+        photoUrls,
+      </if>
+      createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="user != null and user.userId != null" >
+        #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="customer != null and customer.id != null" >
+        #{customer.id,jdbcType=INTEGER},
+      </if>
+      <if test="contact != null and contact.id != null" >
+        #{contact.id,jdbcType=INTEGER},
+      </if>
+      <if test="visitPlan != null and visitPlan.id != null" >
+        #{visitPlan.id,jdbcType=INTEGER},
+      </if>
+      <if test="contactTel != null" >
+        #{contactTel,jdbcType=VARCHAR},
+      </if>
+      <if test="fromdate != null and fromdate != ''" >
+        #{fromdate,jdbcType=VARCHAR},
+      </if>
+      <if test="enddate != null and enddate != ''" >
+        #{enddate,jdbcType=VARCHAR},
+      </if>
+      <if test="address != null" >
+        #{address,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null" >
+        #{content,jdbcType=VARCHAR},
+      </if>
+      <if test="photoUrls != null" >
+        #{photoUrls,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.BusTripReport" >
+    update ss_bustripreport
+    <set >
+      <if test="user != null and user.userId != null" >
+        userId = #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="customer != null and customer.id != null" >
+        cusId = #{customer.id,jdbcType=INTEGER},
+      </if>
+      <if test="contact != null and contact.id != null" >
+        contactId = #{contact.id,jdbcType=INTEGER},
+      </if>
+      <if test="visitPlan != null and visitPlan.id != null" >
+        visitId = #{visitPlan.id,jdbcType=INTEGER},
+      </if>
+      <if test="contactTel != null" >
+        contactTel = #{contactTel,jdbcType=VARCHAR},
+      </if>
+      <if test="fromdate != null and fromdate != ''" >
+        fromdate = #{fromdate,jdbcType=VARCHAR},
+      </if>
+      <if test="enddate != null and enddate != ''" >
+        enddate = #{enddate,jdbcType=VARCHAR},
+      </if>
+      <if test="address != null" >
+        address = #{address,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate != null" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null" >
+        content = #{content,jdbcType=VARCHAR},
+      </if>
+      <if test="photoUrls != null" >
+        photoUrls = #{photoUrls,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.BusTripReport" >
+    update ss_bustripreport
+    set userId = #{user.userId,jdbcType=INTEGER},
+      cusId = #{customer.id,jdbcType=INTEGER},
+      contactId = #{contact.id,jdbcType=INTEGER},
+      visitId = #{visitPlan.id,jdbcType=INTEGER},
+      contactTel = #{contactTel,jdbcType=VARCHAR},
+      fromdate = #{fromdate,jdbcType=VARCHAR},
+      enddate = #{enddate,jdbcType=VARCHAR},
+      address = #{address,jdbcType=VARCHAR},
+      content = #{content,jdbcType=VARCHAR},
+      photoUrls = #{photoUrls,jdbcType=VARCHAR},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by btr.createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by btr.createdate desc
+  </select>
+</mapper>

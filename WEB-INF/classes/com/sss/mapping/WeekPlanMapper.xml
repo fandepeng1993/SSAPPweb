@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IWeekPlanDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.WeekPlan" >
+    <id column="plan_id" property="planId" jdbcType="INTEGER" />
+    <result column="fromDate" property="fromdate" jdbcType="VARCHAR" />
+    <result column="endDate" property="enddate" jdbcType="VARCHAR" />
+    <result column="content" property="content" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    <result column="photoUrls" property="photoUrls" jdbcType="VARCHAR" />
+    <result column="fillReportDate" property="fillReportDate" jdbcType="VARCHAR" />
+    
+    <association property="user" javaType="com.sss.pojo.User">
+		<id column="wu_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="wu_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="wu_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="wu_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="wu_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="wu_user_status" property="status" jdbcType="VARCHAR" />
+	    <result column="wu_user_email" property="email" jdbcType="VARCHAR" />
+	    <result column="wu_user_birthDate" property="birthdate" jdbcType="VARCHAR" />
+	    <result column="wu_user_entryDate" property="entrydate" jdbcType="VARCHAR" />
+	    <result column="wu_user_lastlogindate" property="lastlogindate" jdbcType="VARCHAR" />
+	    <result column="wu_user_telephone" property="telephone" jdbcType="VARCHAR" />
+	    <result column="wu_user_address" property="address" jdbcType="VARCHAR" />
+	    <result column="wu_user_eduBackground" property="edubackground" jdbcType="VARCHAR" />
+	    <result column="wu_user_major" property="major" jdbcType="VARCHAR" />
+		<result column="wu_user_photoUrl" property="photoUrl" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		w.*,
+  		u.user_id as wu_user_id,
+  		u.user_name as wu_user_name,
+  		u.user_no as wu_user_no,
+  		u.position_id as wu_position_id,
+  		u.sex as wu_user_sex,
+  		u.status as wu_user_status,
+  		u.email as wu_user_email,
+  		u.birthdate as wu_user_birthDate,
+  		u.entrydate as wu_user_entryDate,
+  		u.lastlogindate as wu_user_lastlogindate,
+  		u.telephone as wu_user_telephone,
+  		u.address as wu_user_address,
+  		u.edubackground as wu_user_eduBackground,
+  		u.major as wu_user_major,
+  		u.school as wu_user_school,
+  		u.photoUrl as wu_user_photoUrl
+    from 
+    	ss_weekplan w
+   	left join
+   		ss_user u
+   	on
+   		w.user_id = u.user_id
+  </sql>
+  <!-- 返回一个list的写法 -->
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by w.createdate desc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where w.plan_id = #{planId,jdbcType=INTEGER} order by w.createdate desc
+  </select>
+  <select id="selByUserName"  resultMap="BaseResultMap" parameterType="java.lang.String" >
+    <include refid="associateQuery" />
+    where u.user_name like "%"#{keyWords,jdbcType=VARCHAR}"%" order by w.createdate desc
+  </select> 
+  <select id="selByUserId" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where w.user_id = #{userId,jdbcType=INTEGER} order by w.createdate desc
+  </select>
+  <select id="selByUserIdAndKey" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where w.user_id = #{userId,jdbcType=INTEGER} and u.user_name like "%"#{keyWords,jdbcType=VARCHAR}"%"
+  	order by w.createdate desc
+  </select>
+  <select id="getWPlanByDate" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where w.user_id = #{userId,jdbcType=INTEGER} and 
+    	 w.fromDate &gt;= #{fromdate,jdbcType=VARCHAR} and 
+    	 w.fromDate &lt;= #{enddate,jdbcType=VARCHAR}
+  </select>
+  <select id="getWPlansByUIds" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where w.user_id in 
+    <foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>  
+    order by w.createdate desc
+  </select>
+  <select id="getWPlansByUIdsLazy" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where w.user_id in 
+    <foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>  
+    order by w.createdate desc
+    limit #{fromNo,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+  <select id="getWPlansByUIdsAndKeyWords" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where w.user_id in 
+    <foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>  
+	and u.user_name like "%"#{keyWords,jdbcType=VARCHAR}"%"
+    order by w.createdate desc
+  </select>
+  <select id="getFillCountByPri" resultType="java.lang.Integer" >
+   	select count(*) from ss_weekplan 
+    where user_id in 
+	    <foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">  
+		  #{item}  
+		</foreach>  
+    	and fromDate &gt;= #{fromdate,jdbcType=VARCHAR} 
+    	and fromDate &lt;= #{enddate,jdbcType=VARCHAR} 
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_weekplan
+    where plan_id = #{planId,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.WeekPlan" >
+    insert into ss_weekplan (plan_id, user_id, fromDate, 
+      endDate, content, createdate, photoUrls, fillReportDate
+      )
+    values (#{planId,jdbcType=INTEGER}, #{user.userId,jdbcType=INTEGER}, #{fromdate,jdbcType=VARCHAR}, 
+      #{enddate,jdbcType=VARCHAR}, #{content,jdbcType=VARCHAR}, #{createdate,jdbcType=VARCHAR}, #{photoUrls,jdbcType=VARCHAR},
+      #{fillReportDate,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.WeekPlan" >
+    insert into ss_weekplan
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="planId != null" >
+        plan_id,
+      </if>
+      <if test="user.userId != null" >
+        user_id,
+      </if>
+      <if test="fromdate != null" >
+        fromDate,
+      </if>
+      <if test="enddate != null" >
+        endDate,
+      </if>
+      <if test="content != null" >
+        content,
+      </if>
+      <if test="photoUrls != null" >
+        photoUrls,
+      </if>
+      <if test="fillReportDate != null and fillReportDate != ''" >
+        fillReportDate,
+      </if>
+        createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="planId != null" >
+        #{planId,jdbcType=INTEGER},
+      </if>
+      <if test="user.userId != null" >
+        #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="fromdate != null" >
+        #{fromdate,jdbcType=VARCHAR},
+      </if>
+      <if test="enddate != null" >
+        #{enddate,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null" >
+        #{content,jdbcType=VARCHAR},
+      </if>
+      <if test="photoUrls != null" >
+        #{photoUrls,jdbcType=VARCHAR},
+      </if>
+      <if test="fillReportDate != null and fillReportDate != ''" >
+        #{fillReportDate,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.WeekPlan" >
+    update ss_weekplan
+    <set >
+      <if test="user.userId != null" >
+        user_id = #{user.userId,jdbcType=INTEGER},
+      </if>
+      <if test="fromdate != null" >
+        fromDate = #{fromdate,jdbcType=VARCHAR},
+      </if>
+      <if test="enddate != null" >
+        endDate = #{enddate,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null" >
+        content = #{content,jdbcType=VARCHAR},
+      </if>
+      <if test="photoUrls != null" >
+        photoUrls = #{photoUrls,jdbcType=VARCHAR},
+      </if>
+      <if test="fillReportDate != null and fillReportDate != ''" >
+        fillReportDate = #{fillReportDate,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where plan_id = #{planId,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.WeekPlan" >
+    update ss_weekplan
+    set user_id = #{user.userId,jdbcType=INTEGER},
+      fromDate = #{fromdate,jdbcType=VARCHAR},
+      endDate = #{enddate,jdbcType=VARCHAR},
+      content = #{content,jdbcType=VARCHAR},
+      createdate = #{createdate,jdbcType=VARCHAR},
+      photoUrls = #{photoUrls,jdbcType=VARCHAR},
+      fillReportDate = #{fillReportDate,jdbcType=VARCHAR}
+    where plan_id = #{planId,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by w.createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by w.createdate desc
+  </select>
+</mapper>

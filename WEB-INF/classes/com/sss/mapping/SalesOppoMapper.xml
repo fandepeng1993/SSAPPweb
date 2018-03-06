@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sss.dao.ISalesOppoDAO">
+  <resultMap id="BaseResultMap" type="com.sss.pojo.SalesOppo">
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="salesAmount" property="salesAmount" jdbcType="DECIMAL" />
+    <result column="salesStage" property="salesStage" jdbcType="VARCHAR" />
+    <result column="finishdate" property="finishdate" jdbcType="VARCHAR" />
+    <result column="note" property="note" jdbcType="VARCHAR" />
+    <result column="oppoType" property="oppoType" jdbcType="VARCHAR" />
+    <result column="oppoSource" property="oppoSource" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    
+    <association property="customer" javaType="com.sss.pojo.Customer">
+		<id column="sc_customer_id" property="id" jdbcType="INTEGER" />
+	    <result column="sc_customer_name" property="customerName" jdbcType="VARCHAR" />
+	    <result column="sc_customer_area" property="area" jdbcType="VARCHAR" />
+	    <result column="sc_customer_industry" property="industry" jdbcType="VARCHAR" />
+	    <result column="sc_customer_website" property="website" jdbcType="VARCHAR" />
+	    <result column="sc_customer_source" property="source" jdbcType="VARCHAR" />
+	    <result column="sc_customer_type" property="type" jdbcType="VARCHAR" />
+	    <result column="sc_customer_note" property="note" jdbcType="VARCHAR" />
+	    <result column="sc_customer_createdate" property="createdate" jdbcType="VARCHAR" />
+	</association>
+	<association property="creator" javaType="com.sss.pojo.User">
+		<id column="su_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="su_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="su_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="su_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="su_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="su_user_status" property="status" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery">
+  	select 
+  		s.*,
+  		cus.id as sc_customer_id,
+  		cus.customer_name as sc_customer_name,
+  		cus.area as sc_customer_area,
+  		cus.industry as sc_customer_industry,
+  		cus.website as sc_customer_website,
+  		cus.source as sc_customer_source,
+  		cus.type as sc_customer_type,
+  		cus.note as sc_customer_note,
+  		cus.createdate as sc_customer_createdate,
+  		u.user_id as su_user_id,
+  		u.user_name as su_user_name,
+  		u.user_no as su_user_no,
+  		u.position_id as su_position_id,
+  		u.sex as su_user_sex,
+  		u.status as su_user_status
+    from 
+    	ss_salesoppo s
+   	left join
+   		ss_customer cus
+   	on
+   		s.customerId = cus.id
+   	left join 
+   		ss_user u
+   	on 
+   		s.creator = u.user_id
+  </sql>
+  
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by s.createdate desc
+  </select>
+  <select id="selectListByUId"  resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" /> 
+    where s.creator = #{userId,jdbcType=INTEGER} order by s.createdate desc
+  </select>
+  <select id="selectListByCusId"  resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" /> 
+    where s.customerId = #{cusId,jdbcType=INTEGER} order by s.createdate desc
+  </select>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where s.id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from ss_salesoppo
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.SalesOppo">
+    insert into ss_salesoppo (id, creator, name, 
+      customerId, salesAmount, salesStage, 
+      finishdate, note, oppoType, 
+      oppoSource, createdate)
+    values (#{id,jdbcType=INTEGER}, #{creator.userId,jdbcType=INTEGER}, #{name,jdbcType=VARCHAR}, 
+      #{customer.id,jdbcType=INTEGER}, #{salesAmount,jdbcType=DECIMAL}, #{salesStage,jdbcType=VARCHAR}, 
+      #{finishdate,jdbcType=VARCHAR}, #{note,jdbcType=VARCHAR}, #{oppoType,jdbcType=VARCHAR}, 
+      #{oppoSource,jdbcType=VARCHAR}, #{createdate,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.SalesOppo">
+    <selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+    </selectKey>
+    insert into ss_salesoppo
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="creator != null and creator.userId != 0">
+        creator,
+      </if>
+      <if test="name != null">
+        name,
+      </if>
+      <if test="customer != null and customer.id != 0">
+        customerId,
+      </if>
+      <if test="salesAmount != null">
+        salesAmount,
+      </if>
+      <if test="salesStage != null">
+        salesStage,
+      </if>
+      <if test="finishdate != null">
+        finishdate,
+      </if>
+      <if test="note != null">
+        note,
+      </if>
+      <if test="oppoType != null">
+        oppoType,
+      </if>
+      <if test="oppoSource != null">
+        oppoSource,
+      </if>
+      	createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="creator != null and creator.userId != 0">
+        #{creator.userId,jdbcType=INTEGER},
+      </if>
+      <if test="name != null">
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="customer != null and customer.id != 0">
+        #{customer.id,jdbcType=INTEGER},
+      </if>
+      <if test="salesAmount != null">
+        #{salesAmount,jdbcType=DECIMAL},
+      </if>
+      <if test="salesStage != null">
+        #{salesStage,jdbcType=VARCHAR},
+      </if>
+      <if test="finishdate != null">
+        #{finishdate,jdbcType=VARCHAR},
+      </if>
+      <if test="note != null">
+        #{note,jdbcType=VARCHAR},
+      </if>
+      <if test="oppoType != null">
+        #{oppoType,jdbcType=VARCHAR},
+      </if>
+      <if test="oppoSource != null">
+        #{oppoSource,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.SalesOppo">
+    update ss_salesoppo
+    <set>
+      <if test="creator != null and creator.userId != 0">
+        creator = #{creator.userId,jdbcType=INTEGER},
+      </if>
+      <if test="name != null">
+        name = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="customer != null and customer.id != 0">
+        customerId = #{customer.id,jdbcType=INTEGER},
+      </if>
+      <if test="salesAmount != null">
+        salesAmount = #{salesAmount,jdbcType=DECIMAL},
+      </if>
+      <if test="salesStage != null">
+        salesStage = #{salesStage,jdbcType=VARCHAR},
+      </if>
+      <if test="finishdate != null">
+        finishdate = #{finishdate,jdbcType=VARCHAR},
+      </if>
+      <if test="note != null">
+        note = #{note,jdbcType=VARCHAR},
+      </if>
+      <if test="oppoType != null">
+        oppoType = #{oppoType,jdbcType=VARCHAR},
+      </if>
+      <if test="oppoSource != null">
+        oppoSource = #{oppoSource,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.SalesOppo">
+    update ss_salesoppo
+    set creator = #{creator.userId,jdbcType=INTEGER},
+      name = #{name,jdbcType=VARCHAR},
+      customerId = #{customer.id,jdbcType=INTEGER},
+      salesAmount = #{salesAmount,jdbcType=DECIMAL},
+      salesStage = #{salesStage,jdbcType=VARCHAR},
+      finishdate = #{finishdate,jdbcType=VARCHAR},
+      note = #{note,jdbcType=VARCHAR},
+      oppoType = #{oppoType,jdbcType=VARCHAR},
+      oppoSource = #{oppoSource,jdbcType=VARCHAR},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by s.createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by s.createdate desc
+  </select>
+</mapper>

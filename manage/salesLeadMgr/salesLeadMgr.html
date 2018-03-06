@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>销售线索管理</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/plugins/iCheck/icheck.min.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		//设定查看的权限。1：查看所有；2：查看直属下级；3：查看所有下级；4：查看自己；
+		var selPri = -1;
+		//当前页面所属菜单的menuCode
+	    var menuCode;
+		//根据权限渲染页面
+		$(document).ready(function(){ 
+		menuCode = Request["menuCode"];
+			$.ajax({
+				url: "../../sessionAdmin/getPri",
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					var pathname = window.location.pathname;
+					var url = pathname.substring(pathname.indexOf("/", 1) + 1, pathname.length);
+					$.each(eval("(" + data + ")"), function(index, item) {
+						if(item.menuUrl == url) {
+							setSelPriByMenuName(item.menuName);
+							if(item.menuName == "增加") {
+								$("#add-g").show();
+							} else if(item.menuName == "修改") {
+								$("#update-g").show();
+							} else if(item.menuName == "删除") {
+								$("#delete-g").show();
+							}
+						}
+					});
+					
+					switch(selPri) {
+		    	  	case 1:
+		    	  		initTable("../../salesLeadsAdmin/salesLeadses");
+						lookShow();
+		    	  		break;
+		    	  	case 2:
+		    	  		initTable("../../salesLeadsAdmin/slsByUserPri/" + currentUserId + "," + selPri);
+						lookShow();
+      					break;
+		    	  	case 3:
+		    	  		initTable("../../salesLeadsAdmin/slsByUserPri/" + currentUserId + "," + selPri);
+						lookShow();
+      					break;
+		    	  	case 4:
+		    	  		initTable("../../salesLeadsAdmin/slsByUserPri/" + currentUserId + "," + selPri);
+						lookShow();
+      					break;
+		    	  	}
+				} 
+			});
+		});
+		
+		function lookShow() {
+			$("#search-g").show();
+			$("#keySpan").show();
+			$("#keyWords").show();
+		}
+		
+		var allData;
+		var salesLeadses = null;
+		var ajaxUrl = null;
+		function initTable(url) {
+			ajaxUrl = url;
+			$.ajax({
+				url: url,
+				datatype: "json",
+				type: "get",
+				data: {},
+				success: function (data, status, xhr) {
+					$("#salesLeadsTable").empty();
+					allData = eval("(" + data + ")");
+					salesLeadses = allData;
+					totalRecords = eval("(" + data + ")").length;
+					
+					//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+					if(totalRecords % pageSize != 0) {
+						totalPages = Math.floor(totalRecords / pageSize) + 1;
+					} else {
+						totalPages = totalRecords / pageSize;
+					}
+					//根据totalPages初始化页码插件
+					$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+					$("#Pagination").pagination(totalPages);
+				} 
+			});
+		}
+		var pageSize = 10;
+		var pageNo = 1;//当前的页码
+		var totalRecords = 0;
+		var totalPages = 0;
+
+		function circleInfos() {
+			 $("#salesLeadsTable").empty();
+			 $.each(salesLeadses, function(index, item) {
+				 if(index >= ((pageNo-1)*pageSize) && index < (pageNo*pageSize)) {
+					 new UserCommon().fillTable("salesLeadsTable",item,index);
+					 
+				 } else if(index > (pageNo*pageSize)) {
+					 return;
+				 }
+				 //为checkbox添加监听事件
+				 new UserCommon().checkboxListener();
+		      });
+		}
+		
+		/**
+		 * 根据reportId填充单个用户详细信息查看表单
+		 */
+		function fillDetail(id) {
+			admin_role_add('<strong>销售线索查看</strong>',"viewSalesLead.html?menuCode=" + menuCode + "&salesLeadsId=" + id,'500');
+		}
+		
+		/**
+		 * 选择修改后填充相关信息
+		 */
+		function fillUpdateForm() {
+			var but = $("input[name='selectFlag']");
+			var selSLIds;
+			var num = 0;
+			for(var i=0; i<but.length; i++) {
+				if(but[i].checked) { 
+					if(num == 0) {
+						selSLIds = but[i].value;
+					}
+					num += 1;
+					//alert(but[i].value);
+				}
+			} 
+			if(num == 1) {
+				$.each(salesLeadses, function(index, item) {
+					if(item.id == selSLIds) {
+						admin_role_add('<strong>销售线索修改</strong>',"editSalesLead.html?menuCode=" + menuCode + "&salesLeadsId=" + item.id,'500');
+					}
+			    });
+			} else {
+				new UserCommon().check("success","请选择一个销售线索！",null,"warning");
+			}
+		}
+
+		function deleteSalesLeadses() {
+			var str = "";
+			$("input[name='selectFlag']").each(function(){
+				if($(this).is(':checked')) str += $(this).val() + ",";
+			});
+
+			if(str != null && str.trim() != "") {
+				str = str.substring(0, str.length-1);
+				layer.confirm('要删除么？',function(index){
+					$.ajax({
+					      url: "../../salesLeadsAdmin/salesLeads/" + str,
+					      datatype: "text",
+					      type: "delete",
+					      data: {},
+					      success: function (data) {
+					    	  var json = eval("(" + data + ")");
+					    	  if(json.status == 1) {
+					    		  new UserCommon().check("success",json.msg,null,"success");
+					    		  initTable(ajaxUrl);
+					    		  layer.close(index);
+					    	  } else {
+					    		  new UserCommon().check("success",json.msg,null,"fail");
+					    	  }
+					      }
+					});
+				});
+			} else {
+				new UserCommon().check("success","请选择要删除的销售线索！",null,"warning");
+			}
+		}
+
+		function getSalesLeadsByKey() {
+			var keyWords = $("#keyWords").val();
+			salesLeadses = new Array();
+			$.each(allData, function(index, item) {
+				if(item.creator.userName.indexOf(keyWords) != -1) {
+					salesLeadses.push(item);
+				}
+			});
+			
+			totalRecords = salesLeadses.length;
+			//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+			if(totalRecords % pageSize != 0) {
+				totalPages = Math.floor(totalRecords / pageSize) + 1;
+			} else {
+				totalPages = totalRecords / pageSize;
+			}
+			//根据totalPages初始化页码插件
+			$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+			$("#Pagination").pagination(totalPages);
+		}
+		
+		function advancedSearch(dto) {
+			$.ajax({
+				url: "../../salesLeadsAdmin/selectByAdvancedSearch" ,
+				datatype: "json",
+				type: "post",
+				data: JSON.stringify(dto),
+				success: function (data, status, xhr) {
+					$("#salesLeadsTable").empty();
+					salesLeadses = data;
+					totalRecords = salesLeadses.length;
+					//通过计算，得到分页应该需要分几页，其中不满一页的数据按一页计算 
+					if(totalRecords % pageSize != 0) {
+						totalPages = Math.floor(totalRecords / pageSize) + 1;
+					} else {
+						totalPages = totalRecords / pageSize;
+					}
+					
+					$("#sumPage").html("共<strong class=\"allPage\">" + totalPages + "</strong>页");
+					$("#Pagination").pagination(totalPages);
+				} 
+			});
+		}
+		/*管理员-角色-添加*/
+		function admin_role_add(title,url,w){
+			new UserCommon().layer_show(title,url,w);
+		}
+		function addSalesLeads() {
+			admin_role_add('<strong>销售线索添加</strong>',"addSalesLead.html?menuCode=" + menuCode,'500');
+		}
+	</script>
+</head>
+<body>
+	<div class="bt-div">
+		<div class="bt-div-in">
+			<button id="add-g" class="btn btn-default btn-xs bt-one" onclick="addSalesLeads()">
+				<span class="glyphicon glyphicon-plus color-add"></span> 添加
+			</button>
+			<button id="update-g" class="btn btn-default btn-xs bt-two" onclick="fillUpdateForm()">
+				<span class="glyphicon glyphicon-edit color-edit"></span> 修改
+			</button>
+			<button id="delete-g" class="btn btn-default btn-xs bt-three" onclick="deleteSalesLeadses()">
+				<span class="glyphicon glyphicon-trash color-del"></span> 删除
+			</button>
+			<span class="bt-div-title" id="keySpan">线索所有人姓名:</span>
+			<input class="bt-div-input" type="text" id="keyWords">
+			<button class="btn btn-default bt-div-bt" id="search-g" onclick="getSalesLeadsByKey()">
+				<span class="glyphicon glyphicon-search color-zn"></span> 搜索
+			</button>
+<!-- 			<button type="button" class="btn btn-default bt-div-bt" style="display: inline-block;" onclick="slideRight()">
+				<span class="glyphicon glyphicon-search color-zn"></span> 高级搜索
+			</button> -->
+		</div>
+	</div>
+	<div class="bt-div-two-table">
+		<div class="table-responsive centerTable">
+			<table class="table table-data-bottom text-center tableHidden">
+				<thead>
+					<tr class="table-first-tr" fieldType="controlCB" fieldName="id">
+						<th fieldType="checkbox" fieldName="id"><input type="checkbox" name="ifAll" class="all"></th>
+						<th fieldType="num" fieldName="">序号</th>
+						<th fieldType="text" fieldName="name">姓名</th>
+						<th fieldType="text" fieldName="company">公司名称</th>
+						<th fieldType="text" fieldName="position">职务</th>
+						<th fieldType="text" fieldName="creator.userName">线索所有人</th>
+						<th fieldType="text" fieldName="followStatus">跟进状态</th>
+						<th fieldType="text" fieldName="phone">电话</th>
+						<th fieldType="text" fieldName="telephone">手机</th>
+						<th fieldType="text" fieldName="email">电子邮件</th>
+						<th fieldType="datetime" fieldName="createdate">创建时间</th>
+						<th fieldType="detailInfo" fieldName="id">详细信息</th>
+					</tr>
+				</thead>
+				<tbody id="salesLeadsTable">
+				</tbody>
+			</table> 
+		</div>
+		<!-- 分页 -->
+		<div class="pages">
+	        <div id="Pagination"></div>
+	        <div class="searchPage">
+	          <span class="page-sum" id="sumPage"></span>
+	          <span class="page-go">跳转<input type="text">页</span>
+	          <a class="page-btn" href="javascript:;">GO</a>
+	        </div>
+	    </div>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+</body>
+</html>

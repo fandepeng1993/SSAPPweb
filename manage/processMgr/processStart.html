@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>发起流程</title>
+<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+<link rel="stylesheet" href="../../css/plugins/iCheck/custom.css">
+<link rel="stylesheet" type="text/css" href="../../css/form.css">
+<!-- 自定义字体文件 -->
+<link rel="stylesheet" type="text/css" href="../../css/icon/iconfont.css">
+<style>
+	.panel_contain .row .col-sm-4 .panel-body.process p a{
+		cursor:pointer;
+	}
+</style>	
+<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+<script type="text/javascript" src="../../js/checkUser.js"></script>
+<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../../js/jquery.pagination.js"></script>
+<script type="text/javascript" src="../../js/UserUtil.js"></script>
+<script type="text/javascript" src="../../js/UserCommon.js"></script>
+<script type="text/javascript" src="../../js/plugins/layer/layer.min.js"></script>
+<script type="text/javascript" src="../../js/oaProcessJson.js"></script>
+<script type="text/javascript">
+
+    var menuCode;
+	$(document).ready(function(){
+		menuCode = Request["menuCode"];
+		initProcessPanel();
+	});
+	
+	/*管理员-角色-申请*/
+	function admin_role_add(title,url,w){
+		new UserCommon().layer_show(title,url,w);
+	}
+	
+	//初始化流程面板
+	function initProcessPanel() {
+		//若还未取processJson信息，发请求去取
+		$.ajax({
+			url: "../../processPanelAdmin/selectActivated",
+			datatype: "json",
+			type: "get",
+			data: {},
+			success: function (data, status, xhr) {
+				var activatedProPanel = data;
+				for(var key in activatedProPanel) {
+					var value = activatedProPanel[key];
+					var panelDivId = null; 
+					switch(value.type) {
+					case "财务管理":
+						panelDivId = "finance";
+						break;
+					case "考勤管理":
+						panelDivId = "attendance";
+						break;
+					case "人事管理":
+						panelDivId = "personnel";
+						break;
+					case "生产管理":
+						panelDivId = "production";
+						break;
+					case "行政管理":
+						panelDivId = "administration";
+						break;
+					case "销售管理":
+						panelDivId = "sale";
+						break;
+					}
+					if(panelDivId) {
+						$("#" + panelDivId).append("<p onclick=\"commonProcess('" + value.processDefinitionKey + "', '" + value.name + "')\"><i></i><a>" + value.name + "</a></p>");
+					}
+				}
+			} 
+		});
+	}
+	function commonProcess(processDefKey, processName) {
+		if(processDefKey=="sampleProcess"){
+			admin_role_add('<strong>样品申请作业</strong>',"addSampleProcess.html?processDefinitionKey=sampleProcess" , iframeJson.width*0.62);
+		}else if(processDefKey=="orderCloseProcess"){
+			admin_role_add('<strong>订单结案</strong>',"addOrderCloseProcess.html?processDefinitionKey=orderCloseProcess" , iframeJson.width*0.62);
+		}else if(processDefKey=="outSendProcess"){
+			admin_role_add('<strong>外发货通知单</strong>',"addOutSendProcess.html?processDefinitionKey=outSendProcess" , iframeJson.width*0.62);
+		}else if(processDefKey=="supplementaryProcess"){
+			admin_role_add('<strong>补料单</strong>',"addSupplementaryProcess.html?processDefinitionKey=supplementaryProcess" , iframeJson.width*0.62);
+		}else if(processDefKey=="returnsProcess"){
+			admin_role_add('<strong>退货通知单</strong>',"addReturnsProcess.html?processDefinitionKey=returnsProcess" , iframeJson.width*0.62);
+		}else if(processDefKey=="purchaseProcess"){
+			admin_role_add('<strong>采购超收申请单</strong>',"addPurchaseProcess.html?processDefinitionKey=purchaseProcess" , iframeJson.width*0.62);
+		}else if(processDefKey=="paymentProcess"){
+			admin_role_add('<strong>付款申请单</strong>',"addPaymentProcess.html?processDefinitionKey=paymentProcess" , iframeJson.width*0.62);
+		}else if(processDefKey=="inventoryProcess"){
+			admin_role_add('<strong>库存改制申请</strong>',"addInventoryProcess.html?processDefinitionKey=inventoryProcess" , iframeJson.width*0.62);
+		}else if(processDefKey=="requisitionProcess"){
+			admin_role_add('<strong>行政请购</strong>',"addProcess/addRequisitionProcess.html?processDefinitionKey=requisitionProcess" , iframeJson.width*0.62);
+		}else{
+			admin_role_add('<strong>' + processName + '</strong>',"addProcess.html?processDefinitionKey=" + processDefKey, iframeJson.width*0.62);
+		}
+	}
+</script>
+</head>
+<body>
+	<div class="panel_contain">
+		<div class="tittle_head clearfix">
+			<div class="tittle_head_left">
+				<h3>工作流</h3>
+				<p>Workflow</p>	
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-4">
+				<div class="panel panel-default">
+					<div class="Workflow_item">
+						<div style="position: relative;display: inline-block;">
+							<i class="iconfont icon-caiwu Color_org"></i>
+
+						</div>
+						<div class="workflow_Info">
+							<span>财务管理</span>
+							<br>
+							<span class="departMent">Property management</span>
+						</div>
+						<div class="openSwitch">
+							<i class=" Sy_slideUp glyphicon glyphicon-minus" data-toggle="collapse" data-parent="#accordion" href="#collapseOne"></i>
+						</div>
+					</div>
+					<div id="collapseOne" class="panel-collapse collapse in">
+						<div class="panel-body process" id="finance">
+							<!-- <p onclick="paymentProcess()"><i></i><a>付款申请单（浙江上上）</a></p>
+							<p onclick="elseProcess()"><i></i><a>其他费用申请</a></p>
+							<p onclick="billProcess()"><i></i><a>票据先行流程</a></p> -->
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-4">
+				<div class="panel panel-default">
+					<div class="Workflow_item">
+						<div style="position: relative;display: inline-block;">
+							<i class="iconfont icon-kaoqin Color_skyBlue"></i>
+
+						</div>
+						<div class="workflow_Info">
+							<span>考勤管理</span>
+							<br>
+							<span class="departMent">Attendance management</span>
+						</div>
+						<div class="openSwitch">
+							<i class=" Sy_slideUp glyphicon glyphicon-minus" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo"></i>
+						</div>
+					</div>
+
+					<div id="collapseTwo" class="panel-collapse collapse in">
+						<div class="panel-body process" id="attendance">
+							<!-- <p onclick="startOvertimeProcess()"><i></i><a>加班单</a></p>
+							<p onclick="startCardProcess()"><i></i><a>补卡单</a></p>
+							<p onclick="startLeaveProcess()"><i></i><a>请假单</a></p> -->
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-4">
+				<div class="panel panel-default">
+					<div class="Workflow_item">
+						<div style="position: relative;display: inline-block;">
+							<i class="iconfont icon-icon-users-bold Color_green"></i>
+
+						</div>
+						<div class="workflow_Info">
+							<span>人事管理</span>
+							<br>
+							<span class="departMent">Personnel management</span>
+						</div>
+						<div class="openSwitch">
+							<i class=" Sy_slideUp glyphicon glyphicon-minus" data-toggle="collapse" data-parent="#accordion" href="#collapseThree"></i>
+						</div>
+					</div>
+				
+					<div id="collapseThree" class="panel-collapse collapse in">
+						<div class="panel-body process" id="personnel">
+							<!--<p><i></i><a>IT权限录入申请(×)</a></p>
+							<p onclick="startEntryProcess()"><i></i><a>入职申请单(√)</a></p>
+							<p><i></i><a>测试</a></p>
+							<p onclick="startQuitProcess()"><i></i><a>离职人员登记表(√)</a></p> -->
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-4">
+				<div class="panel panel-default">
+					<div class="Workflow_item">
+						<div style="position: relative;display: inline-block;">
+							<i class="iconfont icon-shengchan1 Color_seaBlue"></i>
+
+						</div>
+						<div class="workflow_Info">
+							<span>生产管理</span>
+							<br>
+							<span class="departMent">Production management</span>
+						</div>
+						<div class="openSwitch">
+							<i class=" Sy_slideUp glyphicon glyphicon-minus" data-toggle="collapse" data-parent="#accordion" href="#collapseFour"></i>
+						</div>
+					</div>
+
+					<div id="collapseFour" class="panel-collapse collapse in">
+						<div class="panel-body process" id="production">
+							<!-- <p onclick="disqualificationProcess()"><i></i><a>不合格品处置</a></p>
+							<p onclick="inventoryProcess()"><i></i><a>库存改制申请</a></p>
+							<p onclick="productionProcess()"><i></i><a>生产指令单</a></p>
+							<p onclick="supplementaryProcess()"><i></i><a>补料单</a></p>
+							<p onclick="equipmentProcess()"><i></i><a>设备保修/保养单</a></p>
+							<p onclick="returnsProcess()"><i></i><a>退货通知单</a></p>
+							<p onclick="purchaseProcess()"><i></i><a>采购超收申请单</a></p> -->
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-4">
+				<div class="panel panel-default">
+					<div class="Workflow_item">
+						<div style="position: relative;display: inline-block;">
+							<i class="iconfont icon-hangzheng Color_purple"></i>
+
+						</div>
+						<div class="workflow_Info">
+							<span>行政管理</span>
+							<br>
+							<span class="departMent">Administrative management</span>
+						</div>
+						<div class="openSwitch">
+							<i class=" Sy_slideUp glyphicon glyphicon-minus" data-toggle="collapse" data-parent="#accordion" href="#collapseFive"></i>
+						</div>
+					</div>
+					<div id="collapseFive" class="panel-collapse collapse in">
+						<div class="panel-body process" id="administration">
+							<!-- <p onclick="startSealApplyProcess()"><i></i><a>公章使用申请(√)</a></p>
+							<p onclick="startTravelProcess()"><i></i><a>出差申请单(√)</a></p>
+							<p onclick="startOutCarProcess()"><i></i><a>出门出车单(√)</a></p>
+							<p onclick="startSocialApplyProcess()"><i></i><a>应酬申请单(√)</a></p> -->
+							<p><i></i><a>外检通知单（×）</a></p>
+							<p><i></i><a>行政请购单（×）</a></p>
+							<!-- <p><i></i><a>行政请购（×）</a></p> -->
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-4">
+				<div class="panel panel-default">
+					<div class="Workflow_item">
+						<div style="position: relative;display: inline-block;">
+							<i class="iconfont icon-xiaoshou Color_pink"></i>
+						</div>
+						<div class="workflow_Info">
+							<span>销售管理</span>
+							<br>
+							<span class="departMent">Sales management</span>
+						</div>
+						<div class="openSwitch">
+							<i class=" Sy_slideUp glyphicon glyphicon-minus" data-toggle="collapse" data-parent="#accordion" href="#collapseSix"></i>
+						</div>
+					</div>
+					<div id="collapseSix" class="panel-collapse collapse in">
+						<div class="panel-body process" id="sale">
+							<!-- <p onclick="startOutSendProcess()"><i></i><a>外发货通知单</a></p>
+							<p onclick="clientVisitProcess()"><i></i><a>客户来访联络函</a></p>
+							<p onclick="commitmentProcess()"><i></i><a>承诺书</a></p>
+							<p onclick="bidRecordProcess()"><i></i><a>投标备案审批表</a></p>
+							<p onclick="sampleProcess()"><i></i><a>样品申请作业</a></p>
+							<p onclick="orderChangeProcess()"><i></i><a>订单变更/取消</a></p>
+							<p onclick="orderCloseProcess()"><i></i><a>订单结案</a></p>
+							<p onclick="transportProcess()"><i></i><a>运输申请单</a></p> -->
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

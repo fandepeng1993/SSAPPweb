@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sss.dao.IPcontactDAO" >
+  <resultMap id="BaseResultMap" type="com.sss.pojo.Pcontact" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="function_type" property="functionType" jdbcType="VARCHAR" />
+    <result column="company_name" property="companyName" jdbcType="VARCHAR" />
+    <result column="res_name" property="resName" jdbcType="VARCHAR" />
+    <result column="sex" property="sex" jdbcType="VARCHAR" />
+    <result column="deptName" property="deptname" jdbcType="VARCHAR" />
+    <result column="position" property="position" jdbcType="VARCHAR" />
+    <result column="officeTel" property="officetel" jdbcType="VARCHAR" />
+    <result column="telephone" property="telephone" jdbcType="VARCHAR" />
+    <result column="fax" property="fax" jdbcType="VARCHAR" />
+    <result column="email" property="email" jdbcType="VARCHAR" />
+    <result column="address" property="address" jdbcType="VARCHAR" />
+    <result column="note" property="note" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="VARCHAR" />
+    
+    <association property="project" javaType="com.sss.pojo.Project">
+		<id column="p_project_id" property="id" jdbcType="INTEGER" />
+	    <result column="p_project_Stage" property="projectStage" jdbcType="VARCHAR" />
+	    <result column="p_project_investment" property="investment" jdbcType="VARCHAR" />
+	    <result column="p_project_name" property="projectName" jdbcType="VARCHAR" />
+	</association>
+	
+	<association property="creator" javaType="com.sss.pojo.User">
+		<id column="cu_user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="cu_position_id" property="position.positionId" jdbcType="INTEGER" />
+	    <result column="cu_user_no" property="userNo" jdbcType="VARCHAR" />
+	    <result column="cu_user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="cu_user_sex" property="sex" jdbcType="VARCHAR" />
+	    <result column="cu_user_status" property="status" jdbcType="VARCHAR" />
+	</association>
+  </resultMap>
+  <sql id="associateQuery" >
+  	select 
+  		pcon.*,
+  		pro.id as p_project_id,
+  		pro.project_stage as p_project_Stage,
+  		pro.investment as p_project_investment,
+  		pro.project_name as p_project_name,
+  		u.user_id as cu_user_id,
+  		u.user_name as cu_user_name,
+  		u.user_no as cu_user_no,
+  		u.position_id as cu_position_id,
+  		u.sex as cu_user_sex,
+  		u.status as cu_user_status
+    from 
+    	ss_pcontact pcon
+   	left join
+   		ss_project pro
+   	on
+   		pcon.project_id = pro.id
+   	left join 
+   		ss_user u
+   	on 
+   		pcon.creator = u.user_id
+  </sql>
+  <select id="selectList"  resultMap="BaseResultMap"  >
+    <include refid="associateQuery" /> order by pcon.createdate desc
+  </select>
+  <select id="selectByProId"  resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" /> 
+    where pcon.project_id = #{proId,jdbcType=INTEGER}
+    order by pcon.createdate desc
+  </select>
+  <select id="getProsByUIds" resultMap="BaseResultMap" >
+    <include refid="associateQuery" />
+    where pro.salesman in 
+    <foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+	  #{item}  
+	</foreach>  
+    order by pcon.createdate desc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    <include refid="associateQuery" />
+    where pcon.id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from ss_pcontact
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.sss.pojo.Pcontact" >
+    insert into ss_pcontact (id, project_id, creator, 
+      function_type, company_name, res_name, 
+      sex, deptName, position, 
+      officeTel, telephone, fax, 
+      email, address, note, 
+      createdate)
+    values (#{id,jdbcType=INTEGER}, #{project.id,jdbcType=INTEGER}, #{creator.userId,jdbcType=INTEGER}, 
+      #{functionType,jdbcType=VARCHAR}, #{companyName,jdbcType=VARCHAR}, #{resName,jdbcType=VARCHAR}, 
+      #{sex,jdbcType=VARCHAR}, #{deptname,jdbcType=VARCHAR}, #{position,jdbcType=VARCHAR}, 
+      #{officetel,jdbcType=VARCHAR}, #{telephone,jdbcType=VARCHAR}, #{fax,jdbcType=VARCHAR}, 
+      #{email,jdbcType=VARCHAR}, #{address,jdbcType=VARCHAR}, #{note,jdbcType=VARCHAR}, 
+      now())
+  </insert>
+  <insert id="insertPcontacts" parameterType="list">
+      insert into ss_Pcontact 
+	      (id, project_id, creator, 
+	      function_type, company_name, res_name, 
+	      sex, deptName, position, 
+	      officeTel, telephone, fax, 
+	      email, address, note, 
+	      createdate) 
+	  values
+         <foreach collection="list" item="item" index="index" separator=",">
+	      (#{item.id,jdbcType=INTEGER}, #{item.project.id,jdbcType=INTEGER}, #{item.creator.userId,jdbcType=INTEGER}, 
+	      #{item.functionType,jdbcType=VARCHAR}, #{item.companyName,jdbcType=VARCHAR}, #{item.resName,jdbcType=VARCHAR}, 
+	      #{item.sex,jdbcType=VARCHAR}, #{item.deptname,jdbcType=VARCHAR}, #{item.position,jdbcType=VARCHAR}, 
+	      #{item.officetel,jdbcType=VARCHAR}, #{item.telephone,jdbcType=VARCHAR}, #{item.fax,jdbcType=VARCHAR}, 
+	      #{item.email,jdbcType=VARCHAR}, #{item.address,jdbcType=VARCHAR}, #{item.note,jdbcType=VARCHAR}, 
+	      now())
+         </foreach>
+  </insert>
+  <insert id="insertSelective" parameterType="com.sss.pojo.Pcontact" >
+  	<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id"> 
+        SELECT LAST_INSERT_ID() AS ID   
+    </selectKey>
+    insert into ss_pcontact
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="project != null and project.id !=0" >
+        project_id,
+      </if>
+      <if test="creator != null and creator.userId != 0" >
+        creator,
+      </if>
+      <if test="functionType != null" >
+        function_type,
+      </if>
+      <if test="companyName != null" >
+        company_name,
+      </if>
+      <if test="resName != null" >
+        res_name,
+      </if>
+      <if test="sex != null" >
+        sex,
+      </if>
+      <if test="deptname != null" >
+        deptName,
+      </if>
+      <if test="position != null" >
+        position,
+      </if>
+      <if test="officetel != null" >
+        officeTel,
+      </if>
+      <if test="telephone != null" >
+        telephone,
+      </if>
+      <if test="fax != null" >
+        fax,
+      </if>
+      <if test="email != null" >
+        email,
+      </if>
+      <if test="address != null" >
+        address,
+      </if>
+      <if test="note != null" >
+        note,
+      </if>
+        createdate,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="project != null and project.id !=0" >
+        #{project.id,jdbcType=INTEGER},
+      </if>
+      <if test="creator != null and creator.userId != 0" >
+        #{creator.userId,jdbcType=INTEGER},
+      </if>
+      <if test="functionType != null" >
+        #{functionType,jdbcType=VARCHAR},
+      </if>
+      <if test="companyName != null" >
+        #{companyName,jdbcType=VARCHAR},
+      </if>
+      <if test="resName != null" >
+        #{resName,jdbcType=VARCHAR},
+      </if>
+      <if test="sex != null" >
+        #{sex,jdbcType=VARCHAR},
+      </if>
+      <if test="deptname != null" >
+        #{deptname,jdbcType=VARCHAR},
+      </if>
+      <if test="position != null" >
+        #{position,jdbcType=VARCHAR},
+      </if>
+      <if test="officetel != null" >
+        #{officetel,jdbcType=VARCHAR},
+      </if>
+      <if test="telephone != null" >
+        #{telephone,jdbcType=VARCHAR},
+      </if>
+      <if test="fax != null" >
+        #{fax,jdbcType=VARCHAR},
+      </if>
+      <if test="email != null" >
+        #{email,jdbcType=VARCHAR},
+      </if>
+      <if test="address != null" >
+        #{address,jdbcType=VARCHAR},
+      </if>
+      <if test="note != null" >
+        #{note,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate == null or createdate == ''" >
+        now(),
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        #{createdate,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.sss.pojo.Pcontact" >
+    update ss_pcontact
+    <set >
+      <if test="project != null and project.id != 0" >
+        project_id = #{project.id,jdbcType=INTEGER},
+      </if>
+      <if test="creator != null and creator.userId != 0">
+        creator = #{creator.userId,jdbcType=INTEGER},
+      </if>
+      <if test="functionType != null" >
+        function_type = #{functionType,jdbcType=VARCHAR},
+      </if>
+      <if test="companyName != null" >
+        company_name = #{companyName,jdbcType=VARCHAR},
+      </if>
+      <if test="resName != null" >
+        res_name = #{resName,jdbcType=VARCHAR},
+      </if>
+      <if test="sex != null" >
+        sex = #{sex,jdbcType=VARCHAR},
+      </if>
+      <if test="deptname != null" >
+        deptName = #{deptname,jdbcType=VARCHAR},
+      </if>
+      <if test="position != null" >
+        position = #{position,jdbcType=VARCHAR},
+      </if>
+      <if test="officetel != null" >
+        officeTel = #{officetel,jdbcType=VARCHAR},
+      </if>
+      <if test="telephone != null" >
+        telephone = #{telephone,jdbcType=VARCHAR},
+      </if>
+      <if test="fax != null" >
+        fax = #{fax,jdbcType=VARCHAR},
+      </if>
+      <if test="email != null" >
+        email = #{email,jdbcType=VARCHAR},
+      </if>
+      <if test="address != null" >
+        address = #{address,jdbcType=VARCHAR},
+      </if>
+      <if test="note != null" >
+        note = #{note,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate != null and createdate != ''" >
+        createdate = #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.sss.pojo.Pcontact" >
+    update ss_pcontact
+    set project_id = #{project.id,jdbcType=INTEGER},
+      creator = #{creator.userId,jdbcType=INTEGER},
+      function_type = #{functionType,jdbcType=VARCHAR},
+      company_name = #{companyName,jdbcType=VARCHAR},
+      res_name = #{resName,jdbcType=VARCHAR},
+      sex = #{sex,jdbcType=VARCHAR},
+      deptName = #{deptname,jdbcType=VARCHAR},
+      position = #{position,jdbcType=VARCHAR},
+      officeTel = #{officetel,jdbcType=VARCHAR},
+      telephone = #{telephone,jdbcType=VARCHAR},
+      fax = #{fax,jdbcType=VARCHAR},
+      email = #{email,jdbcType=VARCHAR},
+      address = #{address,jdbcType=VARCHAR},
+      note = #{note,jdbcType=VARCHAR},
+      createdate = #{createdate,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  
+  <select id="searchByDTO"  resultMap="BaseResultMap" parameterType="com.sss.pojo.dto.SearchPcontactDTO" >
+	<include refid="associateQuery" />
+	where 
+	  <if test="resName != null" >
+	      pcon.res_name like "%"#{resName,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="resName == null" >
+	      pcon.res_name like "%%" 
+	  </if>
+	  <if test="addresses != null" >
+	      <foreach collection="addresses" item="item" index="index"  open="AND (" separator="OR" close=")" >  
+          	pcon.address LIKE CONCAT('%',#{item},'%')  
+          </foreach>  
+	  </if>
+	  <if test="projectAddresses != null" >
+	      <foreach collection="projectAddresses" item="item" index="index"  open="AND (" separator="OR" close=")" >  
+          	pro.address LIKE CONCAT('%',#{item},'%')  
+          </foreach>  
+	  </if>
+	  <if test="projectIds != null" >
+	      AND pcon.project_id in
+	      <foreach item="item" index="index" collection="projectIds" open="(" separator="," close=")">  
+		  	#{item}  
+		  </foreach>  
+	  </if>
+	  <if test="salesmanIds != null" >
+	      AND pro.salesman in
+	      <foreach item="item" index="index" collection="salesmanIds" open="(" separator="," close=")">  
+		  	#{item}  
+		  </foreach>  
+	  </if>
+	  <if test="creatorIds != null" >
+	      AND pcon.creator in
+	      <foreach item="item" index="index" collection="creatorIds" open="(" separator="," close=")">  
+		  	#{item}  
+		  </foreach>  
+	  </if>
+	  <if test="projectName != null and projectName != ''" >
+	      AND pro.project_name like "%"#{projectName,jdbcType=VARCHAR}"%" 
+	  </if>
+	  <if test="officetel != null and officetel != ''" >
+	      AND pcon.officeTel = #{officetel}
+	  </if>
+	  <if test="telephone != null and telephone != ''" >
+	      AND pcon.telephone = #{telephone}
+	  </if>
+	  <if test="fax != null and fax != ''" >
+	      AND pcon.fax = #{fax}
+	  </if>
+	  <if test="functionType != null and functionType != ''" >
+	      AND pcon.function_type = #{functionType}
+	  </if>
+	  <if test="companyName != null and companyName != ''" >
+	      AND pcon.company_name like "%"#{companyName}"%" 
+	  </if>
+	 
+	  <if test="fromdate != null and fromdate != ''" >
+	      AND pcon.createdate &gt;= #{fromdate,jdbcType=VARCHAR}
+	  </if>
+	  <if test="enddate != null and enddate != ''" >
+	      AND pcon.createdate &lt;= #{enddate,jdbcType=VARCHAR}
+	  </if>
+	order by pcon.createdate desc
+  </select>
+  <!-- 高级搜索 -->
+  <select id="selectByAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+	<include refid="associateQuery" />
+	where 1=1 
+		<if test="list != null">
+			<foreach item="item" index="index" collection="list" separator=" " >  
+			  and ${item.fieldName} ${item.condition} ${item.fieldValue} 
+			</foreach>  
+		</if>
+	order by pcon.createdate desc
+  </select>
+  <!-- 复杂高级搜索 -->
+  <select id="selectByComplexAdvancedSearchDTO" useCache="false" resultMap="BaseResultMap">
+    <include refid="associateQuery" />
+    where 1=1 
+    	<if test="list != null">
+		    <foreach item="mapItem" index="listIndex" collection="list" >  
+		    	<if test="listIndex == 0">and</if>
+				 (
+				<foreach item="item" index="index" collection="mapItem.searchDTOs">
+					${item.fieldName} ${item.condition} ${item.fieldValue} ${item.LogicalOperator} 
+				</foreach>
+				)
+				${mapItem.groupLogicalOperator}
+			</foreach>  
+    	</if>
+    order by pcon.createdate desc
+  </select>
+</mapper>

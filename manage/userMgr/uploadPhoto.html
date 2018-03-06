@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>上传头像</title>
+	<link rel="stylesheet" type="text/css" href="../../css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../css/user.common.css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../../js/laydate/laydate.js"></script>
+	<script src="../../js/jquery-form.js"></script>
+	<script type="text/javascript" src="../../js/checkUser.js"></script>
+	<script type="text/javascript" src="../../js/UserUtil.js"></script>
+	<script type="text/javascript" src="../../js/UserCommon.js"></script>
+	<script type="text/javascript">
+		
+		$(document).ready(function(){ 
+			var parentIframe = $("iframe",parent.document);
+			photoButObj = parentIframe.eq(0).contents().find("#photoBut");
+			//photoButObj = $("#photoBut", window.parent.document);
+			//初始化层的大小
+			initLayerSize();
+		});
+		
+			//var uploadUserNo;
+			var photoUrl;
+			//上传头像所属button元素对象
+			var photoButObj;
+			/**
+			 * 点击保存触发
+			 */
+			function savePhoto() {
+				photoButObj.prev().attr("src", photoUrl);
+				photoButObj.prev().prev().val(photoUrl);
+				new UserCommon().layer_close();
+			}
+			/**
+			 * 上传头像input改变时触发
+			 */
+			function upload() {
+				//if(uploadUserNo != null) {
+					$("#uploadForm").attr("action", "../../uploadServlet");
+					//$("#uploadForm").submit();
+					$("#uploadForm").ajaxSubmit({ 
+						success: function (data, status) { 
+							var json = eval("(" + data + ")");
+					    	if(json.status == 1) {
+					    		$("#uploadForm").prev().attr("src", json.msg);
+					    		photoUrl = json.msg;
+					    	} else {
+					    		new UserCommon().check("success",json.msg,null,"fail");
+					    	}
+						} 
+					});
+				//}
+			}
+	</script>
+</head>
+<body>
+	<!-- 照片添加 -->
+	<div id="selectPhoto" style="z-index:8;background:#f7f7f7;width:100%;border:1px solid #80a1d0;">
+		<div style="text-align:left;padding-left:10px;background:#f7f7f7;color:#205e91;width:100%;line-height:50px;font-size:15px;font-family:微软雅黑;float:left">选择照片
+		</div>
+		<div style="width:100%;float:left;height:280px">
+			<div style="width:100%;height:280px">
+				<div style="float:left;color:#000;width:380px;background:#fff;margin-left:10px;height:230px;">
+					<img alt="员工头像" src="" height="180" width="380">
+					<form  name="uploadForm" target="_self" id="uploadForm" action="" enctype="multipart/form-data" method="post" style="margin-top:15px;">
+				           <span style="float:left;">上传头像:</span> <input type="file" name="image" onchange="upload()" style="float:left">
+				    </form>
+				</div>
+				<div class="edit-bottom">
+					<button type="button" class="btn btn-xs edit-close btn-primary" onclick="new UserCommon().layer_close();"><i class="glyphicon glyphicon-remove"></i>&nbsp;关闭</button>
+					<button type="button" class="btn btn-xs edit-save btn-primary" onclick="savePhoto()"><i class="glyphicon glyphicon-ok"></i>&nbsp;保存</button>
+				</div>
+			</div>	
+		</div>
+	</div>
+	<!-- 服务器返回信息弹出 -->
+	<div class="edit-success" id="success">
+		<div class="alert alert-success alert-dismissable">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+				&times;
+			</button>
+			<span></span>
+		</div>
+	</div>
+	<!-- 弹出提示框 -->
+	<div id="edit-promit">
+		<div class="edit-content-in">
+			<span class="glyphicon glyphicon-remove-circle edit-red"></span>
+			<span></span>
+			<div><img src="../../images/sanjiao.png" width="10"></div>
+		</div>
+	</div>
+</body>
+</html>
